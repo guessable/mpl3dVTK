@@ -1,6 +1,6 @@
 # mpl3d-vtk
 
-面向 NumPy 数据的 Python 三维科学绘图库，提供 MATLAB 风格的绘图函数，也可以直接在 Matplotlib Figure 中使用 `vtk3d` 子图。
+面向 NumPy 数据的 Python 三维科学绘图库，提供独立绘图函数，也可以直接在 Matplotlib Figure 中使用 `vtk3d` 子图。
 
 - **Matplotlib** 管理原生三维坐标轴、刻度、鼠标视角、数学文本、色图、色条与子图布局。
 - **VTK / OpenGL** 处理三角网格、等值面提取、体数据切片、三维光照与深度遮挡。默认使用 2 倍超采样。
@@ -33,7 +33,7 @@ u = np.exp(x * np.sin(y))
 
 fig = plt.figure(figsize=(10, 4.5), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
-surface = ax.plot_surface(x, y, u, cmap="viridis")
+surface = ax.plot_surface(x, y, u)
 ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
 ax.set_box_aspect((1, 1, 0.8))
 ax.view_init(elev=30, azim=-60)
@@ -50,7 +50,7 @@ m.close(fig)
 
 常用轴方法包括 `plot_surface`、`plot_wireframe`、`plot_trisurf`、`plot`、`scatter`、`quiver`、`contour`、`stem` 和 `bar3d`。用 `ax.set()`、`ax.tick_params()`、`ax.grid()` 和 `ax.view_init()` 调整坐标轴。
 
-### 用 MATLAB 风格的函数绘制零等值面
+### 绘制零等值面
 
 ```python
 import numpy as np
@@ -69,7 +69,7 @@ print(f"{len(iso.faces)} triangles")
 m.close(fig)
 ```
 
-高层绘图函数可以接收首个位置参数 `ax` 或关键字 `ax=ax`。`m.hold("on", ax=ax)` 可在同一组轴上叠加多个 MATLAB 风格的绘图调用。原生 Matplotlib 风格的轴方法默认叠加图元。
+高层绘图函数可以接收首个位置参数 `ax` 或关键字 `ax=ax`。`m.hold("on", ax=ax)` 可让连续调用在同一组轴上叠加。Matplotlib 轴方法默认叠加图元。
 
 ## API
 
@@ -79,14 +79,14 @@ m.close(fig)
 | --- | --- |
 | 规则曲面 | 高度数组形状为 `(ny, nx)`。坐标可以是同形状的 `X, Y` 网格，也可以是两个一维向量。 |
 | 规则体数据 | 数组形状为 `(ny, nx, nz)`，与 `np.meshgrid(x, y, z, indexing="xy")` 一致。 |
-| 三角网格 | `trisurf(tri, x, y, z[, c])` 接收形状 `(n_faces, 3)` 的整数面索引。默认从 0 开始，MATLAB 导出的索引可用 `index_base=1`。 |
+| 三角网格 | `trisurf(tri, x, y, z[, c])` 接收形状 `(n_faces, 3)` 的整数面索引。默认从 0 开始，从 1 开始的索引可用 `index_base=1`。 |
 | 颜色与光照 | `cmap` 和 `clim` 控制映射。用 `FaceColor="interp"`、`EdgeColor="none"`、`FaceAlpha`、`FaceLighting` 等属性设置图元。 |
 | 返回值 | 大多数绘图函数返回 `Graphic`。可传给 `fig.colorbar()`，通过 `vertices`、`faces`、`data`、`mapper` 和 `actor` 访问网格或 VTK 对象。组合图和动画的返回值见逐函数页面。 |
 | 复用图元 | 调用 `handle.set_clim()` 或 `handle.set_cmap()` 更新色映射。规则曲面可用 `set_zdata()` 和 `set_cdata()` 更新数据。 |
-| 坐标轴风格 | 默认沿用 my-mpl-style 的正交视角、等数据单位比例、灰色透明轴框与向外刻度。创建子图时传 `axes_style="matplotlib"` 可选用 Matplotlib 的默认外观。 |
+| 默认外观 | 正交视角、等数据单位比例、白底、细网格与向外刻度。标量默认使用蓝绿黄渐变，多个线系列按固定顺序配色。 |
 | 抗锯齿 | `antialiasing` 支持整数 1–4。1 为原始像素尺寸，2 为默认，4 可用于高质量静态导出。可用 `ax.set_antialiasing(4)` 按子图调整。 |
 
-按 [基础 MATLAB 三维绘图清单](docs/base_matlab_3d.md) 核对接口覆盖。当前版本的参数重载、图形属性和返回值见 [API 参考](docs/api.md)。
+按 [三维绘图图集](docs/plot_catalog.md) 查找图形。参数重载、图形属性和返回值见 [API 参考](docs/api.md)。
 
 ### 逐函数说明与配图
 
@@ -197,7 +197,7 @@ m.close(fig)
 
 | 接口 | 用途 | 示例 |
 | --- | --- | --- |
-| [`plot`](docs/function_reference.md#plot) | 对应 MATLAB 的三维 graph 和 digraph 绘图用法。edges 每行是一条边的两个节点索引，xyz 每行是节点坐标。也可给 XData、YData、ZData，或省略坐标让 VTK 求解 force3 布局。用 directed=True 显示箭头。 | <img src="docs/figures/plot.png" width="150" alt="plot 示例"> |
+| [`plot`](docs/function_reference.md#plot) | 绘制三维网络图。edges 每行是一条边的两个节点索引，xyz 每行是节点坐标。也可给 XData、YData、ZData，或省略坐标让 VTK 求解 force3 布局。用 directed=True 显示箭头。 | <img src="docs/figures/plot.png" width="150" alt="plot 示例"> |
 | [`graphplot`](docs/function_reference.md#graphplot) | 从零基边列表绘制三维图。可显式传入节点位置、边颜色和标签，也可由 VTK 计算布局。 | <img src="docs/figures/graphplot.png" width="150" alt="graphplot 示例"> |
 | [`image`](docs/function_reference.md#image) | 将 RGB(A) 或索引色图像放在 XY 平面。X、Y 的首尾值定义首尾像素中心。z 指平面高度，AlphaData 可为逐像素矩阵。 | <img src="docs/figures/image.png" width="150" alt="image 示例"> |
 | [`imagesc`](docs/function_reference.md#imagesc) | 把标量矩阵映射到当前色图。clims 指定数值范围，z 改变平面位置。返回可供 colorbar 使用的图元。 | <img src="docs/figures/imagesc.png" width="150" alt="imagesc 示例"> |
@@ -213,27 +213,27 @@ m.close(fig)
 | [`axis`](docs/function_reference.md#axis) | 可传 auto、tight、equal、vis3d、on、off 或六个坐标边界，八个元素时包含色标上下限。 | <img src="docs/figures/axis.png" width="150" alt="axis 示例"> |
 | [`daspect`](docs/function_reference.md#daspect) | 按当前轴跨度设置数据单位的显示比例。示例将三个轴的单位长度设为一致。 | <img src="docs/figures/daspect.png" width="150" alt="daspect 示例"> |
 | [`pbaspect`](docs/function_reference.md#pbaspect) | 指定三维坐标框三边的显示比例。相同数据可用更低的框显示。 | <img src="docs/figures/pbaspect.png" width="150" alt="pbaspect 示例"> |
-| [`view`](docs/function_reference.md#view) | 使用 MATLAB 方位角和仰角，或传视线方向。2 为顶视图，3 为默认三维视角。 | <img src="docs/figures/view.png" width="150" alt="view 示例"> |
+| [`view`](docs/function_reference.md#view) | 用方位角和仰角或视线向量设置视角，方位角从负 y 轴起算。2 为顶视图，3 为默认三维视角。 | <img src="docs/figures/view.png" width="150" alt="view 示例"> |
 | [`camproj`](docs/function_reference.md#camproj) | 选择 perspective 或 orthographic。省略 mode 返回当前投影类型。 | <img src="docs/figures/camproj.png" width="150" alt="camproj 示例"> |
 | [`hidden`](docs/function_reference.md#hidden) | 控制 VTK 网格背面与被几何遮挡的部分线条是否隐藏。 | <img src="docs/figures/hidden.png" width="150" alt="hidden 示例"> |
 | [`shading`](docs/function_reference.md#shading) | 在 flat、interp、faceted 间切换。faceted 保留边线。对已经创建的图元生效。 | <img src="docs/figures/shading.png" width="150" alt="shading 示例"> |
 | [`lighting`](docs/function_reference.md#lighting) | 为已有表面选择 none、flat、gouraud 或 phong。表面法向会随规则网格更新。 | <img src="docs/figures/lighting.png" width="150" alt="lighting 示例"> |
 | [`camlight`](docs/function_reference.md#camlight) | 添加跟随相机的光源，支持 left、right 或 headlight。返回 VTK 光源。 | <img src="docs/figures/camlight.png" width="150" alt="camlight 示例"> |
 | [`light`](docs/function_reference.md#light) | 在世界坐标中放置光源。style 可为 infinite 或 local。返回 VTK 光源。 | <img src="docs/figures/light.png" width="150" alt="light 示例"> |
-| [`lightangle`](docs/function_reference.md#lightangle) | 以 MATLAB 方位角和仰角设置一个固定方向光。可用 color 指定光色。 | <img src="docs/figures/lightangle.png" width="150" alt="lightangle 示例"> |
+| [`lightangle`](docs/function_reference.md#lightangle) | 以方位角和仰角设置一个固定方向光，方位角从负 y 轴起算。可用 color 指定光色。 | <img src="docs/figures/lightangle.png" width="150" alt="lightangle 示例"> |
 | [`material`](docs/function_reference.md#material) | 设置 dull、shiny、metal 材质或四个光照系数。四个值依次为环境、漫反射、镜面反射、高光指数。 | <img src="docs/figures/material.png" width="150" alt="material 示例"> |
 | [`colormap`](docs/function_reference.md#colormap) | 更新场景色表，可传 Matplotlib 色表名或 RGB(A) 数组。 | <img src="docs/figures/colormap.png" width="150" alt="colormap 示例"> |
 | [`colorbar`](docs/function_reference.md#colorbar) | 创建原生 Matplotlib 色条。默认取当前场景最后一个图元。可传 ticks、label 和 shrink。 | <img src="docs/figures/colorbar.png" width="150" alt="colorbar 示例"> |
 | [`clim`](docs/function_reference.md#clim) | 为当前场景设定颜色映射范围。传 auto 恢复按数据映射，省略参数返回当前范围。caxis 为同义入口。 | <img src="docs/figures/clim.png" width="150" alt="clim 示例"> |
 | [`alim`](docs/function_reference.md#alim) | 在 AlphaDataMapping 为 scaled 时设置透明度映射区间。省略参数返回当前区间。 | <img src="docs/figures/alim.png" width="150" alt="alim 示例"> |
-| [`hold`](docs/function_reference.md#hold) | 控制连续 MATLAB 风格绘图调用是否叠加。示例将半透明参考平面与等值面画在同一轴。 | <img src="docs/figures/hold.png" width="150" alt="hold 示例"> |
-| [`set`](docs/function_reference.md#set) | 修改绘图句柄的可写属性。支持 MATLAB 属性名和相应的 Python Setter。 | <img src="docs/figures/set.png" width="150" alt="set 示例"> |
+| [`hold`](docs/function_reference.md#hold) | 控制连续高层绘图调用是否叠加。示例将半透明参考平面与等值面画在同一轴。 | <img src="docs/figures/hold.png" width="150" alt="hold 示例"> |
+| [`set`](docs/function_reference.md#set) | 修改绘图句柄的可写属性。可使用属性名与值组成的位置参数对或 Python 关键字。 | <img src="docs/figures/set.png" width="150" alt="set 示例"> |
 | [`grid`](docs/function_reference.md#grid) | 切换 Matplotlib 原生三维网格线。更精细的设置可以在 ax.grid 或轴对象上完成。 | <img src="docs/figures/grid.png" width="150" alt="grid 示例"> |
 | [`title`](docs/function_reference.md#title) | 设置子图标题。返回原生 Matplotlib Text，可以调整字体、颜色和位置。 | <img src="docs/figures/title.png" width="150" alt="title 示例"> |
 | [`xlabel`](docs/function_reference.md#xlabel) | 设置 x 轴标签，接受数学文本和 Matplotlib 文本属性。 | <img src="docs/figures/xlabel.png" width="150" alt="xlabel 示例"> |
 | [`ylabel`](docs/function_reference.md#ylabel) | 设置 y 轴标签，接受数学文本和 Matplotlib 文本属性。 | <img src="docs/figures/ylabel.png" width="150" alt="ylabel 示例"> |
 | [`zlabel`](docs/function_reference.md#zlabel) | 设置 z 轴标签，接受数学文本和 Matplotlib 文本属性。 | <img src="docs/figures/zlabel.png" width="150" alt="zlabel 示例"> |
-| [`caxis`](docs/function_reference.md#caxis) | MATLAB 风格的色域设置，是 clim 的别名。示例把两端颜色锁定在 −2 和 2。 | <img src="docs/figures/caxis.png" width="150" alt="caxis 示例"> |
+| [`caxis`](docs/function_reference.md#caxis) | 设置场景的颜色映射范围，是 clim 的别名。示例把两端颜色锁定在 −2 和 2。 | <img src="docs/figures/caxis.png" width="150" alt="caxis 示例"> |
 
 </details>
 
@@ -253,7 +253,7 @@ m.close(fig)
 | [`getpoints`](docs/function_reference.md#getpoints) | 读取 animatedline 当前保留的三个坐标数组副本。示例用散点标出读回的采样位置。 | <img src="docs/figures/getpoints.png" width="150" alt="getpoints 示例"> |
 | [`clearpoints`](docs/function_reference.md#clearpoints) | 清空 animatedline 中已有和待追加的样本，保留句柄。示例清空旧轨迹后，用同一条线开始新轨迹。 | <img src="docs/figures/clearpoints.png" width="150" alt="clearpoints 示例"> |
 | [`Graphic`](docs/function_reference.md#graphic) | 常见 VTK 图元的返回类型，兼容 Matplotlib Artist 与 ScalarMappable。通过绘图函数取得句柄后可调颜色范围、透明度和可见性。 | <img src="docs/figures/Graphic.png" width="150" alt="Graphic 示例"> |
-| [`VtkAxes`](docs/function_reference.md#vtkaxes) | 注册为 vtk3d 的 Matplotlib Axes3D 子类，接收 antialiasing 和 axes_style 参数。用 Figure 或 pyplot 的子图方法创建。 | <img src="docs/figures/VtkAxes.png" width="150" alt="VtkAxes 示例"> |
+| [`VtkAxes`](docs/function_reference.md#vtkaxes) | 注册为 vtk3d 的 Matplotlib Axes3D 子类，自动应用三维默认外观。用 Figure 或 pyplot 的子图方法创建。 | <img src="docs/figures/VtkAxes.png" width="150" alt="VtkAxes 示例"> |
 
 </details>
 
@@ -280,7 +280,7 @@ python -m venv .venv
 python -m pip install -e ".[test]"
 python -m pytest -q
 python examples/function_reference.py
-python examples/base_matlab_catalog.py --render
+python examples/plot_catalog.py --render
 ```
 
 批量任务可在导入 `pyplot` 和 `mpl3d_vtk` 前设置 `matplotlib.use("Agg")`。Linux 无显示服务器时，使用能创建 EGL 或 OSMesa 上下文的 VTK 环境。循环出图后用 `m.close(fig)` 释放窗口资源。PDF/SVG 中，坐标轴、文字和二维图元按 Matplotlib 的矢量格式输出，VTK 视口按指定 `dpi` 嵌入位图。 [示例与验证](docs/examples.md)
@@ -294,7 +294,7 @@ python -m twine check dist/*
 
 ## 版本与性能
 
-0.4.0 默认采用 my-mpl-style 轴样式，并减少了 VTK 颜色缓冲到 Matplotlib 的转换和重采样。在报告的 Windows / RTX 4060 Laptop 测试环境中，307,708 面的 `cheese` 网格旋转重绘中位耗时由 46.21 ms 降至 21.23 ms，PNG 导出由 267.00 ms 降至 128.37 ms。 [复测条件与原始数据](benchmarks/results/viewport_optimization/README.md) · [与 Matplotlib 的 trisurf 对照](benchmarks/results/my_mpl_style/README.md)
+0.5.0 统一了三维子图的默认坐标轴和配色。此前 0.4.0 减少了视口合成的转换和重采样。在当时的测试中，307,708 面网格的旋转重绘中位耗时由 46.21 ms 降至 21.23 ms，PNG 导出由 267.00 ms 降至 128.37 ms。 [复测条件与原始数据](benchmarks/results/viewport_optimization/README.md)
 
 ## 示例
 
@@ -324,4 +324,4 @@ $u=\exp(x\sin y)$ 在 $[-2,2]^2$ 上的三维曲面，与两条二维截线共�
 
 ## 第三方声明
 
-默认轴框与投影刻度样式改编自 my-mpl-style。项目包含这部分代码的 MIT 许可与版权声明。 [my-mpl-style](https://github.com/guessable/my-mpl-style) · [第三方许可](mpl3d_vtk/_my_mpl_style_license.txt)
+投影刻度代码附有原作者的 MIT 许可和版权声明。 [第三方许可](mpl3d_vtk/_my_mpl_style_license.txt)

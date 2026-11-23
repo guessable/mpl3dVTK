@@ -151,7 +151,7 @@ def volume_arrays(args):
 
 
 def volume_flat(a):
-    # MATLAB meshgrid dimensions: (y, x, z). VTK point IDs vary fastest in x.
+    # Cartesian meshgrid dimensions: (y, x, z). VTK point IDs vary fastest in x.
     return np.asarray(a).transpose(2, 0, 1).ravel()
 
 

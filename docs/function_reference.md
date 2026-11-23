@@ -33,7 +33,7 @@ fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
 Z 为高度矩阵，C 可为独立标量场或逐点 RGB(A)。X、Y 可传坐标向量。返回曲面句柄。
 
 ```python
-m.surf(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none", cmap="viridis")
+m.surf(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none")
 ```
 
 ![surf 示例](figures/surf.png)
@@ -876,7 +876,7 @@ m.scatter3(ax,*p.T,35,"#c45967")
 
 `plot(edges, xyz=None) / graphplot(edges, xyz=None)`
 
-对应 MATLAB 的三维 graph 和 digraph 绘图用法。edges 每行是一条边的两个节点索引，xyz 每行是节点坐标。也可给 XData、YData、ZData，或省略坐标让 VTK 求解 force3 布局。用 directed=True 显示箭头。
+绘制三维网络图。edges 每行是一条边的两个节点索引，xyz 每行是节点坐标。也可给 XData、YData、ZData，或省略坐标让 VTK 求解 force3 布局。用 directed=True 显示箭头。
 
 ```python
 G = {"edges": [[0,1],[1,2],[2,3],[3,4],[4,0],[1,4],[3,0]], "directed": True}
@@ -989,7 +989,7 @@ m.pbaspect((1,1,.42),ax=ax)
 
 `view(az, el) / view([az, el]) / view([x, y, z]) / view(2 or 3)`
 
-使用 MATLAB 方位角和仰角，或传视线方向。2 为顶视图，3 为默认三维视角。
+用方位角和仰角或视线向量设置视角，方位角从负 y 轴起算。2 为顶视图，3 为默认三维视角。
 
 ```python
 m.surf(ax,d.X,d.Y,d.Z,FaceColor="interp",EdgeColor="none")
@@ -1080,7 +1080,7 @@ m.light((1,-1,2),color="#ffe9c2",style="local",ax=ax)
 
 `lightangle(az, el, ax=ax)`
 
-以 MATLAB 方位角和仰角设置一个固定方向光。可用 color 指定光色。
+以方位角和仰角设置一个固定方向光，方位角从负 y 轴起算。可用 color 指定光色。
 
 ```python
 m.surf(ax,d.X,d.Y,d.Z,FaceColor="interp",EdgeColor="none",FaceLighting="gouraud",cmap="Greys")
@@ -1159,7 +1159,7 @@ m.alim((-5,6),ax=ax)
 
 `hold(state='on', ax=ax)`
 
-控制连续 MATLAB 风格绘图调用是否叠加。示例将半透明参考平面与等值面画在同一轴。
+控制连续高层绘图调用是否叠加。示例将半透明参考平面与等值面画在同一轴。
 
 ```python
 m.hold("on",ax=ax)
@@ -1173,7 +1173,7 @@ m.slice(ax,d.s,d.s,d.s,d.V,[],[],[-.45],FaceAlpha=.6,cmap="magma")
 
 `set(handle, Name, Value, ..., **properties)`
 
-修改绘图句柄的可写属性。支持 MATLAB 属性名和相应的 Python Setter。
+修改绘图句柄的可写属性。可使用属性名与值组成的位置参数对或 Python 关键字。
 
 ```python
 h = m.surf(ax,d.X,d.Y,d.Z,EdgeColor="none")
@@ -1254,7 +1254,7 @@ m.zlabel(r"$z$ (m)", ax=ax, color="#26778a")
 
 `caxis(limits=None, ax=ax)`
 
-MATLAB 风格的色域设置，是 clim 的别名。示例把两端颜色锁定在 −2 和 2。
+设置场景的颜色映射范围，是 clim 的别名。示例把两端颜色锁定在 −2 和 2。
 
 ```python
 h = m.surf(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none", cmap="coolwarm")
@@ -1433,12 +1433,11 @@ fig.colorbar(h, ax=ax, shrink=.7)
 
 `VtkAxes`
 
-注册为 vtk3d 的 Matplotlib Axes3D 子类，接收 antialiasing 和 axes_style 参数。用 Figure 或 pyplot 的子图方法创建。
+注册为 vtk3d 的 Matplotlib Axes3D 子类，自动应用三维默认外观。用 Figure 或 pyplot 的子图方法创建。
 
 ```python
 assert isinstance(ax, m.VtkAxes)
-ax.set_antialiasing(3)
-ax.plot_surface(d.X, d.Y, d.Z, cmap="viridis")
+ax.plot_surface(d.X, d.Y, d.Z)
 ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
 ```
 

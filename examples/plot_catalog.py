@@ -1,4 +1,4 @@
-"""Verify and render the complete checklist of base MATLAB 3-D examples."""
+"""Verify and render the categorized gallery of 3D drawing examples."""
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -45,18 +45,6 @@ DATA = {
     "流线与向量场计算": "stream2 stream3 curl divergence interpstreamspeed",
 }
 
-SOURCE_LINKS = {
-    "绘图类型": "https://www.mathworks.com/help/matlab/creating_plots/types-of-matlab-plots.html",
-    "曲面和网格": "https://www.mathworks.com/help/matlab/surface-and-mesh-plots-1.html",
-    "多边形": "https://www.mathworks.com/help/matlab/geometry.html",
-    "体可视化": "https://www.mathworks.com/help/matlab/volume-visualization.html",
-    "三角剖分绘图": "https://www.mathworks.com/help/matlab/referencelist.html?category=mathematics&listtype=cat&type=function",
-    "图和有向图": "https://www.mathworks.com/help/matlab/ref/graph.plot.html",
-    "Alpha Shape 绘图": "https://www.mathworks.com/help/matlab/ref/alphashape.plot.html",
-    "三维轴上的图像": "https://www.mathworks.com/help/matlab/ref/image.html",
-}
-
-
 def _contacts(figures, folder, file, names, title):
     columns = 3
     w,h = 535,385
@@ -100,8 +88,8 @@ def main():
         raise RuntimeError("the core checklist contains duplicate entries")
 
     text = [
-        "# 基础 MATLAB 三维绘图清单",
-        f"核对范围为基础 MATLAB R2026b 的绘图目录及三维图元用法。清单列出 **{len(charts)} 个绘图和标注入口**，"
+        "# 三维绘图图集",
+        f"图集包含 **{len(charts)} 个绘图和标注入口**，"
         f"以及 **{len(helpers)} 个数据与几何辅助函数**。图中数据由 NumPy 生成，VTK 负责三维渲染，"
         "Matplotlib 负责坐标轴和排版。",
         "函数名链接到 [逐函数参考](function_reference.md) 中的签名、参数、可运行代码和独立原图。"
@@ -120,15 +108,12 @@ def main():
         links = " · ".join(f"[`{n}`](function_reference.md#{n})" for n in spec.split())
         text.append(f"- {section}　{links}")
     text.extend([
-        "## 输入与兼容范围",
-        "MATLAB 的 `plot(G)` 三维网络图对应 Python 的 `plot(edges, xyz)`，另有 `graphplot` 同义入口。"
-        "MATLAB 的 `plot(alphaShape(...))` 对应 `alphashape(points, alpha)`。"
-        "`sphere`、`cylinder`、`ellipsoid` 返回网格数组，可交给 `surf` 或 `mesh` 绘制。",
-        "本清单的覆盖口径为基础 MATLAB 的入口及表中给出的代表性用法。"
-        "完整 Handle Graphics 属性、表重载、上下文菜单、编辑器和三维查看器行为仍有实现差异。工具箱函数无需纳入基础清单。",
-        "官方索引　"+" · ".join(f"[{name}]({url})" for name,url in SOURCE_LINKS.items()),
+        "## 数据输入",
+        "用 `plot(edges, xyz)` 或 `graphplot(edges, xyz)` 绘制三维网络，"
+        "用 `alphashape(points, alpha)` 绘制散点边界。"
+        "`sphere`、`cylinder` 和 `ellipsoid` 返回网格数组，可交给 `surf` 或 `mesh` 绘制。",
     ])
-    (docs/"base_matlab_3d.md").write_text("\n\n".join(text)+"\n",encoding="utf-8")
+    (docs/"plot_catalog.md").write_text("\n\n".join(text)+"\n",encoding="utf-8")
     print(f"Verified {len(charts)} drawing and annotation entry points and {len(helpers)} data helpers.")
 
 

@@ -7,6 +7,7 @@ import numpy as np
 import pytest
 
 import mpl3d_vtk as m
+from mpl3d_vtk._projected_ticks import apply_axes_style
 
 
 @pytest.fixture(autouse=True)
@@ -29,8 +30,9 @@ def _pixel(ax, point):
 def test_identical_native_axes():
     frames = []
     for name in ("3d", "vtk3d"):
-        options = {"axes_style":"matplotlib"} if name == "vtk3d" else {}
-        fig, ax = _figure(name, **options)
+        fig, ax = _figure(name, proj_type="ortho")
+        if name == "3d":
+            apply_axes_style(ax)
         ax.set(xlim=(-2, 2), ylim=(1, 3), zlim=(0, 4),
                xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
         ax.set_box_aspect((1, 2, 1))
@@ -43,12 +45,13 @@ def test_identical_native_axes():
     np.testing.assert_array_equal(*frames)
 
 
-def test_repository_axes_defaults_and_explicit_overrides():
+def test_axes_defaults_and_explicit_controls():
     fig, ax = _figure()
     assert (ax.elev, ax.azim) == (30,-127.5)
     assert m.camproj(ax=ax) == "orthographic"
     assert all(not axis.pane.get_fill() for axis in (ax.xaxis,ax.yaxis,ax.zaxis))
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -5
+    np.testing.assert_allclose(ax.xaxis._axinfo["grid"]["color"], (.13, .13, .13, .15))
     m.plot3(ax,[0,4],[0,2],[0,1])
     ax.set(xlim=(0,4), ylim=(0,2), zlim=(0,1))
     fig.canvas.draw()
@@ -63,6 +66,28 @@ def test_repository_axes_defaults_and_explicit_overrides():
     assert (supplied.elev,supplied.azim) == (15,105)
     assert m.camproj(ax=supplied) == "perspective"
     np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
+
+
+def test_default_colors_are_local_and_reset_on_clear():
+    with matplotlib.rc_context({"image.cmap": "inferno", "axes.prop_cycle": matplotlib.cycler(color=["red"])}):
+        _, ax = _figure()
+        xyz = np.array([[0., 1.], [0., 1.]])
+        h = ax.plot_surface(xyz, xyz.T, xyz + xyz.T)
+        assert h.get_cmap().name == "blue_green_yellow"
+        np.testing.assert_array_equal(h.get_array(), (xyz + xyz.T).ravel())
+        assert h.get_cmap().N == 256
+        assert m.surf(ax, xyz, cmap="magma").get_cmap().name == "magma"
+        lines = [ax.plot([0, 1], [0, 1], [i, i])[0] for i in (0, 1)]
+        np.testing.assert_allclose([line.actor.GetProperty().GetColor() for line in lines],
+                                   [[.066, .443, .745], [.866, .329, .0]])
+        points = m.scatter3(ax, [0], [0], [0])
+        np.testing.assert_allclose(points.actor.GetProperty().GetColor(), [.066, .443, .745])
+        _, native = plt.subplots()
+        assert native.plot([0, 1])[0].get_color() == "red"
+        assert matplotlib.rcParams["image.cmap"] == "inferno"
+        m.colormap("gray", ax=ax)
+        ax.clear()
+        assert ax.plot_surface(xyz, xyz.T, xyz + xyz.T).get_cmap().name == "blue_green_yellow"
 
 
 @pytest.mark.parametrize("projection", ["persp", "ortho"])

@@ -85,5 +85,5 @@ def graphplot(edges, xyz=None, *, ax, xdata=None, ydata=None, zdata=None, layout
 
 
 def plot(*args, **kwargs):
-    """MATLAB graph plot spelling for a graph given by its edge list."""
+    """Plot a graph given by its edge list."""
     return graphplot(*args,**kwargs)

@@ -1,4 +1,4 @@
-"""MATLAB-style 3D graphics powered by VTK."""
+"""Scientific 3D graphics powered by VTK and Matplotlib."""
 from .scene import (Graphic, VtkAxes, alim, axis, caxis, camlight, camproj, clim,
                     close, colorbar, colormap, daspect, drawnow, figure, gca,
                     grid, hidden, hold, light, lightangle, lighting, material,
@@ -20,4 +20,4 @@ from .spatial import alphashape, pcshow, pcshowpair, plotTransforms, volshow
 from .graphs import graphplot, plot
 from .planes import image, imagesc
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"

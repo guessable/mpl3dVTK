@@ -8,7 +8,7 @@ python examples/gallery.py vtk_gallery.png
 python examples/chart_catalog.py chart_catalog.png
 python examples/random_isosurface.py random_isosurface.png
 python examples/closed_surface.py closed_surface.png --antialiasing 4
-python examples/base_matlab_catalog.py --render
+python examples/plot_catalog.py --render
 ```
 
 | 示例 | 图形 |
@@ -19,7 +19,7 @@ python examples/base_matlab_catalog.py --render
 | [random_isosurface.py](../examples/random_isosurface.py) | 在 `[-1,1]^3` 的 19×19×19 网格上采独立均匀标量，提取零等值面。 |
 | [closed_surface.py](../examples/closed_surface.py) | 用 `trisurf` 在封闭环面上显示标量函数，可调整抗锯齿倍数。 |
 | [function_reference.py](../examples/function_reference.py) | 重新生成 [带图函数参考](function_reference.md) 中的全部图片和代码。 |
-| [base_matlab_catalog.py](../examples/base_matlab_catalog.py) | 核对覆盖并生成 [基础 MATLAB 完整图集](base_matlab_3d.md) 的五张分类图。 |
+| [plot_catalog.py](../examples/plot_catalog.py) | 核对绘图入口并生成 [三维绘图图集](plot_catalog.md) 的五张分类图。 |
 
 随机示例可用如下写法复现标量场和等值面几何。绘图示例另外按顶点高度上色。
 

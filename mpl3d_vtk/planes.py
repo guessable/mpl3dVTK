@@ -1,4 +1,4 @@
-"""Matlab image primitives rendered as a depth-tested textured plane."""
+"""Image primitives rendered as a depth-tested textured plane."""
 import numpy as np
 import vtk
 from matplotlib.cm import ScalarMappable

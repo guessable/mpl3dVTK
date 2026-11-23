@@ -1,7 +1,6 @@
 """Replot and benchmark guessable/my-mpl-style data with both renderers."""
 from argparse import ArgumentParser
 from io import BytesIO
-from inspect import signature
 import json
 from pathlib import Path
 import platform
@@ -25,7 +24,6 @@ MPL = "Matplotlib"
 VTK = "mpl3d-vtk"
 ELEVATION = 30
 AZIMUTH = -127.5
-SUPPORTS_AXES_STYLE = "axes_style" in signature(m.VtkAxes).parameters
 
 
 def _mesh(root, name):
@@ -72,8 +70,6 @@ def _axes_parameters(data):
 
 def _axes(fig, loc, renderer, aa=2):
     settings = {"projection":"3d"} if renderer == MPL else {"projection":"vtk3d","antialiasing":aa}
-    if renderer == VTK and SUPPORTS_AXES_STYLE:
-        settings["axes_style"] = "matplotlib"
     return fig.add_subplot(*loc, **settings)
 
 
@@ -138,7 +134,7 @@ def render(root, output, meshes):
             ax.set_title(rf"$\bar{{\phi}}={mean:.2f}$  |  Matplotlib",fontsize=13,pad=9)
             ax = _axes(fig,(2,3,col+4),VTK)
             # Source marching cubes treats the stored volume as (x,y,z).
-            # mpl3d-vtk accepts MATLAB-compatible order (y,x,z).
+            # mpl3d-vtk accepts array order (y,x,z).
             h = m.isosurface(ax,*coords,volume.transpose(1,0,2),0,FaceColor="#18b83e",
                              AmbientStrength=.33,DiffuseStrength=.67,SpecularStrength=.06)
             m.light(light.direction,ax=ax)
@@ -259,7 +255,7 @@ def main():
                  "mpl3d_vtk":m.__version__,"vtk":vtk.vtkVersion.GetVTKVersion(),
                  "numpy":np.__version__,"scikit_image":skimage_version,"backend":"Agg",
                  "canvas_px":[800,600],"png_px":[1600,1200],
-                 "axes_style":"my-mpl-style" if args.source_style else "matplotlib",
+                 "axes_presentation":"reference" if args.source_style else "renderer defaults",
                  "rotation_frames":args.rotations,"fresh_figures":args.fresh_figures,
                  "exports":args.exports,"results":rows}
         (dest/"trisurf_timings.json").write_text(json.dumps(stats,indent=2)+"\n",encoding="utf-8")

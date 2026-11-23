@@ -19,7 +19,7 @@ def main(destination):
     panels = fig.add_gridspec(1, 2, width_ratios=(1.7, 1))
     ax = fig.add_subplot(panels[0], projection="vtk3d")
     profile = fig.add_subplot(panels[1])
-    h = ax.plot_surface(x, y, u, cmap="viridis", vmin=np.exp(-2), vmax=np.exp(2))
+    h = ax.plot_surface(x, y, u, vmin=np.exp(-2), vmax=np.exp(2))
     ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
     ax.set_box_aspect((1, 1, .73), zoom=.92)
     ax.xaxis.set_major_locator(FixedLocator([-2, -1, 0, 1, 2]))

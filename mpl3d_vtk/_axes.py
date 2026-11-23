@@ -1,18 +1,30 @@
 """Native Matplotlib 3D axes with a transparent VTK geometry layer."""
 from itertools import product
 from operator import index
+import re
 
 import numpy as np
 from PIL import Image
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
-import matplotlib as mpl
 from matplotlib.artist import Artist, allow_rasterization
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.projections import register_projection
 from matplotlib.transforms import Bbox
 from mpl_toolkits.mplot3d import Axes3D
 
-from ._projected_ticks import apply_repository_axes
+from ._projected_ticks import apply_axes_style
+
+
+_SERIES_COLORS = (
+    (0.066, 0.443, 0.745), (0.866, 0.329, 0.000), (0.929, 0.694, 0.125),
+    (0.521, 0.086, 0.819), (0.231, 0.666, 0.196), (0.184, 0.745, 0.937),
+    (0.819, 0.015, 0.545),
+)
+_SCALAR_COLORMAP = LinearSegmentedColormap.from_list("blue_green_yellow", (
+    "#35296f", "#403d97", "#2855b5", "#0872ba", "#108bb8", "#17a0ac",
+    "#34af96", "#61ba76", "#a2bf50", "#d4c241", "#eed345", "#f6ec56",
+), N=256)
 
 
 def _sampling_factor(value):
@@ -83,26 +95,22 @@ class VtkAxes(Axes3D):
     """Matplotlib owns the axes. Only the three-dimensional data pass goes to VTK."""
     name = "vtk3d"
 
-    def __init__(self, *args, antialiasing=2, axes_style="my-mpl-style", **kwargs):
-        if axes_style not in ("my-mpl-style", "matplotlib"):
-            raise ValueError("axes_style must be 'my-mpl-style' or 'matplotlib'")
-        self._axes_style = axes_style
+    def __init__(self, *args, antialiasing=2, **kwargs):
         self._default_equal_aspect = False
         self._style_aspect_limits = None
-        repository_style = axes_style == "my-mpl-style"
         use_default_aspect = "aspect" not in kwargs and kwargs.get("box_aspect") is None
-        if repository_style:
-            kwargs.setdefault("elev", 30)
-            kwargs.setdefault("azim", -127.5)
-            kwargs.setdefault("proj_type", "persp" if kwargs.get("focal_length") is not None
-                              and np.isfinite(kwargs["focal_length"]) else "ortho")
+        kwargs.setdefault("elev", 30)
+        kwargs.setdefault("azim", -127.5)
+        focal_length = kwargs.get("focal_length")
+        kwargs.setdefault("proj_type", "persp" if focal_length is not None
+                          and np.isfinite(focal_length) else "ortho")
+        kwargs.setdefault("facecolor", "white")
         self._antialiasing = _sampling_factor(antialiasing)
         super().__init__(*args, **kwargs)
-        if repository_style:
-            apply_repository_axes(self)
-            if use_default_aspect:
-                super().set_aspect("equal")
-                self._default_equal_aspect = True
+        self._apply_visual_defaults()
+        if use_default_aspect:
+            super().set_aspect("equal")
+            self._default_equal_aspect = True
         self.renderer = vtk.vtkRenderer()
         self.window = vtk.vtkRenderWindow()
         self.window.SetOffScreenRendering(True)
@@ -123,7 +131,6 @@ class VtkAxes(Axes3D):
         self._pixel_buffer = vtk.vtkUnsignedCharArray()
         self.camera = self.renderer.GetActiveCamera()
         self.handles = []
-        self.default_cmap = mpl.rcParams["image.cmap"]
         self.color_limits = None
         self.alpha_limits = (0.,1.)
         self.holding = False
@@ -163,6 +170,17 @@ class VtkAxes(Axes3D):
         self._antialiasing = _sampling_factor(factor)
         self.stale = True
 
+    def _apply_visual_defaults(self):
+        apply_axes_style(self)
+        self.set_prop_cycle(color=_SERIES_COLORS)
+        self.default_cmap = _SCALAR_COLORMAP.copy()
+
+    @staticmethod
+    def _series_color(color):
+        if isinstance(color, str) and re.fullmatch(r"C[0-9]+", color):
+            return _SERIES_COLORS[int(color[1:]) % len(_SERIES_COLORS)]
+        return color
+
     def clear_scene(self):
         for handle in self.handles.copy():
             handle.remove()
@@ -172,13 +190,11 @@ class VtkAxes(Axes3D):
             self.clear_scene()
         super().clear()
         if hasattr(self, "_viewport"):
-            self.default_cmap = mpl.rcParams["image.cmap"]
             self.color_limits = None
             self.alpha_limits = (0.,1.)
             self.renderer.RemoveAllLights()
             self.add_artist(self._viewport)
-            if self._axes_style == "my-mpl-style":
-                apply_repository_axes(self)
+            self._apply_visual_defaults()
 
     def _fit_style_aspect(self):
         if self._default_equal_aspect and self.get_aspect() == "equal":
@@ -402,9 +418,8 @@ class VtkAxes(Axes3D):
         args = [a[index] for a in xyz]
         if facecolors is not None:
             args.append(np.asarray(facecolors)[index])
-        if facecolors is None and "cmap" not in kwargs:
-            kwargs.setdefault("color","C0")
-        kwargs.setdefault("lighting",shade if shade is not None else "cmap" not in kwargs)
+        solid_color = kwargs.get("color") is not None
+        kwargs.setdefault("lighting", shade if shade is not None else solid_color and "cmap" not in kwargs)
         return self._add_plot(surf,*args,**{"facecolor":"interp","edgecolor":"none",**kwargs})
 
     def plot_wireframe(self,X,Y,Z,*,rcount=None,ccount=None,rstride=None,cstride=None,**kwargs):

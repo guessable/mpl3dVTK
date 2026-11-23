@@ -2,7 +2,7 @@
 
 ## 调用约定
 
-导入 `mpl3d_vtk` 后可使用 `fig.add_subplot(projection="vtk3d")` 或 `m.subplot(111)`。表中的绘图函数可把坐标轴作为首个参数，或用 `ax=ax` 传入。MATLAB 风格绘图调用可用 `m.hold("on", ax=ax)` 叠加。原始图元 `surface`、`animatedline` 和 Matplotlib 风格的坐标轴绘图方法默认叠加。
+导入 `mpl3d_vtk` 后可使用 `fig.add_subplot(projection="vtk3d")` 或 `m.subplot(111)`。表中的绘图函数可把坐标轴作为首个参数，或用 `ax=ax` 传入。用 `m.hold("on", ax=ax)` 叠加高层绘图调用。原始图元 `surface`、`animatedline` 和 Matplotlib 轴方法默认叠加。
 
 ```python
 h = m.surf(ax, X, Y, Z, C, "FaceColor", "interp", "EdgeColor", "none")
@@ -10,7 +10,7 @@ m.set(h, FaceLighting="gouraud", FaceAlpha=.8)
 fig.colorbar(h, ax=ax, label="Temperature")
 ```
 
-曲面数组采用 `(ny, nx)`，体数组采用 `(ny, nx, nz)`。这对应 NumPy 的 `np.meshgrid(x, y, z, indexing="xy")`。省略规则坐标时，从 1 开始生成坐标。几何索引默认从 0 开始，`patch`、`trisurf`、`trimesh` 和 `tetramesh` 可用 `index_base=1` 读入 MATLAB 面索引。曲面中的非有限坐标挖去相邻面，曲线中的非有限坐标断开线段。
+曲面数组采用 `(ny, nx)`，体数组采用 `(ny, nx, nz)`。这对应 NumPy 的 `np.meshgrid(x, y, z, indexing="xy")`。省略规则坐标时，从 1 开始生成坐标。几何索引默认从 0 开始，`patch`、`trisurf`、`trimesh` 和 `tetramesh` 可用 `index_base=1` 读入从 1 开始的面索引。曲面中的非有限坐标挖去相邻面，曲线中的非有限坐标断开线段。
 
 表中省略通用的轴和样式参数。普通图返回 `Graphic`，可以直接传给 Matplotlib 色条，也可以用 `vertices`、`faces`、`data`、`mapper` 和 `actor` 访问底层数据。组合图返回多个句柄。绘图函数调用时的 `Name, Value` 使用 Python 字符串与值依次传入，也可使用 Python 关键字参数。
 
@@ -67,7 +67,7 @@ fig.colorbar(h, ax=ax, label="Temperature")
 | `reducevolume`、`subvolume` | 输入体数据和步长或边界，返回 `X,Y,Z,V`。 |
 | `volumebounds` | 输入标量或向量体数据，返回坐标边界及标量色标边界。 |
 
-切片的插值方法可用末尾字符串或 `method=` 指定，支持 `"linear"`、`"nearest"`、`"cubic"`。最近邻和三次插值要求直角网格。三次使用局部张量积多项式，边界和稀疏网格行为可能与 MATLAB 不同。多张切片默认使用原体数据的共同色域。用 `colors` 给等值面着色时，等值决定几何位置，颜色场决定色条。
+切片的插值方法可用末尾字符串或 `method=` 指定，支持 `"linear"`、`"nearest"`、`"cubic"`。最近邻和三次插值要求直角网格。三次插值使用局部张量积多项式。多张切片默认使用原体数据的共同色域。用 `colors` 给等值面着色时，等值决定几何位置，颜色场决定色条。
 
 ## 向量与流线
 
@@ -90,14 +90,14 @@ fig.colorbar(h, ax=ax, label="Temperature")
 - 曲面支持 `FaceColor="flat"|"interp"|"none"` 或固定颜色，`EdgeColor` 独立设置，`FaceAlpha` 可给常数或配合 `AlphaData` 使用 `"interp"`、`"flat"`。用 `clim`、`caxis` 和 `alim` 设置映射区间。
 - `CDataMapping="direct"` 使用从 1 起的色表索引。支持 Matplotlib 色图名和 RGB(A) 色表数组。默认的 `scaled` 对标量数据使用归一化。
 - `lighting`、`camlight`、`light`、`lightangle`、`material` 管理光照。曲面可调 `AmbientStrength`、`DiffuseStrength`、`SpecularStrength`、`SpecularExponent`。
-- `view` 使用 MATLAB 角度约定。原生 `ax.view_init` 使用 Matplotlib 角度约定。用 `camproj` 或 `ax.set_proj_type` 在正交和透视之间切换。
+- `view(az, el)` 以负 y 轴为方位角零点，正角朝正 x 轴旋转。换算为原生方法是 `ax.view_init(elev=el, azim=az-90)`。用 `camproj` 或 `ax.set_proj_type` 设置投影。
 - `DisplayName` 对应原生 `ax.legend()`，`Visible`、`FaceColor`、`LineWidth` 等可通过 `m.set` 或句柄方法修改。用 `set_zdata()`、`set_cdata()` 批量更新曲面。
 
 ### 默认三维坐标轴
 
-`projection="vtk3d"` 默认采用 my-mpl-style 的 `ax_setting3D` 外观。相机使用正交投影，仰角为 30°，方位角为 −127.5°。坐标轴使用等数据单位比例、灰色无填充轴框、细网格线和按投影轴长调整的向外刻度。轴范围及刻度位置由当前数据和 Matplotlib 的定位器确定。
+`projection="vtk3d"` 默认使用白色背景和正交投影，仰角为 30°，原生方位角为 −127.5°。坐标轴使用等数据单位比例、淡灰色轴框、细网格线和按投影轴长调整的向外刻度。轴范围及刻度位置由当前数据和 Matplotlib 的定位器确定。
 
-原生 `view_init`、`set_proj_type`、`set_box_aspect` 和 `set_xticks` 等接口可覆盖相应设置。创建子图时传 `axes_style="matplotlib"` 可选择 Matplotlib 的原生默认外观。样式只应用在 `vtk3d` 子图。 [my-mpl-style 源码](https://github.com/guessable/my-mpl-style/blob/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c/src/my_mpl_style/_style.py)
+三维标量默认使用 256 色蓝绿黄连续配色，线系列使用蓝、橙、黄、紫、绿、浅蓝和洋红的颜色循环。绘图调用中的 `cmap` 和 `Color` 可指定具体图元的配色。默认外观应用于 `vtk3d` 子图。
 
 ### 抗锯齿
 
@@ -119,11 +119,11 @@ fig.savefig("surface.png", dpi=175)
 | `image` | `C` 或 `X,Y,C`。支持索引色、RGB(A)，默认 z=0。X、Y 的首尾位置是首尾像素中心。 |
 | `imagesc` | 图像数据及可选 `clims`，使用缩放色图。可接原生 Matplotlib 色条。 |
 
-`image` 和 `imagesc` 使用一个四边形及 VTK 纹理。可设置 `AlphaData`、`AlphaDataMapping`、`Interpolation`，用 `set_cdata` 在原尺寸更新像素。 [基础 MATLAB 图和有向图绘图](https://www.mathworks.com/help/matlab/ref/graph.plot.html) · [三维轴内的图像示例](https://www.mathworks.com/help/matlab/ref/image.html)
+`image` 和 `imagesc` 使用一个四边形及 VTK 纹理。可设置 `AlphaData`、`AlphaDataMapping`、`Interpolation`，用 `set_cdata` 在原尺寸更新像素。 [图像示例](function_reference.md#image)
 
-## 兼容性边界
+## 支持范围
 
-[基础 MATLAB 三维绘图清单](base_matlab_3d.md)逐项列出覆盖入口。本参考覆盖已交付的签名。完整图形对象属性、某些表重载和交互 App 还有差异。线型和标记的精确屏幕尺寸受 VTK 后端与绘图方式影响。流线、曲面采样、三维材质及 `flow` 样例字段使用本库的实现。
+[三维绘图图集](plot_catalog.md)列出主要绘图入口及数据辅助函数。各函数支持的签名、属性和代码见 [逐函数参考](function_reference.md)。线型及标记的屏幕尺寸受渲染后端与绘图方式影响。
 
 ## 图窗和动画辅助
 

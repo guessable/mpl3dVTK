@@ -187,12 +187,13 @@ class Graphic(Artist, ScalarMappable):
         prop.SetEdgeVisibility(not self.wire and not _is(self.edge, "none"))
         solid_edge = not _is(self.edge, "none", "flat", "interp")
         if solid_edge:
-            prop.SetEdgeColor(to_rgb(self.edge))
+            prop.SetEdgeColor(to_rgb(self.axes._series_color(self.edge)))
         self.constant_color = self._color
         if not _is(self.face, "interp", "flat", "none"):
             self.constant_color = self.face
         if self.wire and solid_edge:
             self.constant_color = self.edge
+        self.constant_color = self.axes._series_color(self.constant_color)
         prop.SetColor(to_rgb(self.constant_color) if self.constant_color is not None else (1,1,1))
 
     def set_color(self, color):
@@ -556,7 +557,7 @@ def light(position=(1.,0.,1.), *, color="white", style="infinite", ax=None):
     source.SetLightTypeToSceneLight()
     source.SetPosition(*position)
     source.SetFocalPoint(0,0,0)
-    source.SetColor(to_rgb(color))
+    source.SetColor(to_rgb(ax._series_color(color)))
     source.SetPositional(style == "local")
     ax.renderer.AddLight(source)
     ax.stale = True
@@ -643,7 +644,7 @@ def drawnow(*, ax=None):
 
 
 def set(handle, *args, **kwargs):
-    """Apply MATLAB names or Python artist property names to a plot handle."""
+    """Apply graphics property names or Python artist setters to a plot handle."""
     if len(args) % 2:
         raise TypeError("expected property name/value pairs")
     aliases = {"cdata":"cdata", "lighting":"lighting"}
