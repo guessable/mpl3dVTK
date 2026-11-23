@@ -45,11 +45,7 @@ Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.
 
 ## Documentation
 
-| I want to… | Read |
-| --- | --- |
-| Find a plot for my data | [Gallery](docs/plot_catalog.md) |
-| Run examples and export figures | [Examples and export guide](docs/examples.md) |
-| Look up plotting methods, styles, and handles | [Axes and graphics API](docs/api.md) |
-| Extract geometry, slice a scalar field, or trace streamlines | [VTK API reference](docs/function_reference.md) |
-| Compare with Matplotlib's built-in 3D axes | [Triangle mesh and isosurface benchmarks](benchmarks/results/my_mpl_style/README.md) |
-| Port code from an older release | [Migration guide](docs/api.md#migrating-from-older-versions) |
+- [Gallery](docs/plot_catalog.md) · Select a labeled figure to open its function reference.
+- [Examples and export](docs/examples.md) · Run a complete script or save a figure.
+- API reference · [Plotting](docs/api.md), [VTK geometry](docs/function_reference.md), [Scene and handles](docs/scene.md), and [Migration](docs/api.md#migrating-from-older-versions).
+- [Benchmarks](benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.

@@ -1,11 +1,12 @@
-# VTK plotting and geometry reference
+# VTK plotting and geometry
 
-These functions work with NumPy arrays and VTK datasets. See the [axes and graphics API](api.md) for Matplotlib-style plot methods, common style keywords, and `Graphic` objects.
+Choose a method by your input or by the geometry you need. The [plotting API](api.md) covers regular plots and style keywords. [Scene and handles](scene.md) covers lights and incrementally updated lines.
 
-- [Meshes and scalar volumes](#plot_mesh)
-- [Vector fields and streamlines](#trace_streamlines)
-- [Incremental lines](#add_streaming_line)
-- [Point clouds, frames, graphs, and images](#plot_point_cloud)
+| Task | Methods |
+| --- | --- |
+| Meshes and scalar fields | [`plot_mesh`](#plot_mesh), [`extract_isosurface`](#extract_isosurface), [`plot_isosurface`](#plot_isosurface), [`plot_volume_slices`](#plot_volume_slices), [`plot_slice_contours`](#plot_slice_contours), [`plot_volume`](#plot_volume) |
+| Vector fields and streamlines | [`trace_streamlines`](#trace_streamlines), [`plot_vector_samples`](#plot_vector_samples), [`plot_streamlines`](#plot_streamlines), [`plot_streamtubes`](#plot_streamtubes), [`plot_streamribbons`](#plot_streamribbons) |
+| Point clouds and other geometry | [`plot_point_cloud`](#plot_point_cloud), [`plot_alpha_shape`](#plot_alpha_shape), [`plot_coordinate_frames`](#plot_coordinate_frames), [`plot_graph`](#plot_graph), [`plot_image_plane`](#plot_image_plane) |
 
 ## Coordinate conventions
 
@@ -27,7 +28,9 @@ vectors = np.stack((-y, x, np.full_like(z, .2)), axis=-1)
 seeds = [[.3, 0, -.8], [.6, 0, -.8]]
 ```
 
-## plot_mesh
+## Meshes and scalar fields
+
+### `plot_mesh`
 
 ```text
 ax.plot_mesh(vertices, faces, *, values=None, association="point", **style)
@@ -43,7 +46,9 @@ mesh = ax.plot_mesh([[0, 0, 0], [1, 0, 0], [0, 1, 1]], [[0, 1, 2]],
 fig.colorbar(mesh, ax=ax)
 ```
 
-## extract_isosurface
+<img src="gallery/reference/plot_mesh.png" width="460" alt="An arbitrary triangular polygon with interpolated vertex colors">
+
+### `extract_isosurface`
 
 ```text
 vtkplot.extract_isosurface(values, *, level=None, coordinates=None,
@@ -59,7 +64,9 @@ mesh = vtkplot.extract_isosurface(volume, level=.6, coordinates=coordinates, col
 ax.plot_mesh(**mesh, cmap="coolwarm", vmin=-1, vmax=1)
 ```
 
-## plot_isosurface
+<img src="gallery/reference/extract_isosurface.png" width="460" alt="A triangle mesh extracted from a scalar field and colored by its sampled Z values">
+
+### `plot_isosurface`
 
 ```text
 ax.plot_isosurface(values, *, level=None, coordinates=None,
@@ -73,7 +80,9 @@ shell = ax.plot_isosurface(volume, level=.6, coordinates=coordinates,
                            color="tab:blue", alpha=.5)
 ```
 
-## plot_volume_slices
+<img src="gallery/reference/plot_isosurface.png" width="460" alt="A translucent blue spherical level surface">
+
+### `plot_volume_slices`
 
 ```text
 ax.plot_volume_slices(values, *, coordinates=None, x=(), y=(), z=(),
@@ -87,12 +96,14 @@ Linear interpolation is the default. Nearest-neighbor and cubic interpolation re
 Returns a list of `Graphic` objects in X, Y, Z order. See the [intersecting planes example](examples.md#three-intersecting-planes) for a complete figure.
 
 ```python
-slices = ax.plot_volume_slices(volume, coordinates=coordinates, x=[-.5, .5], z=0,
+slices = ax.plot_volume_slices(volume, coordinates=coordinates, x=0, y=0, z=0,
                                cmap="plasma")
 fig.colorbar(slices[0], ax=ax)
 ```
 
-## plot_slice_contours
+<img src="gallery/reference/plot_volume_slices.png" width="460" alt="Three perpendicular scalar slices with a shared colorbar">
+
+### `plot_slice_contours`
 
 ```text
 ax.plot_slice_contours(values, *, coordinates=None, x=(), y=(), z=(), levels=10, **style)
@@ -105,7 +116,9 @@ lines = ax.plot_slice_contours(volume, coordinates=coordinates, z=[-.3, .3],
                                levels=[.3, .6, .9], linewidth=2)
 ```
 
-## plot_volume
+<img src="gallery/reference/plot_slice_contours.png" width="460" alt="Two sets of scalar contour rings in parallel planes">
+
+### `plot_volume`
 
 ```text
 ax.plot_volume(values, *, coordinates=None, cmap="gray", norm=None,
@@ -123,7 +136,11 @@ cloud = ax.plot_volume(np.exp(-4*volume), coordinates=coordinates, cmap="magma",
 fig.colorbar(cloud, ax=ax)
 ```
 
-## trace_streamlines
+<img src="gallery/reference/plot_volume.png" width="460" alt="Maximum intensity projection of a Gaussian scalar volume">
+
+## Vector fields and streamlines
+
+### `trace_streamlines`
 
 ```text
 vtkplot.trace_streamlines(vectors, seeds, *, coordinates=None, step=.1,
@@ -136,9 +153,14 @@ Returns a list of `(m, 3)` paths. Seeds outside the usable domain or at stationa
 
 ```python
 paths = vtkplot.trace_streamlines(vectors, seeds, coordinates=coordinates, step=.15)
+ax.plot_streamlines(paths, color="tab:blue", linewidth=2)
+ax.scatter(*np.asarray(seeds).T, c="tab:orange", s=28, label="Seeds")
+ax.legend()
 ```
 
-## plot_vector_samples
+<img src="gallery/reference/trace_streamlines.png" width="460" alt="Two seed points and the integrated paths winding upward around the Z axis">
+
+### `plot_vector_samples`
 
 ```text
 ax.plot_vector_samples(vectors, points, *, coordinates=None, color_values=None,
@@ -150,11 +172,15 @@ Interpolate vectors at a single XYZ point or an `(n, 3)` array. `glyph` selects 
 An optional `color_values` scalar grid supplies colors at the same positions. Vectors outside the grid are skipped. Returns a `Graphic`. With a colormap and no separate field, colors encode the scaled vector magnitude.
 
 ```python
-glyphs = ax.plot_vector_samples(vectors, seeds, coordinates=coordinates,
+a, b = np.meshgrid(np.linspace(-.8, .8, 6), np.linspace(-.8, .8, 6))
+sample_points = np.column_stack((a.ravel(), b.ravel(), np.zeros(a.size)))
+glyphs = ax.plot_vector_samples(vectors, sample_points, coordinates=coordinates,
                                 color_values=volume, glyph="arrow", length=.4)
 ```
 
-## plot_streamlines
+<img src="gallery/reference/plot_vector_samples.png" width="460" alt="Arrows sampled from a continuous vector field">
+
+### `plot_streamlines`
 
 ```text
 ax.plot_streamlines(paths, **style)
@@ -167,7 +193,9 @@ paths = vtkplot.trace_streamlines(vectors, seeds, coordinates=coordinates)
 lines = ax.plot_streamlines(paths, color="tab:blue", linewidth=2.5)
 ```
 
-## plot_streamtubes
+<img src="gallery/reference/plot_streamlines.png" width="460" alt="Two curved trajectories drawn as blue lines">
+
+### `plot_streamtubes`
 
 ```text
 ax.plot_streamtubes(paths, *, radius=None, radii=None, sides=20, **style)
@@ -180,7 +208,9 @@ paths = vtkplot.trace_streamlines(vectors, seeds, coordinates=coordinates)
 tube = ax.plot_streamtubes(paths, radius=.035, sides=14, color="tab:orange")
 ```
 
-## plot_streamribbons
+<img src="gallery/reference/plot_streamtubes.png" width="460" alt="Two smooth orange tubes following seeded paths">
+
+### `plot_streamribbons`
 
 ```text
 ax.plot_streamribbons(paths, *, width=None, twists=None, **style)
@@ -194,28 +224,11 @@ twists = [np.linspace(0, np.pi, len(path)) for path in paths]
 ribbons = ax.plot_streamribbons(paths, width=.11, twists=twists, color="tab:purple")
 ```
 
-## add_streaming_line
+<img src="gallery/reference/plot_streamribbons.png" width="460" alt="Purple strips twisting as they follow two streamlines">
 
-```text
-ax.add_streaming_line(*, max_points=None, **style)
-```
+## Point clouds and other geometry
 
-Return a `Graphic` subclass for an initially empty, incrementally updated line. A positive integer `max_points` keeps only the latest points. The default retains all points. Pending updates are combined before the next draw.
-
-| Handle method | Behavior |
-| --- | --- |
-| `append(x, y, z=0)` | Queue broadcastable XYZ coordinates. |
-| `get_points()` | Apply pending updates and return copies of the three coordinate arrays. |
-| `clear_points()` | Clear the pending and visible points while preserving style. |
-
-```python
-line = ax.add_streaming_line(max_points=200, color="tab:blue")
-line.append(np.cos(t), np.sin(t), t)
-fig.canvas.draw_idle()
-x_points, y_points, z_points = line.get_points()
-```
-
-## plot_point_cloud
+### `plot_point_cloud`
 
 ```text
 ax.plot_point_cloud(points, *, c=None, s=25, **style)
@@ -224,11 +237,13 @@ ax.plot_point_cloud(points, *, c=None, s=25, **style)
 Draw points from an array with trailing dimension 3 or from a PLY or VTP file. The leading array dimensions are flattened into a point list. `c` and `s` follow [`scatter`](api.md#scatter). Omit `c` to use the file's colors or the Z coordinate when file colors are unavailable. Returns one `Graphic`.
 
 ```python
-points = np.random.default_rng(12).normal(size=(300, 3))
-cloud = ax.plot_point_cloud(points, c=points[:, 2], s=16, cmap="viridis")
+points = np.random.default_rng(12).normal(size=(140, 3))
+cloud = ax.plot_point_cloud(points, c=points[:, 2], s=28, cmap="viridis")
 ```
 
-## plot_alpha_shape
+<img src="gallery/reference/plot_point_cloud.png" width="460" alt="A cloud of sampled Gaussian points colored by height">
+
+### `plot_alpha_shape`
 
 ```text
 ax.plot_alpha_shape(points, *, radius, **style)
@@ -241,7 +256,9 @@ points = np.random.default_rng(12).normal(size=(300, 3))
 boundary = ax.plot_alpha_shape(points, radius=1.1, color="tab:blue", alpha=.6)
 ```
 
-## plot_coordinate_frames
+<img src="gallery/reference/plot_alpha_shape.png" width="460" alt="A partly transparent triangular boundary of a three-dimensional point cloud">
+
+### `plot_coordinate_frames`
 
 ```text
 ax.plot_coordinate_frames(translations, *, rotations=None,
@@ -257,7 +274,9 @@ frames = ax.plot_coordinate_frames([[0, 0, 0], [.5, .5, .5]],
                                   rotations=np.eye(3), frame_size=.25, show_labels=True)
 ```
 
-## plot_graph
+<img src="gallery/reference/plot_coordinate_frames.png" width="460" alt="Two sets of colored XYZ basis arrows">
+
+### `plot_graph`
 
 ```text
 ax.plot_graph(edges, *, positions=None, node_count=None, directed=False,
@@ -275,7 +294,9 @@ graph = ax.plot_graph([[0, 1], [1, 2], [2, 0]],
                       directed=True, node_labels=["A", "B", "C"])
 ```
 
-## plot_image_plane
+<img src="gallery/reference/plot_graph.png" width="460" alt="Three labeled nodes joined by directed graph edges">
+
+### `plot_image_plane`
 
 ```text
 ax.plot_image_plane(image, *, extent=None, z=0., origin="lower",
@@ -290,18 +311,17 @@ Returns a `Graphic` with `set_values(new_image)` to update pixels of the same di
 pixels = np.sin(5*x[:, :, 0]) * np.cos(5*y[:, :, 0])
 image = ax.plot_image_plane(pixels, extent=(-1, 1, -1, 1), z=-.6,
                             cmap="coolwarm", vmin=-1, vmax=1)
+ax.set(zlim=(-.5, .5))
+ax.set_box_aspect((1, 1, .6))
 fig.colorbar(image, ax=ax)
 ```
 
+<img src="gallery/reference/plot_image_plane.png" width="460" alt="A scalar image embedded as a textured plane in 3D">
+
+## add_streaming_line
+
+See [`add_streaming_line`](scene.md#add_streaming_line) for updating line points between draws.
+
 ## add_light
 
-```text
-ax.add_light(position, *, focal_point=(0., 0., 0.), color="white", positional=False)
-```
-
-Add a world-space light. `position` and `focal_point` are XYZ coordinates defining its direction. Set `positional=True` for a local light. `color` accepts a Matplotlib color. Returns a `vtkLight` for further control with the VTK API. Enable `lighting` on the plotted geometry to use the light.
-
-```python
-lamp = ax.add_light((3, -4, 5), color="wheat")
-lamp.SetIntensity(.8)
-```
+See [`add_light`](scene.md#add_light) for adding a world-space light.

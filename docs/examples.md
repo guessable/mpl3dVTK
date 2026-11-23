@@ -14,6 +14,8 @@ Run these commands from the root of an installed checkout. The scripts use Matpl
 
 Run `python examples/plot_catalog.py plots` to generate the general, Matplotlib-style, and VTK galleries in one directory.
 
+See the [API gallery](plot_catalog.md) to browse individual methods. Each thumbnail opens the matching reference entry.
+
 ## Three intersecting planes
 
 The comparison reproduces the [my-mpl-style example](https://github.com/guessable/my-mpl-style/blob/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c/examples/Intersecting_planes.py) for the field `sin(10π(x + y + z))`. Each row uses three midplane slices, an orthographic view, and a shared color range. The upper row spans `[0, 1]` on all axes and the lower row spans `[-1, 1]`.
@@ -68,6 +70,16 @@ Run the [example script](../examples/intersecting_planes.py) with `--method volu
 Use `fig.savefig("plot.png", dpi=200)` for raster output. PDF and SVG embed the VTK viewport as an RGBA image at the output DPI. Matplotlib axes, text, and ordinary 2D plots can remain vector elements. A headless host needs an offscreen OpenGL implementation supported by its VTK build, such as EGL or OSMesa.
 
 Closing an interactive figure releases its VTK windows. With Agg, call `ax.remove()` after saving to release that subplot's VTK window immediately, then call `plt.close(fig)`. Repeat `remove()` for each VTK subplot in a batch figure.
+
+## Regenerate the reference figures
+
+The reference thumbnails show the output of the snippets in the API pages. After changing an example, regenerate its figure along with the rest of the reference.
+
+```sh
+python examples/render_reference.py
+```
+
+The script writes the named figures to `docs/gallery/reference/`.
 
 ## Tests and benchmarks
 

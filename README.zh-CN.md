@@ -47,11 +47,7 @@ plt.show()
 
 详细文档采用英文。
 
-| 任务 | 文档 |
-| --- | --- |
-| 按数据类型找绘图方法 | [图集](docs/plot_catalog.md) |
-| 运行示例并导出图形 | [示例与导出指南](docs/examples.md) |
-| 查阅绘图方法、样式和句柄 | [坐标轴与图元 API](docs/api.md) |
-| 提取等值面、取切片或追踪流线 | [VTK API 参考](docs/function_reference.md) |
-| 对比 Matplotlib 自带三维轴 | [三角网格和等值面基准](benchmarks/results/my_mpl_style/README.md) |
-| 迁移旧代码 | [迁移指南](docs/api.md#migrating-from-older-versions) |
+- [图集](docs/plot_catalog.md) · 每张图标有函数名，点击图片查看对应文档。
+- [示例与导出](docs/examples.md) · 运行完整脚本或保存图形。
+- API 参考 · [绘图](docs/api.md)、[VTK 几何](docs/function_reference.md)、[场景和图元句柄](docs/scene.md)、[迁移指南](docs/api.md#migrating-from-older-versions)。
+- [基准](benchmarks/results/my_mpl_style/README.md) · 查看与 mplot3d 的三角网格和等值面对比。
