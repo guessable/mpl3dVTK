@@ -6,11 +6,11 @@
 
 ## 安装
 
-在仓库根目录运行以下命令。
-
 ```sh
-python -m pip install .
+python -m pip install mpl3d-vtk
 ```
+
+从源码安装时，在仓库根目录运行 `python -m pip install .`。
 
 运行需要 Python 3.11+、NumPy 1.25+、Matplotlib 3.11.x、VTK 9.4–9.x 和可用的 OpenGL 上下文。无显示环境的配置见[导出指南](docs/examples.md#export-and-cleanup)。
 

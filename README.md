@@ -1,18 +1,18 @@
 # mpl3d-vtk
 
-[简体中文](README.zh-CN.md)
+[简体中文](https://github.com/guessable/mpl3dVTK/blob/main/README.zh-CN.md)
 
 `mpl3d-vtk` adds a VTK-backed `vtk3d` projection to Matplotlib. Draw NumPy data as surfaces, triangle meshes, scalar volumes, or vector fields. Use Matplotlib for axes, camera controls, colorbars, layout, and figure export.
 
 ## Installation
 
-Run this command from the repository root.
-
 ```sh
-python -m pip install .
+python -m pip install mpl3d-vtk
 ```
 
-Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a working OpenGL context. For headless rendering, see the [export guide](docs/examples.md#export-and-cleanup).
+To install from a source checkout, run `python -m pip install .` from its root.
+
+Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a working OpenGL context. For headless rendering, see the [export guide](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md#export-and-cleanup).
 
 ## Quickstart
 
@@ -45,7 +45,7 @@ Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.
 
 ## Documentation
 
-- [Gallery](docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
-- [Examples and export](docs/examples.md) · Run a complete script or save a figure.
-- API reference · [Plotting](docs/api.md), [VTK geometry](docs/function_reference.md), and [Scene and handles](docs/scene.md).
-- [Benchmarks](benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.
+- [Gallery](https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
+- [Examples and export](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md) · Run a complete script or save a figure.
+- API reference · [Plotting](https://github.com/guessable/mpl3dVTK/blob/main/docs/api.md), [VTK geometry](https://github.com/guessable/mpl3dVTK/blob/main/docs/function_reference.md), and [Scene and handles](https://github.com/guessable/mpl3dVTK/blob/main/docs/scene.md).
+- [Benchmarks](https://github.com/guessable/mpl3dVTK/blob/main/benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.
