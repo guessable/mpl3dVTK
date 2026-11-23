@@ -1,0 +1,67 @@
+"""Plot a scalar field on a watertight torus with trisurf."""
+from argparse import ArgumentParser
+from pathlib import Path
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import numpy as np
+from vtk.util.numpy_support import numpy_to_vtk
+
+import mpl3d_vtk as m
+
+
+def main(destination, antialiasing=2):
+    theta, phi = np.meshgrid(
+        np.linspace(0, 2*np.pi, 240, endpoint=False),
+        np.linspace(0, 2*np.pi, 96, endpoint=False),
+        indexing="ij",
+    )
+    radius = 2 + .8*np.cos(phi)
+    xyz = np.stack((radius*np.cos(theta), radius*np.sin(theta), .8*np.sin(phi)), axis=-1)
+    field = np.cos(3*theta)*np.cos(phi)
+
+    # Wrap both index directions so neighboring quads share the seam vertices.
+    index = np.arange(theta.size).reshape(theta.shape)
+    next_theta = np.roll(index, -1, axis=0)
+    next_phi = np.roll(index, -1, axis=1)
+    quads = np.column_stack((
+        index.ravel(), next_theta.ravel(),
+        np.roll(next_theta, -1, axis=1).ravel(), next_phi.ravel(),
+    ))
+    triangles = np.vstack((quads[:, [0, 1, 2]], quads[:, [0, 2, 3]]))
+    normals = np.stack((np.cos(phi)*np.cos(theta), np.cos(phi)*np.sin(theta), np.sin(phi)), axis=-1)
+
+    fig, ax = plt.subplots(figsize=(8.8, 6.25), dpi=175, layout="constrained",
+                           subplot_kw={"projection": "vtk3d", "antialiasing": antialiasing})
+    fig.get_layout_engine().set(h_pad=.15, w_pad=.10)
+    x, y, z = xyz.reshape(-1, 3).T
+    handle = m.trisurf(ax, triangles, x, y, z, field.ravel(),
+                       FaceColor="interp", EdgeColor="none", FaceLighting="gouraud",
+                       AmbientStrength=.62, DiffuseStrength=.41, SpecularStrength=.09,
+                       cmap="RdBu_r", clim=(-1, 1))
+    handle.data.GetPointData().SetNormals(numpy_to_vtk(normals.reshape(-1, 3), deep=True))
+    ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-1, 1),
+           xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
+    ax.set(xticks=[-2, 0, 2], yticks=[-2, 0, 2], zticks=[-.8, 0, .8])
+    ax.set_box_aspect((6, 6, 2), zoom=.96)
+    ax.set_proj_type("ortho")
+    ax.view_init(elev=42, azim=-58)
+    ax.set_title(r"$f(\theta,\phi)=\cos(3\theta)\cos\phi$", fontsize=21, pad=5)
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.pane.set_facecolor("#f1f4f8")
+        axis.pane.set_edgecolor("#d7dfe9")
+    fig.colorbar(handle, ax=ax, label=r"$f(\theta,\phi)$",
+                 ticks=[-1, -.5, 0, .5, 1], shrink=.64, fraction=.043, pad=.125)
+    try:
+        fig.savefig(destination, facecolor="white")
+    finally:
+        m.close(fig)
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description=__doc__)
+    parser.add_argument("output", type=Path, nargs="?", default=Path("closed_surface_trisurf.png"))
+    parser.add_argument("--antialiasing", type=int, choices=(1,2,3,4), default=2)
+    args = parser.parse_args()
+    main(args.output, args.antialiasing)

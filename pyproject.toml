@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=80"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mpl3d-vtk"
+version = "0.4.0"
+description = "MATLAB-style scientific 3D plots with VTK and Matplotlib"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["numpy>=1.25", "matplotlib>=3.11,<3.12", "vtk>=9.4,<10"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools]
+packages = ["mpl3d_vtk"]
+
+[tool.setuptools.package-data]
+mpl3d_vtk = ["_my_mpl_style_license.txt"]

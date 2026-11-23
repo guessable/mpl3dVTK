@@ -1,0 +1,11 @@
+.runtime/
+.venv/
+.pytest_cache/
+.mplconfig/
+__pycache__/
+*.egg-info/
+build/
+dist/
+
+# Example previews generated in the repository root.
+/*.png

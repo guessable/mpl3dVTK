@@ -1,0 +1,657 @@
+{
+  "source_commit": "d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.13.5",
+  "matplotlib": "3.11.0",
+  "mpl3d_vtk": "0.3.1",
+  "vtk": "9.7.2",
+  "numpy": "2.4.4",
+  "scikit_image": "0.26.0",
+  "backend": "Agg",
+  "canvas_px": [
+    800,
+    600
+  ],
+  "png_px": [
+    1600,
+    1200
+  ],
+  "rotation_frames": 20,
+  "fresh_figures": 5,
+  "exports": 5,
+  "results": [
+    {
+      "mesh": "cheese",
+      "vertices": 153846,
+      "triangles": 307708,
+      "renderer": "Matplotlib",
+      "antialiasing": false,
+      "build": {
+        "median_ms": 27.39,
+        "p95_ms": 27.93,
+        "samples_ms": [
+          26.818,
+          27.393,
+          28.022,
+          27.582,
+          27.165
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 967.38,
+        "p95_ms": 1000.1,
+        "samples_ms": [
+          1004.518,
+          982.409,
+          967.383,
+          957.527,
+          936.583
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 995.4,
+        "p95_ms": 1027.03,
+        "samples_ms": [
+          1031.337,
+          1009.803,
+          995.404,
+          985.109,
+          963.748
+        ]
+      },
+      "rotate": {
+        "median_ms": 1095.41,
+        "p95_ms": 1458.49,
+        "samples_ms": [
+          925.633,
+          918.433,
+          968.556,
+          914.106,
+          936.243,
+          910.882,
+          939.488,
+          1082.657,
+          1279.688,
+          1288.561,
+          1457.23,
+          1296.989,
+          1359.875,
+          1482.528,
+          1405.853,
+          1454.604,
+          1108.159,
+          1275.22,
+          1068.188,
+          937.504
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 1082.62,
+        "p95_ms": 1122.64,
+        "samples_ms": [
+          1095.732,
+          1082.621,
+          1129.365,
+          1056.11,
+          1073.353
+        ]
+      },
+      "gpu": null
+    },
+    {
+      "mesh": "cheese",
+      "vertices": 153846,
+      "triangles": 307708,
+      "renderer": "Matplotlib",
+      "antialiasing": true,
+      "build": {
+        "median_ms": 28.41,
+        "p95_ms": 29.3,
+        "samples_ms": [
+          29.019,
+          28.411,
+          29.375,
+          27.477,
+          28.12
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 978.62,
+        "p95_ms": 1010.04,
+        "samples_ms": [
+          972.454,
+          978.625,
+          962.566,
+          1009.491,
+          1010.183
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 1007.04,
+        "p95_ms": 1038.04,
+        "samples_ms": [
+          1001.473,
+          1007.036,
+          991.94,
+          1036.968,
+          1038.303
+        ]
+      },
+      "rotate": {
+        "median_ms": 1018.32,
+        "p95_ms": 1580.17,
+        "samples_ms": [
+          974.528,
+          962.949,
+          938.197,
+          969.168,
+          1058.712,
+          964.491,
+          960.771,
+          977.926,
+          964.734,
+          954.262,
+          945.106,
+          1322.91,
+          1399.302,
+          1411.519,
+          1374.184,
+          1455.391,
+          1421.869,
+          1587.543,
+          1579.779,
+          1388.291
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 1683.34,
+        "p95_ms": 1745.56,
+        "samples_ms": [
+          1580.798,
+          1683.341,
+          1693.826,
+          1676.598,
+          1758.493
+        ]
+      },
+      "gpu": null
+    },
+    {
+      "mesh": "cheese",
+      "vertices": 153846,
+      "triangles": 307708,
+      "renderer": "mpl3d-vtk",
+      "antialiasing": 1,
+      "build": {
+        "median_ms": 25.35,
+        "p95_ms": 43.05,
+        "samples_ms": [
+          45.714,
+          25.347,
+          19.849,
+          23.382,
+          32.416
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 138.67,
+        "p95_ms": 157.64,
+        "samples_ms": [
+          160.006,
+          148.197,
+          133.077,
+          127.605,
+          138.673
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 171.09,
+        "p95_ms": 199.28,
+        "samples_ms": [
+          205.72,
+          173.544,
+          152.926,
+          150.987,
+          171.089
+        ]
+      },
+      "rotate": {
+        "median_ms": 47.85,
+        "p95_ms": 60.98,
+        "samples_ms": [
+          47.731,
+          46.197,
+          62.189,
+          38.129,
+          46.617,
+          43.343,
+          57.96,
+          53.329,
+          49.856,
+          47.96,
+          50.757,
+          45.887,
+          46.445,
+          48.407,
+          48.676,
+          60.913,
+          46.953,
+          48.169,
+          46.842,
+          44.396
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 203.66,
+        "p95_ms": 253.91,
+        "samples_ms": [
+          233.592,
+          197.447,
+          199.442,
+          258.984,
+          203.662
+        ]
+      },
+      "gpu": [
+        "OpenGL renderer string:  NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2"
+      ]
+    },
+    {
+      "mesh": "cheese",
+      "vertices": 153846,
+      "triangles": 307708,
+      "renderer": "mpl3d-vtk",
+      "antialiasing": 2,
+      "build": {
+        "median_ms": 21.04,
+        "p95_ms": 22.81,
+        "samples_ms": [
+          22.938,
+          18.174,
+          18.038,
+          22.316,
+          21.038
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 86.0,
+        "p95_ms": 91.05,
+        "samples_ms": [
+          85.997,
+          85.858,
+          84.203,
+          92.266,
+          86.189
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 107.23,
+        "p95_ms": 113.45,
+        "samples_ms": [
+          108.935,
+          104.032,
+          102.241,
+          114.582,
+          107.226
+        ]
+      },
+      "rotate": {
+        "median_ms": 41.46,
+        "p95_ms": 52.3,
+        "samples_ms": [
+          38.248,
+          37.235,
+          37.992,
+          41.198,
+          36.658,
+          47.662,
+          46.086,
+          40.741,
+          43.251,
+          36.029,
+          47.705,
+          41.728,
+          36.204,
+          40.298,
+          38.189,
+          54.499,
+          42.926,
+          44.906,
+          52.187,
+          49.283
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 230.95,
+        "p95_ms": 247.58,
+        "samples_ms": [
+          235.359,
+          226.216,
+          230.948,
+          250.639,
+          229.569
+        ]
+      },
+      "gpu": [
+        "OpenGL renderer string:  NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2"
+      ]
+    },
+    {
+      "mesh": "peanut",
+      "vertices": 2438,
+      "triangles": 4872,
+      "renderer": "mpl3d-vtk",
+      "antialiasing": 2,
+      "build": {
+        "median_ms": 0.88,
+        "p95_ms": 0.95,
+        "samples_ms": [
+          0.966,
+          0.878,
+          0.878,
+          0.876,
+          0.86
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 70.87,
+        "p95_ms": 185.12,
+        "samples_ms": [
+          213.175,
+          72.909,
+          70.866,
+          64.708,
+          65.929
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 71.74,
+        "p95_ms": 186.07,
+        "samples_ms": [
+          214.141,
+          73.787,
+          71.744,
+          65.583,
+          66.789
+        ]
+      },
+      "rotate": {
+        "median_ms": 35.25,
+        "p95_ms": 36.71,
+        "samples_ms": [
+          35.754,
+          35.287,
+          34.298,
+          33.048,
+          35.44,
+          35.209,
+          35.86,
+          36.682,
+          35.589,
+          37.225,
+          36.471,
+          35.407,
+          34.568,
+          34.771,
+          34.799,
+          34.883,
+          35.016,
+          35.027,
+          35.949,
+          33.753
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 143.5,
+        "p95_ms": 158.52,
+        "samples_ms": [
+          162.266,
+          143.526,
+          143.499,
+          142.049,
+          142.273
+        ]
+      },
+      "gpu": [
+        "OpenGL renderer string:  NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2"
+      ]
+    },
+    {
+      "mesh": "peanut",
+      "vertices": 2438,
+      "triangles": 4872,
+      "renderer": "mpl3d-vtk",
+      "antialiasing": 1,
+      "build": {
+        "median_ms": 0.87,
+        "p95_ms": 1.02,
+        "samples_ms": [
+          0.934,
+          0.866,
+          1.047,
+          0.864,
+          0.845
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 71.58,
+        "p95_ms": 78.07,
+        "samples_ms": [
+          79.117,
+          71.58,
+          71.474,
+          70.971,
+          73.862
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 72.52,
+        "p95_ms": 78.98,
+        "samples_ms": [
+          80.051,
+          72.447,
+          72.521,
+          71.836,
+          74.707
+        ]
+      },
+      "rotate": {
+        "median_ms": 33.25,
+        "p95_ms": 33.99,
+        "samples_ms": [
+          33.581,
+          32.596,
+          33.722,
+          32.305,
+          32.588,
+          32.687,
+          36.893,
+          33.649,
+          32.235,
+          32.919,
+          32.403,
+          33.784,
+          33.386,
+          32.91,
+          33.426,
+          32.993,
+          33.836,
+          33.462,
+          33.293,
+          33.213
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 135.66,
+        "p95_ms": 152.4,
+        "samples_ms": [
+          156.115,
+          133.937,
+          134.221,
+          137.537,
+          135.662
+        ]
+      },
+      "gpu": [
+        "OpenGL renderer string:  NVIDIA GeForce RTX 4060 Laptop GPU/PCIe/SSE2"
+      ]
+    },
+    {
+      "mesh": "peanut",
+      "vertices": 2438,
+      "triangles": 4872,
+      "renderer": "Matplotlib",
+      "antialiasing": true,
+      "build": {
+        "median_ms": 0.59,
+        "p95_ms": 0.73,
+        "samples_ms": [
+          0.741,
+          0.594,
+          0.568,
+          0.575,
+          0.684
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 52.58,
+        "p95_ms": 54.63,
+        "samples_ms": [
+          53.864,
+          49.778,
+          52.58,
+          52.222,
+          54.818
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 53.15,
+        "p95_ms": 55.32,
+        "samples_ms": [
+          54.605,
+          50.372,
+          53.148,
+          52.797,
+          55.502
+        ]
+      },
+      "rotate": {
+        "median_ms": 45.05,
+        "p95_ms": 49.26,
+        "samples_ms": [
+          48.112,
+          46.612,
+          43.592,
+          42.667,
+          42.926,
+          46.254,
+          45.3,
+          46.351,
+          45.166,
+          46.223,
+          43.6,
+          42.727,
+          44.933,
+          44.146,
+          49.05,
+          45.988,
+          44.258,
+          53.16,
+          44.147,
+          42.225
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 102.75,
+        "p95_ms": 107.6,
+        "samples_ms": [
+          105.54,
+          102.753,
+          97.674,
+          108.113,
+          99.407
+        ]
+      },
+      "gpu": null
+    },
+    {
+      "mesh": "peanut",
+      "vertices": 2438,
+      "triangles": 4872,
+      "renderer": "Matplotlib",
+      "antialiasing": false,
+      "build": {
+        "median_ms": 0.57,
+        "p95_ms": 0.67,
+        "samples_ms": [
+          0.603,
+          0.52,
+          0.686,
+          0.571,
+          0.543
+        ]
+      },
+      "first_canvas_draw": {
+        "median_ms": 51.47,
+        "p95_ms": 53.87,
+        "samples_ms": [
+          50.55,
+          51.466,
+          52.653,
+          50.169,
+          54.175
+        ]
+      },
+      "setup_to_first_image": {
+        "median_ms": 51.99,
+        "p95_ms": 54.44,
+        "samples_ms": [
+          51.153,
+          51.986,
+          53.34,
+          50.741,
+          54.719
+        ]
+      },
+      "rotate": {
+        "median_ms": 43.09,
+        "p95_ms": 48.87,
+        "samples_ms": [
+          45.517,
+          44.262,
+          42.499,
+          41.635,
+          42.789,
+          43.03,
+          43.336,
+          41.812,
+          43.224,
+          43.389,
+          41.526,
+          43.14,
+          43.045,
+          42.935,
+          44.206,
+          42.72,
+          47.22,
+          80.189,
+          43.265,
+          42.694
+        ]
+      },
+      "png_200_dpi": {
+        "median_ms": 97.77,
+        "p95_ms": 101.03,
+        "samples_ms": [
+          101.453,
+          97.772,
+          95.896,
+          95.878,
+          99.361
+        ]
+      },
+      "gpu": null
+    }
+  ],
+  "wireframe_width_note": "0.35 pt in Matplotlib; multiplied by output DPI/72 for VTK. The wireframe cases were timed in a separate process."
+}
