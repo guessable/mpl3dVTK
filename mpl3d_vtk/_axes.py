@@ -98,7 +98,10 @@ class VtkAxes(Axes3D):
     name = "vtk3d"
 
     def __init__(self, *args, antialiasing=2, **kwargs):
-        kwargs.setdefault("aspect", "auto")
+        # Axes3D starts in auto mode. Reapplying it during initialization can
+        # reset an explicitly supplied box_aspect.
+        if kwargs.get("aspect") == "auto":
+            kwargs.pop("aspect")
         kwargs.setdefault("elev", 30)
         kwargs.setdefault("azim", -127.5)
         focal_length = kwargs.get("focal_length")

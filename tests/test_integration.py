@@ -72,10 +72,11 @@ def test_axes_defaults_and_explicit_controls():
     np.testing.assert_allclose(ax.get_box_aspect()/ax.get_box_aspect()[2],[1,1,1])
     ax.clear()
     assert not ax.xaxis.pane.get_fill()
-    _, supplied = _figure(azim=105, elev=15, proj_type="persp", box_aspect=(1,1,2))
-    assert (supplied.elev,supplied.azim) == (15,105)
-    assert np.isfinite(supplied._focal_length)
-    np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
+    for options in ({}, {"aspect": "auto"}):
+        _, supplied = _figure(azim=105, elev=15, proj_type="persp", box_aspect=(1,1,2), **options)
+        assert (supplied.elev,supplied.azim) == (15,105)
+        assert np.isfinite(supplied._focal_length)
+        np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
     _, explicit_equal = _figure(aspect="equal")
     assert explicit_equal.get_aspect() == "equal"
 
