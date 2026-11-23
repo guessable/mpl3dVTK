@@ -32,6 +32,7 @@ def draw_planes(ax, limits, cmap, method):
     ticks = np.linspace(*limits, 3 if limits[0] == 0 else 5)
     ax.set(xticks=ticks, yticks=ticks, zticks=ticks)
     ax.set(xlim=limits, ylim=limits, zlim=limits)
+    ax.set_aspect("equal")
     ax.set_xlabel("x", labelpad=-5)
     ax.set_ylabel("y", labelpad=-5)
     ax.set_zlabel("z", labelpad=-4)

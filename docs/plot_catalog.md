@@ -86,17 +86,20 @@ Select a figure to open the function's signature, parameters, and runnable examp
   </tr>
   <tr>
     <td align="center" width="33%"><a href="scene.md#set_antialiasing"><img src="gallery/reference/set_antialiasing.png" width="280" alt="set_antialiasing. The same enlarged surface edges with 1× and 4× supersampling"></a></td>
+    <td align="center" width="33%"><a href="scene.md#set_aspect"><img src="gallery/reference/set_aspect.png" width="280" alt="set_aspect. A shallow surface shown with automatic proportions and equal data units"></a></td>
     <td align="center" width="33%"><a href="scene.md#set_box_aspect"><img src="gallery/reference/set_box_aspect.png" width="280" alt="set_box_aspect. Two copies of a surface with the default and a taller Z box aspect"></a></td>
-    <td align="center" width="33%"><a href="scene.md#fit"><img src="gallery/reference/fit.png" width="280" alt="fit. A surface with manual limits and with limits fitted to the plotted data"></a></td>
   </tr>
   <tr>
+    <td align="center" width="33%"><a href="scene.md#fit"><img src="gallery/reference/fit.png" width="280" alt="fit. A surface with manual limits and with limits fitted to the plotted data"></a></td>
     <td align="center" width="33%"><a href="scene.md#clear_scene"><img src="gallery/reference/clear_scene.png" width="280" alt="clear_scene. Removing VTK geometry leaves the Matplotlib annotation and axes in place"></a></td>
     <td align="center" width="33%"><a href="scene.md#clear"><img src="gallery/reference/clear.png" width="280" alt="clear. The populated subplot before clearing and the reset axes after clearing"></a></td>
-    <td align="center" width="33%"><a href="scene.md#vtkaxesremove"><img src="gallery/reference/axes_remove.png" width="280" alt="VtkAxes.remove. One of the two original subplots remains after removing the other"></a></td>
   </tr>
   <tr>
+    <td align="center" width="33%"><a href="scene.md#vtkaxesremove"><img src="gallery/reference/axes_remove.png" width="280" alt="VtkAxes.remove. One of the two original subplots remains after removing the other"></a></td>
     <td align="center" width="33%"><a href="scene.md#get_legend_handles_labels"><img src="gallery/reference/get_legend_handles_labels.png" width="280" alt="get_legend_handles_labels. The samples legend entry placed ahead of the path entry"></a></td>
     <td align="center" width="33%"><a href="scene.md#legend"><img src="gallery/reference/legend.png" width="280" alt="legend. A legend identifying two curves in the same three-dimensional scene"></a></td>
+  </tr>
+  <tr>
     <td align="center" width="33%"><a href="scene.md#pixels"><img src="gallery/reference/pixels.png" width="280" alt="pixels. A standalone image of the surface read back from the VTK viewport"></a></td>
   </tr>
 </table>

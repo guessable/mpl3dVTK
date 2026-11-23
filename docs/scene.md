@@ -39,7 +39,7 @@ def sample(ax, **style):
 
 ## Axes controls
 
-[`VtkAxes`](#vtkaxes) · [`VtkAxes.set`](#vtkaxesset) · [`get_antialiasing`](#get_antialiasing) · [`set_antialiasing`](#set_antialiasing) · [`set_box_aspect`](#set_box_aspect) · [`fit`](#fit) · [`clear_scene`](#clear_scene) · [`clear`](#clear) · [`VtkAxes.remove`](#vtkaxesremove) · [`get_legend_handles_labels`](#get_legend_handles_labels) · [`legend`](#legend) · [`pixels`](#pixels)
+[`VtkAxes`](#vtkaxes) · [`VtkAxes.set`](#vtkaxesset) · [`get_antialiasing`](#get_antialiasing) · [`set_antialiasing`](#set_antialiasing) · [`set_aspect`](#set_aspect) · [`set_box_aspect`](#set_box_aspect) · [`fit`](#fit) · [`clear_scene`](#clear_scene) · [`clear`](#clear) · [`VtkAxes.remove`](#vtkaxesremove) · [`get_legend_handles_labels`](#get_legend_handles_labels) · [`legend`](#legend) · [`pixels`](#pixels)
 
 ### `VtkAxes`
 
@@ -47,7 +47,7 @@ def sample(ax, **style):
 fig.add_subplot(..., projection="vtk3d", antialiasing=2)
 ```
 
-Create a Matplotlib subplot that renders geometry with VTK. The default camera is orthographic at elevation 30° and azimuth −127.5°. Data units have equal lengths unless you supply a box aspect. Pass antialiasing from 1 to 4.
+Create a Matplotlib subplot that renders geometry with VTK. The default camera is orthographic at elevation 30° and azimuth −127.5°. The default `aspect="auto"` uses the normal Matplotlib box proportions. Pass `antialiasing` from 1 to 4.
 
 ```python
 fig, ax = new_scene()
@@ -113,13 +113,33 @@ for panel, factor in zip(panels, (1, 4)):
 
 <img src="gallery/reference/set_antialiasing.png" width="700" alt="The same enlarged surface edges with 1× and 4× supersampling">
 
+### `set_aspect`
+
+```text
+ax.set_aspect(aspect, adjustable=None)
+```
+
+Use `"auto"` for the display box's usual proportions or `"equal"` to give one data unit the same length on every axis. The modes `"equalxy"`, `"equalxz"`, and `"equalyz"` match units on two axes. Matplotlib adjusts the box by default. Pass `adjustable="datalim"` to adjust the data limits instead.
+
+```python
+fig, (auto, equal) = new_scene(2)
+for ax in (auto, equal):
+    ax.plot_surface(x, y, .25*z, cmap="viridis")
+    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.2, .2))
+auto.set_title("Auto box proportions")
+equal.set_aspect("equal")
+equal.set_title("Equal length per data unit")
+```
+
+<img src="gallery/reference/set_aspect.png" width="700" alt="A shallow surface shown with automatic proportions and equal data units">
+
 ### `set_box_aspect`
 
 ```text
 ax.set_box_aspect(aspect, *, zoom=1)
 ```
 
-Set the display box's three axis ratios and its zoom. This leaves the input coordinates unchanged and overrides automatic equal-unit scaling.
+Set the display box's three axis ratios and its zoom. The input coordinates are unchanged. Pass `None` for Matplotlib's default box ratios.
 
 ```python
 fig, (auto, fixed) = new_scene(2)

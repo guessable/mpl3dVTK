@@ -98,9 +98,7 @@ class VtkAxes(Axes3D):
     name = "vtk3d"
 
     def __init__(self, *args, antialiasing=2, **kwargs):
-        self._default_equal_aspect = False
-        self._style_aspect_limits = None
-        use_default_aspect = "aspect" not in kwargs and kwargs.get("box_aspect") is None
+        kwargs.setdefault("aspect", "auto")
         kwargs.setdefault("elev", 30)
         kwargs.setdefault("azim", -127.5)
         focal_length = kwargs.get("focal_length")
@@ -109,9 +107,6 @@ class VtkAxes(Axes3D):
         self._antialiasing = _sampling_factor(antialiasing)
         super().__init__(*args, **kwargs)
         apply_axes_style(self)
-        if use_default_aspect:
-            super().set_aspect("equal")
-            self._default_equal_aspect = True
         self.renderer = vtk.vtkRenderer()
         self.window = vtk.vtkRenderWindow()
         self.window.SetOffScreenRendering(True)
@@ -140,11 +135,6 @@ class VtkAxes(Axes3D):
         self._viewport_frame = None
         self._viewport_extent = None
 
-    def set_box_aspect(self, aspect, *, zoom=1):
-        # Explicit Matplotlib settings take precedence over the style default.
-        super().set_box_aspect(aspect, zoom=zoom)
-        self._default_equal_aspect = False
-
     def get_antialiasing(self):
         """Return the VTK render scale per output pixel dimension."""
         return self._antialiasing
@@ -168,15 +158,6 @@ class VtkAxes(Axes3D):
             self.add_artist(self._viewport)
             apply_axes_style(self)
 
-    def _fit_style_aspect(self):
-        if self._default_equal_aspect and self.get_aspect() == "equal":
-            self._unstale_viewLim()
-            spans = tuple(np.ptp(np.asarray(self.get_w_lims()).reshape(3,2), axis=1))
-            key = (spans, self._vertical_axis)
-            if key != self._style_aspect_limits:
-                super().set_box_aspect(spans)
-                self._style_aspect_limits = key
-
     def fit(self):
         if self.handles:
             records = [h._raw_bounds() for h in self.handles]
@@ -193,7 +174,6 @@ class VtkAxes(Axes3D):
                 handle._flush()
         if self._limits_dirty:
             self.fit()
-        self._fit_style_aspect()
         super().draw(renderer)
 
     def _sync_camera(self, projection, affine):

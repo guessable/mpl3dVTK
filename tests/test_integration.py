@@ -52,6 +52,8 @@ def test_identical_native_axes():
 def test_axes_defaults_and_explicit_controls():
     fig, ax = _figure()
     assert (ax.elev, ax.azim) == (30,-127.5)
+    assert ax.get_aspect() == "auto"
+    _, native = _figure("3d")
     assert np.isinf(ax._focal_length)
     assert all(not axis.pane.get_fill() for axis in (ax.xaxis,ax.yaxis,ax.zaxis))
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -5
@@ -60,6 +62,9 @@ def test_axes_defaults_and_explicit_controls():
     ax.plot([0,4],[0,2],[0,1])
     ax.set(xlim=(0,4), ylim=(0,2), zlim=(0,1))
     fig.canvas.draw()
+    np.testing.assert_allclose(ax.get_box_aspect(), native.get_box_aspect())
+    ax.set_aspect("equal")
+    assert ax.get_aspect() == "equal"
     np.testing.assert_allclose(ax.get_box_aspect()/ax.get_box_aspect()[2],[4,2,1])
     ax.set_box_aspect((1,1,1))
     ax.set_zlim(0,3)
@@ -71,6 +76,8 @@ def test_axes_defaults_and_explicit_controls():
     assert (supplied.elev,supplied.azim) == (15,105)
     assert np.isfinite(supplied._focal_length)
     np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
+    _, explicit_equal = _figure(aspect="equal")
+    assert explicit_equal.get_aspect() == "equal"
 
 
 def test_matplotlib_defaults_supply_colormap_and_color_cycle():
