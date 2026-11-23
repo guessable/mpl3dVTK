@@ -23,7 +23,7 @@ def main(destination):
     ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
     ax.set_box_aspect((1, 1, .73), zoom=.92)
     ax.xaxis.set_major_locator(FixedLocator([-2, -1, 0, 1, 2]))
-    ax.yaxis.set_major_locator(FixedLocator([-2, -1, 0, 1, 2]))
+    ax.yaxis.set_major_locator(FixedLocator([-1, 0, 1, 2]))
     ax.zaxis.set_major_locator(FixedLocator([0, 2, 4, 6, 8]))
     accent = "#176a75"
     ax.tick_params(axis="z", colors=accent)
