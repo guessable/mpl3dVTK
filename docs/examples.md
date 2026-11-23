@@ -1,50 +1,80 @@
-# 示例与验证
+# Examples and figure export
 
-安装 Python 包后，在项目根目录运行以下命令。示例使用 Matplotlib Agg 和 VTK 离屏窗口。
+Run these commands from the root of an installed checkout. The scripts use Matplotlib's Agg backend and an offscreen VTK window.
 
-图集使用 `vtk3d` 的默认视角、轴框和刻度。标量着色采用当前 Matplotlib 色图，配色示例会在代码中写明所用颜色。
+| Example | What it demonstrates | Command |
+| --- | --- | --- |
+| [Exponential surface](../examples/exp_surface.py) | A surface, a colorbar, and two 2D cross-sections in one figure | `python examples/exp_surface.py surface.png` |
+| [Scientific plotting gallery](../examples/gallery.py) | A surface, a scalar slice, 3D lines, and streamtubes | `python examples/gallery.py gallery.png` |
+| [Matplotlib-style plots](../examples/chart_catalog.py) | Surfaces, contours, scatter, quiver, and bars | `python examples/chart_catalog.py charts.png` |
+| [VTK plot reference](../examples/function_reference.py) | Volume rendering, streams, point clouds, graphs, and image planes | `python examples/function_reference.py vtk_reference.png` |
+| [Random scalar field](../examples/random_isosurface.py) | A zero isosurface colored by vertex height | `python examples/random_isosurface.py isosurface.png` |
+| [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
+| [Intersecting planes](../examples/intersecting_planes.py) | Three perpendicular slices and their occlusion | `python examples/intersecting_planes.py slices.png` |
 
-```sh
-python examples/exp_surface.py exp_surface.png
-python examples/gallery.py vtk_gallery.png
-python examples/chart_catalog.py chart_catalog.png
-python examples/random_isosurface.py random_isosurface.png
-python examples/closed_surface.py closed_surface.png --antialiasing 4
-python examples/plot_catalog.py --render
-```
+Run `python examples/plot_catalog.py plots` to generate the general, Matplotlib-style, and VTK galleries in one directory.
 
-| 示例 | 图形 |
-| --- | --- |
-| [exp_surface.py](../examples/exp_surface.py) | 指数曲面与两个二维剖面，共用一个 Matplotlib Figure。 |
-| [gallery.py](../examples/gallery.py) | 指数曲面、透明等值面与切片、三维曲线、旋转流管。 |
-| [chart_catalog.py](../examples/chart_catalog.py) | 十二种基础画法的快速预览。 |
-| [random_isosurface.py](../examples/random_isosurface.py) | 在 `[-1,1]^3` 的 19×19×19 网格上采独立均匀标量，提取零等值面。 |
-| [closed_surface.py](../examples/closed_surface.py) | 用 `trisurf` 在封闭环面上显示标量函数，可调整抗锯齿倍数。 |
-| [function_reference.py](../examples/function_reference.py) | 重新生成 [带图函数参考](function_reference.md) 中的全部图片和代码。 |
-| [plot_catalog.py](../examples/plot_catalog.py) | 核对绘图入口并生成 [三维绘图图集](plot_catalog.md) 的五张分类图。 |
+## Three intersecting planes
 
-随机示例可用如下写法复现标量场和等值面几何。绘图示例另外按顶点高度上色。
+The comparison reproduces the [my-mpl-style example](https://github.com/guessable/my-mpl-style/blob/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c/examples/Intersecting_planes.py) for the field `sin(10π(x + y + z))`. Each row uses three midplane slices, an orthographic view, and a shared color range. The upper row spans `[0, 1]` on all axes and the lower row spans `[-1, 1]`.
+
+The left column shows the original workaround, which draws four parts of each slice separately. In the center column, the horizontal plane hides regions of the vertical planes that should be visible in front of it. The right column draws three full planes with per-pixel depth testing in VTK.
+
+![Three intersecting planes drawn with split mplot3d surfaces, full mplot3d surfaces, and full vtk3d surfaces](gallery/intersecting_planes_comparison.png)
+
+### Evaluate an analytic field on each plane
+
+Use `plot_surface` when you can evaluate the field directly on the slices or already have 2D samples. The example samples 100×100 points per plane. It passes the coordinates and color values separately.
 
 ```python
+import matplotlib.pyplot as plt
 import numpy as np
-import mpl3d_vtk as m
+import mpl3d_vtk
 
-t = np.linspace(-1, 1, 19)
-V = np.random.default_rng(42).uniform(-1, 1, (19, 19, 19))
-data = m.isosurface_geometry(t, t, t, V, 0)
-assert data["faces"].shape[1] == 3
+fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
+t = np.linspace(0, 1, 100)
+a, b = np.meshgrid(t, t)
+c = np.full_like(a, 0.5)
+for x, y, z in ((c, a, b), (a, c, b), (a, b, c)):
+    u = np.sin(10 * np.pi * (x + y + z))
+    surface = ax.plot_surface(x, y, z, values=u, cmap="viridis", vmin=-1, vmax=1)
+fig.colorbar(surface, ax=ax)
 ```
 
-## 批量导出
+This is the default `--method surface` in [intersecting_planes.py](../examples/intersecting_planes.py).
 
-`fig.savefig("figure.png", dpi=200)` 可导出 PNG。PDF 和 SVG 中，VTK 视口按指定 DPI 嵌入图像，Matplotlib 坐标框架、文本和二维曲线使用相应后端的矢量输出。Linux 无显示环境需安装提供 EGL 或 OSMesa 的 VTK 运行环境。图形资源用 `m.close(fig)` 释放。
+### Slice an existing scalar volume
 
-## 本地回归和性能
+Pass a `(ny, nx, nz)` array and the three coordinate vectors to `plot_volume_slices`. This example creates a sample volume with the midpoint on the grid. The returned handles follow X, Y, Z order and share a color range.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import mpl3d_vtk
+
+fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
+t = np.linspace(0, 1, 101)
+x, y, z = np.meshgrid(t, t, t, sparse=True)
+volume = np.sin(10 * np.pi * (x + y + z))
+slices = ax.plot_volume_slices(volume, coordinates=(t, t, t), x=.5, y=.5, z=.5,
+                              cmap="viridis", vmin=-1, vmax=1)
+fig.colorbar(slices[0], ax=ax)
+```
+
+Run the [example script](../examples/intersecting_planes.py) with `--method volume` to generate both sets of slices with this method. See [`plot_volume_slices`](function_reference.md#plot_volume_slices) for interpolation options.
+
+## Export and cleanup
+
+Use `fig.savefig("plot.png", dpi=200)` for raster output. PDF and SVG embed the VTK viewport as an RGBA image at the output DPI. Matplotlib axes, text, and ordinary 2D plots can remain vector elements. A headless host needs an offscreen OpenGL implementation supported by its VTK build, such as EGL or OSMesa.
+
+Closing an interactive figure releases its VTK windows. With Agg, call `ax.remove()` after saving to release that subplot's VTK window immediately, then call `plt.close(fig)`. Repeat `remove()` for each VTK subplot in a batch figure.
+
+## Tests and benchmarks
 
 ```sh
 python -m pip install ".[test]"
 python -m pytest -q
-python benchmarks/benchmark.py --surface 128 256 512 --volume 40 80 128 --frames 15
+python benchmarks/benchmark.py --surface 128 256 512 --volume 40 80 128 --segments 20000 --frames 20
 ```
 
-测试覆盖坐标轴像素一致性、正交和透视下的深度遮挡、透明视口合成、几何采样、动画更新及文件导出。性能脚本输出绘制环境、首次显示、旋转、更新高度、更新颜色的中位数和第 95 百分位耗时。等值面计时使用预先准备的体数据，测量 VTK 提取阶段。
+The benchmark reports geometry construction, a full first draw, rotation redraws, height and color updates, and VTK isosurface extraction. It reports medians and 95th percentiles for repeated operations. Match the device, canvas, dataset, and antialiasing when comparing runs. For measurements on upstream data, see the [triangle mesh and isosurface comparisons](../benchmarks/results/my_mpl_style/README.md).

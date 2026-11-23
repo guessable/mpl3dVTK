@@ -1,11 +1,13 @@
 """NumPy ↔ VTK conventions shared by chart and volume functions."""
 import numpy as np
 import vtk
-from vtk.util.numpy_support import numpy_to_vtk, numpy_to_vtkIdTypeArray, vtk_to_numpy
+from vtk.util.numpy_support import numpy_to_vtk, vtk_to_numpy
 
 
 def numeric(value):
-    return np.ma.asarray(value, dtype=float).filled(np.nan)
+    if np.ma.isMaskedArray(value):
+        return np.ma.asarray(value, dtype=float).filled(np.nan)
+    return np.asarray(value, dtype=float)
 
 
 def array(value, name):
@@ -26,15 +28,14 @@ def points(xyz):
 
 def cells(indices, offsets=None):
     indices = np.asarray(indices)
+    dtype = np.int32 if indices.dtype == np.int32 and indices.size <= np.iinfo(np.int32).max else np.int64
     if offsets is None:
         if indices.ndim != 2:
             raise ValueError("connectivity must be a matrix")
-        offsets = np.arange(len(indices) + 1, dtype=np.int64) * indices.shape[1]
-    idtype = np.int64 if vtk.vtkIdTypeArray().GetDataTypeSize() == 8 else np.int32
-    def ids(a):
-        return numpy_to_vtkIdTypeArray(np.ascontiguousarray(a, dtype=idtype).ravel(), deep=True)
+        offsets = np.arange(len(indices) + 1, dtype=dtype) * indices.shape[1]
     c = vtk.vtkCellArray()
-    c.SetData(ids(offsets), ids(indices))
+    c.SetData(numpy_to_vtk(np.ascontiguousarray(offsets, dtype=dtype), deep=True),
+              numpy_to_vtk(np.ascontiguousarray(indices, dtype=dtype).ravel(), deep=True))
     return c
 
 
@@ -46,20 +47,17 @@ def poly(xyz, faces=None):
             indices = np.asarray(faces)
         except ValueError:
             indices = None
-        integer = indices is not None and np.issubdtype(indices.dtype,np.integer)
-        if indices is not None and indices.ndim == 2 and (integer or np.isfinite(indices).all()):
+        if indices is not None and indices.ndim == 2:
             offsets = None
             if indices.shape[1] < 3 and len(indices):
                 raise ValueError("polygon faces need at least three vertices")
         else:
-            rows = [np.asarray(row,dtype=float) for row in faces]
-            rows = [row[~np.isnan(row)] for row in rows]
-            if any(len(row) < 3 for row in rows):
+            rows = [np.asarray(row) for row in faces]
+            if any(row.ndim != 1 or len(row) < 3 for row in rows):
                 raise ValueError("polygon faces need at least three vertices")
-            indices = np.concatenate(rows) if rows else np.empty(0)
-            offsets = np.cumsum([0]+[len(row) for row in rows])
-            integer = False
-        if not integer and (not np.isfinite(indices).all() or not np.equal(indices, np.floor(indices)).all()):
+            indices = np.concatenate(rows) if rows else np.empty(0, dtype=int)
+            offsets = np.cumsum([0] + [len(row) for row in rows])
+        if indices.size and not np.issubdtype(indices.dtype, np.integer):
             raise ValueError("face indices must be integers")
         if indices.size and (indices.min() < 0 or indices.max() >= len(xyz)):
             raise ValueError("face index outside vertex array")
@@ -68,16 +66,40 @@ def poly(xyz, faces=None):
 
 
 def line_data(paths):
+    if isinstance(paths, np.ndarray) and paths.ndim == 3 and paths.shape[1] >= 2 and paths.shape[2] == 3:
+        paths = numeric(paths)
+        finite = np.isfinite(paths)
+        all_finite = finite.all()
+        if all_finite or paths.shape[1] == 2:
+            if not all_finite:
+                paths = paths[finite.all(axis=(1, 2))]
+            xyz = paths.reshape(-1, 3)
+            offsets = np.arange(len(paths) + 1) * paths.shape[1]
+            return _polyline_data(xyz, offsets)
+
     chunks = []
     for path in paths:
-        path = numeric(path).reshape(-1, 3)
+        path = numeric(path)
+        if path.ndim != 2 or path.shape[1] != 3:
+            raise ValueError("paths must have shape (n, 3)")
         valid = np.isfinite(path).all(axis=1)
+        if valid.all():
+            if len(path) >= 2:
+                chunks.append(path)
+            continue
         edges = np.flatnonzero(np.diff(valid, prepend=False, append=False))
         chunks.extend(path[a:b] for a, b in edges.reshape(-1, 2) if b - a >= 2)
-    xyz = np.concatenate(chunks) if chunks else np.empty((0, 3))
+    if len(chunks) == 1:
+        xyz = chunks[0]
+    else:
+        xyz = np.concatenate(chunks) if chunks else np.empty((0, 3))
+    return _polyline_data(xyz, np.cumsum([0] + [len(chunk) for chunk in chunks]))
+
+
+def _polyline_data(xyz, offsets):
     data = poly(xyz)
-    offsets = np.cumsum([0] + [len(chunk) for chunk in chunks])
-    data.SetLines(cells(np.arange(len(xyz)), offsets))
+    dtype = np.int32 if len(xyz) <= np.iinfo(np.int32).max else np.int64
+    data.SetLines(cells(np.arange(len(xyz), dtype=dtype), offsets))
     return data
 
 
@@ -92,56 +114,56 @@ def output(algorithm, data=None):
     return algorithm.GetOutput()
 
 
-def surface_arrays(args):
-    if len(args) in (1, 2):
-        z = numeric(args[0])
-        if z.ndim != 2:
-            raise ValueError("Z must be a 2-D matrix")
-        y, x = np.indices(z.shape) + 1
-        c = args[1] if len(args) == 2 else z
-    elif len(args) in (3, 4):
-        x, y, z = map(numeric, args[:3])
-        if x.ndim == y.ndim == 1:
-            x, y = np.meshgrid(x, y)
-        x, y, z = np.broadcast_arrays(x, y, z)
-        c = args[3] if len(args) == 4 else z
-    else:
-        raise TypeError("expected Z[, C] or X, Y, Z[, C]")
+def surface_arrays(x, y, z):
+    x, y, z = map(numeric, (x, y, z))
+    if z.ndim != 2:
+        raise ValueError("z must be a two-dimensional grid")
+    if x.ndim == y.ndim == 1:
+        x, y = x[None, :], y[:, None]
+    x, y, z = np.broadcast_arrays(x, y, z)
     if z.ndim != 2 or min(z.shape) < 2:
         raise ValueError("surface needs at least two rows and columns")
-    c = np.asanyarray(c)
-    if c.dtype != np.uint8 or c.ndim == 2:
-        c = numeric(c)
-    if c.shape not in (z.shape, z.shape + (3,), z.shape + (4,)):
-        raise ValueError("C must match Z or contain RGB(A) values per vertex")
-    return x, y, z, c
+    return x, y, z
 
 
-def surface_mesh(x, y, z):
-    xyz = np.column_stack([a.ravel() for a in (x, y, z)])
-    idx = np.arange(z.size).reshape(z.shape)[:-1, :-1].ravel()
-    nx = z.shape[1]
-    faces = idx[:, None] + np.array([0, 1, nx + 1, nx])
-    finite = np.isfinite(xyz).all(axis=1)
-    if not finite.all():
-        faces = faces[finite[faces].all(axis=1)]
-    return xyz, faces
+def surface_faces(shape, valid=None):
+    ny, nx = shape
+    dtype = np.int32 if nx * ny <= np.iinfo(np.int32).max else np.int64
+    rows = np.arange(ny - 1, dtype=dtype) * nx
+    columns = np.arange(nx - 1, dtype=dtype)
+    starts = rows[:, None] + columns[None, :]
+    if valid is not None:
+        valid = valid.reshape(shape)
+        starts = starts[valid[:-1, :-1] & valid[:-1, 1:] & valid[1:, 1:] & valid[1:, :-1]]
+    return starts.reshape(-1, 1) + np.array([0, 1, nx + 1, nx], dtype=dtype)
 
 
-def volume_arrays(args):
-    if len(args) == 1:
-        v = numeric(args[0])
-        if v.ndim != 3:
-            raise ValueError("volume must have shape (ny, nx, nz)")
-        ny, nx, nz = v.shape
-        coords = [np.arange(1, n + 1, dtype=float) for n in (nx, ny, nz)]
-    elif len(args) == 4:
-        *coords, v = map(numeric, args)
-    else:
-        raise TypeError("expected V or X, Y, Z, V")
+def surface_poly(x, y, z):
+    coordinates = vtk.vtkDoubleArray()
+    coordinates.SetName("coordinates")
+    coordinates.SetNumberOfComponents(3)
+    coordinates.SetNumberOfTuples(z.size)
+    xyz = vtk_to_numpy(coordinates).reshape(z.shape + (3,))
+    xyz[..., 0], xyz[..., 1], xyz[..., 2] = x, y, z
+    grid_points = vtk.vtkPoints()
+    grid_points.SetData(coordinates)
+    data = vtk.vtkPolyData()
+    data.SetPoints(grid_points)
+    valid = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
+    data.SetPolys(cells(surface_faces(z.shape, None if valid.all() else valid)))
+    return data
+
+
+def volume_arrays(values, coordinates=None):
+    v = numeric(values)
     if v.ndim != 3 or min(v.shape) < 2:
         raise ValueError("volume must be a 3-D array with at least two samples per axis")
     shape = (v.shape[1], v.shape[0], v.shape[2])
+    if coordinates is None:
+        return tuple(np.arange(n, dtype=float) for n in shape), v
+    coords = tuple(map(numeric, coordinates))
+    if len(coords) != 3:
+        raise ValueError("coordinates must contain x, y and z")
     if all(c.ndim == 1 for c in coords):
         if tuple(map(len, coords)) != shape:
             raise ValueError("coordinate lengths must match (nx, ny, nz)")
@@ -155,7 +177,7 @@ def volume_flat(a):
     return np.asarray(a).transpose(2, 0, 1).ravel()
 
 
-def volume_grid(coords, v, *, image=False):
+def volume_grid(coords, v, *, image=False, scalars=True):
     ny, nx, nz = v.shape
     vectors = all(c.ndim == 1 for c in coords)
     if not vectors and image:
@@ -177,7 +199,8 @@ def volume_grid(coords, v, *, image=False):
         data = vtk.vtkStructuredGrid()
         data.SetPoints(points(np.column_stack([volume_flat(c) for c in coords])))
     data.SetDimensions(nx, ny, nz)
-    data.GetPointData().SetScalars(array(volume_flat(v), "values"))
+    if scalars:
+        data.GetPointData().SetScalars(array(volume_flat(v), "values"))
     return data
 
 

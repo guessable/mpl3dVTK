@@ -1,4 +1,4 @@
-"""Point clouds, coordinate transforms, alpha shapes and volume ray casting."""
+"""Point clouds, coordinate frames and volume ray casting."""
 from pathlib import Path
 
 import numpy as np
@@ -8,50 +8,37 @@ from matplotlib.cm import ScalarMappable
 from vtk.util.numpy_support import vtk_to_numpy
 
 from ._geometry import numeric, output, poly, volume_arrays, volume_grid
-from .charts import scatter3
-from .scene import Graphic, _cmap, chart
-from .vectors import quiver3
+from .scene import Graphic, _cmap
 
 
-def _cloud(value):
-    if isinstance(value,(str,Path)):
-        readers = {".ply":vtk.vtkPLYReader,".vtp":vtk.vtkXMLPolyDataReader}
-        path = Path(value)
-        if path.suffix.lower() not in readers:
+def _cloud(points):
+    if isinstance(points, (str, Path)):
+        path = Path(points)
+        readers = {".ply": vtk.vtkPLYReader, ".vtp": vtk.vtkXMLPolyDataReader}
+        reader_cls = readers.get(path.suffix.lower())
+        if reader_cls is None:
             raise ValueError("point cloud files must be PLY or VTP")
         if not path.is_file():
             raise FileNotFoundError(path)
-        reader = readers[path.suffix.lower()]()
+        reader = reader_cls()
         reader.SetFileName(str(path))
         data = output(reader)
-        rgb = data.GetPointData().GetScalars()
-        return vtk_to_numpy(data.GetPoints().GetData()), None if rgb is None else vtk_to_numpy(rgb)
-    xyz = np.asarray(getattr(value,"Location",value),dtype=float)
-    if not xyz.ndim >= 2 or xyz.shape[-1] != 3:
-        raise ValueError("point cloud coordinates must have shape (..., 3)")
-    c = getattr(value,"Color",None)
-    if c is not None:
-        c = np.asarray(c)
-        c = c.reshape(-1,3) if c.size else None
-    return xyz.reshape(-1,3),c
+        scalars = data.GetPointData().GetScalars()
+        if not data.GetNumberOfPoints():
+            return np.empty((0, 3)), None
+        return vtk_to_numpy(data.GetPoints().GetData()), None if scalars is None else vtk_to_numpy(scalars)
+    xyz = numeric(points)
+    if xyz.ndim < 2 or xyz.shape[-1] != 3:
+        raise ValueError("points must have shape (..., 3)")
+    return xyz.reshape(-1, 3), None
 
 
-@chart
-def pcshow(points, colors=None, *, markersize=5, ax, **kwargs):
-    xyz,rgb = _cloud(points)
-    color = colors if colors is not None else (rgb if rgb is not None else xyz[:,2])
-    if not isinstance(color,(str,tuple)) and color is not None:
-        color = np.asarray(color)
-        if color.ndim > 2:
-            color = color.reshape(-1,color.shape[-1])
-    return scatter3(ax,*xyz.T,float(markersize)**2,color,**kwargs)
-
-
-@chart
-def pcshowpair(first, second, *, markersize=5, ax, **kwargs):
-    a = pcshow(ax,first,"#b5599b",markersize=markersize,**kwargs)
-    b = pcshow(ax,second,"#48a271",markersize=markersize,**kwargs)
-    return a,b
+def plot_point_cloud(self, points, *, c=None, s=25, **style):
+    """Render an array of points or a PLY or VTP file as a point cloud."""
+    xyz, file_colors = _cloud(points)
+    if c is None and "color" not in style:
+        c = file_colors if file_colors is not None else xyz[:, 2]
+    return self.scatter(*xyz.T, s=s, c=c, **style)
 
 
 def _rotation_matrices(q):
@@ -70,98 +57,108 @@ def _rotation_matrices(q):
                      2*(x*z-w*y),2*(y*z+w*x),1-2*(x*x+y*y)),axis=-1).reshape(-1,3,3)
 
 
-@chart
-def plotTransforms(translations, rotations=None, *, frame_size=1., show_frame_labels=False, ax, **kwargs):
-    """Draw coordinate triads from homogeneous matrices or translations and rotations."""
+
+def plot_coordinate_frames(self, translations, *, rotations=None, frame_size=1.,
+                           show_labels=False, **style):
+    """Draw triads from homogeneous transforms or from translations and rotations."""
     t = numeric(translations)
     if rotations is None:
-        if t.shape[-2:] != (4,4):
-            raise ValueError("expected homogeneous (n,4,4) transforms")
-        transforms = t.reshape(-1,4,4)
-        t,r = transforms[:,:3,3], transforms[:,:3,:3]
+        if t.shape[-2:] != (4, 4):
+            raise ValueError("expected homogeneous transforms with shape (n, 4, 4)")
+        transforms = t.reshape(-1, 4, 4)
+        t, r = transforms[:, :3, 3], transforms[:, :3, :3]
     else:
         if t.ndim == 0 or t.shape[-1] != 3:
-            raise ValueError("translations must have shape (n,3)")
-        t,r = t.reshape(-1,3),_rotation_matrices(rotations)
-        r = np.broadcast_to(r,(len(t),3,3))
-    handles = [quiver3(ax,*t.T,*(r[:,:,i]*frame_size).T,0,**{"color":color,**kwargs})
-               for i,color in enumerate(("#d9534f","#4eae64","#3367ba"))]
-    if show_frame_labels in (True,"on"):
-        for i,p in enumerate(t):
-            handles[0].annotations.append(ax.text(*p,str(i+1)))
+            raise ValueError("translations must have shape (n, 3)")
+        t, r = t.reshape(-1, 3), _rotation_matrices(rotations)
+        r = np.broadcast_to(r, (len(t), 3, 3))
+    handles = [
+        self.quiver(*t.T, *r[:, :, i].T, length=frame_size, **{"color": color, **style})
+        for i, color in enumerate(("#d9534f", "#4eae64", "#3367ba"))
+    ]
+    if show_labels:
+        handles[0].annotations.extend(self.text(*point, str(i)) for i, point in enumerate(t))
     return handles
 
 
-@chart
-def alphashape(points, alpha, *, ax, **kwargs):
+def plot_alpha_shape(self, points, *, radius, **style):
     """Draw the boundary of the tetrahedral alpha complex of 3-D points."""
-    p,_ = _cloud(points)
-    if not np.isfinite(alpha) and alpha != np.inf or alpha <= 0:
-        raise ValueError("alpha must be positive")
+    p, _ = _cloud(points)
+    if np.isnan(radius) or radius <= 0:
+        raise ValueError("radius must be positive")
     delaunay = vtk.vtkDelaunay3D()
-    if np.isfinite(alpha):
-        delaunay.SetAlpha(alpha)
+    if np.isfinite(radius):
+        delaunay.SetAlpha(radius)
         delaunay.AlphaTrisOff()
         delaunay.AlphaLinesOff()
         delaunay.AlphaVertsOff()
     tet = output(delaunay,poly(p[np.isfinite(p).all(axis=1)]))
     surface = output(vtk.vtkDataSetSurfaceFilter(),tet)
-    return Graphic(ax,surface,**{"color":"#5590b1","lighting":"gouraud",**kwargs})
+    return Graphic(self, surface, **{"color": "#5590b1", "lighting": "gouraud", **style})
+
 
 
 class VolumeGraphic(Artist, ScalarMappable):
     """Matplotlib artist and color mappable for a VTK volume."""
-    def __init__(self,ax,data,values,cmap,alphamap,rendering_style,clim):
+
+    def __init__(self, ax, data, values, *, cmap, norm, opacity, blend_mode, vmin, vmax, label):
         Artist.__init__(self)
-        ScalarMappable.__init__(self,cmap=cmap)
-        self.axes,self.data = ax,data
+        ScalarMappable.__init__(self, cmap=_cmap(cmap), norm=norm)
+        self.axes, self.data = ax, data
         self.mapper = vtk.vtkSmartVolumeMapper()
         self.mapper.SetInputData(data)
         self.actor = vtk.vtkVolume()
         self.actor.SetMapper(self.mapper)
         self.actor.GetProperty().SetInterpolationTypeToLinear()
-        self._cdata_mapping = "scaled"
-        modes = {"VolumeRendering":self.mapper.SetBlendModeToComposite,
-                 "MaximumIntensityProjection":self.mapper.SetBlendModeToMaximumIntensity,
-                 "MinimumIntensityProjection":self.mapper.SetBlendModeToMinimumIntensity,
-                 "AverageIntensityProjection":self.mapper.SetBlendModeToAverageIntensity}
-        if rendering_style not in modes:
-            raise ValueError(f"unknown volume rendering style {rendering_style!r}")
-        modes[rendering_style]()
-        self._opacity = np.asarray(alphamap,dtype=float).ravel()
-        if self._opacity.size < 2 or not np.all((self._opacity>=0)&(self._opacity<=1)):
-            raise ValueError("AlphaMap must have at least two values in [0,1]")
+        modes = {
+            "composite": self.mapper.SetBlendModeToComposite,
+            "maximum": self.mapper.SetBlendModeToMaximumIntensity,
+            "minimum": self.mapper.SetBlendModeToMinimumIntensity,
+            "average": self.mapper.SetBlendModeToAverageIntensity,
+        }
+        if blend_mode not in modes:
+            raise ValueError(f"unknown blend_mode {blend_mode!r}")
+        modes[blend_mode]()
+        self._opacity = numeric(opacity).ravel()
+        if self._opacity.size < 2 or not np.all((self._opacity >= 0) & (self._opacity <= 1)):
+            raise ValueError("opacity must have at least two values in [0, 1]")
+        self.set_label(label)
         self.set_array(values)
-        if clim is not None:
-            self.set_clim(*clim)
-        self.callbacks.connect("changed",self._refresh)
+        self.set_clim(vmin, vmax)
+        self.callbacks.connect("changed", self._refresh)
         self._refresh()
         ax.renderer.AddVolume(self.actor)
         ax.add_artist(self)
         ax.handles.append(self)
         ax._limits_dirty = True
 
-    def _refresh(self,*_):
+    def _refresh(self, *_):
         colors = vtk.vtkColorTransferFunction()
         opacity = vtk.vtkPiecewiseFunction()
-        lo,hi = self.get_clim()
+        lo, hi = self.get_clim()
         if lo == hi:
-            hi = lo+1
-        for t in np.linspace(lo,hi,256):
-            colors.AddRGBPoint(t,*self.to_rgba(t)[:3])
-        for t,a in zip(np.linspace(lo,hi,len(self._opacity)),self._opacity):
-            opacity.AddPoint(t,a)
+            hi = lo + 1
+        levels = np.linspace(lo, hi, 256)
+        for level, rgb in zip(levels, self.to_rgba(levels)[:, :3]):
+            colors.AddRGBPoint(level, *rgb)
+        for level, alpha in zip(np.linspace(lo, hi, len(self._opacity)), self._opacity):
+            opacity.AddPoint(level, alpha)
         self.actor.GetProperty().SetColor(colors)
         self.actor.GetProperty().SetScalarOpacity(opacity)
         self.axes.stale = True
 
-    def raw_bounds(self):
+    def set_visible(self, visible):
+        super().set_visible(visible)
+        self.actor.SetVisibility(bool(visible))
+
+    def _raw_bounds(self):
         return self.data.GetBounds()
 
-    def sync_geometry(self,transforms,nonlinear):
+    _render_bounds = _raw_bounds
+
+    def _sync_geometry(self, transforms, nonlinear):
         if any(nonlinear):
             raise ValueError("volume rendering requires linear axes")
-        self.actor.SetVisibility(self.get_visible())
 
     def remove(self):
         if self in self.axes.handles:
@@ -171,14 +168,14 @@ class VolumeGraphic(Artist, ScalarMappable):
             super().remove()
 
 
-@chart
-def volshow(v, *, coords=None, cmap="gray", alphamap=(0.,0.,.45,.9),
-            rendering_style="VolumeRendering", clim=None, ax):
+def plot_volume(self, values, *, coordinates=None, cmap="gray", norm=None, vmin=None, vmax=None,
+                opacity=(0., 0., .45, .9), blend_mode="composite", label=None):
     """Ray cast a scalar volume on a uniform rectilinear grid."""
-    axes,v = volume_arrays((v,) if coords is None else (*coords,v))
-    if not np.isfinite(v).all():
-        raise ValueError("volshow requires finite scalar samples")
-    data = volume_grid(axes,v,image=True)
+    coords, values = volume_arrays(values, coordinates)
+    if not np.isfinite(values).all():
+        raise ValueError("volume rendering requires finite scalar samples")
+    data = volume_grid(coords, values, image=True)
     if not data.IsA("vtkImageData"):
-        raise ValueError("volshow requires uniform and ascending coordinates")
-    return VolumeGraphic(ax,data,v,_cmap(cmap),alphamap,rendering_style,clim)
+        raise ValueError("volume rendering requires uniformly spaced, ascending coordinates")
+    return VolumeGraphic(self, data, values, cmap=cmap, norm=norm, opacity=opacity,
+                         blend_mode=blend_mode, vmin=vmin, vmax=vmax, label=label)

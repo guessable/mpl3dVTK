@@ -1,4 +1,4 @@
-"""Plot a scalar field on a watertight torus with trisurf."""
+"""Plot a scalar field on a watertight torus as a triangle mesh."""
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from vtk.util.numpy_support import numpy_to_vtk
 
-import mpl3d_vtk as m
+import mpl3d_vtk  # Registers the vtk3d projection.
 
 
 def main(destination, antialiasing=2):
@@ -35,11 +35,9 @@ def main(destination, antialiasing=2):
     fig, ax = plt.subplots(figsize=(8.8, 6.25), dpi=175, layout="constrained",
                            subplot_kw={"projection": "vtk3d", "antialiasing": antialiasing})
     fig.get_layout_engine().set(h_pad=.15, w_pad=.10)
-    x, y, z = xyz.reshape(-1, 3).T
-    handle = m.trisurf(ax, triangles, x, y, z, field.ravel(),
-                       FaceColor="interp", EdgeColor="none", FaceLighting="gouraud",
-                       AmbientStrength=.62, DiffuseStrength=.41, SpecularStrength=.09,
-                       clim=(-1, 1))
+    handle = ax.plot_mesh(xyz.reshape(-1, 3), triangles, values=field.ravel(),
+                          lighting="gouraud", ambient=.62, diffuse=.41, specular=.09,
+                          vmin=-1, vmax=1)
     handle.data.GetPointData().SetNormals(numpy_to_vtk(normals.reshape(-1, 3), deep=True))
     ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-1, 1),
            xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
@@ -49,7 +47,8 @@ def main(destination, antialiasing=2):
     try:
         fig.savefig(destination)
     finally:
-        m.close(fig)
+        ax.remove()
+        plt.close(fig)
 
 
 if __name__ == "__main__":

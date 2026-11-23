@@ -32,7 +32,8 @@ def main(destination):
     profile.grid(alpha=.25)
     profile.legend(frameon=False, loc="upper center")
     fig.savefig(destination)
-    mpl3d_vtk.close(fig)
+    ax.remove()
+    plt.close(fig)
 
 
 if __name__ == "__main__":

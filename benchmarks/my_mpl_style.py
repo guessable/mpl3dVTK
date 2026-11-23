@@ -26,6 +26,13 @@ ELEVATION = 30
 AZIMUTH = -127.5
 
 
+def _close_figure(figure):
+    for ax in figure.axes:
+        if isinstance(ax, m.VtkAxes):
+            ax.remove()
+    plt.close(figure)
+
+
 def _mesh(root, name):
     with np.load(root/"data"/f"{name}.npz", allow_pickle=False) as data:
         xyz, triangles = data["vertices"], data["elements"]
@@ -48,13 +55,12 @@ def _draw_triangles(ax, renderer, data, native_aa, dpi=100):
                                 antialiased=native_aa,linewidth=0,shade=False)
             h.set_array(face_values)
             return h
-        return m.trisurf(ax,triangles,x,y,z,face_values,cmap="viridis",norm=norm,
-                         FaceColor="flat",EdgeColor="none")
+        return ax.plot_mesh(xyz, triangles, values=face_values, association="cell", cmap="viridis", norm=norm)
     if renderer == MPL:
         return ax.plot_trisurf(x,y,z,triangles=triangles,color="#e8eef5",edgecolor="#2b5f8a",
                                linewidth=.35,antialiased=native_aa,shade=False)
     # Matplotlib expects points, whereas the VTK draw path uses output pixels.
-    return m.trisurf(ax,triangles,x,y,z,FaceColor="#e8eef5",EdgeColor="#2b5f8a",LineWidth=.35*dpi/72)
+    return ax.plot_mesh(xyz, triangles, facecolor="#e8eef5", edgecolor="#2b5f8a", linewidth=.35*dpi/72)
 
 
 def _axes_parameters(data):
@@ -117,7 +123,7 @@ def render(root, output, meshes):
                     cb = fig.colorbar(h,ax=ax,shrink=.66,fraction=.04,pad=.04)
                     cb.ax.set_title("$u$",pad=7)
         fig.savefig(output/"trisurf_comparison.png",facecolor="white")
-        m.close(fig)
+        _close_figure(fig)
 
         fig = plt.figure(figsize=(12,8.1))
         fig.subplots_adjust(left=.055,right=.965,bottom=.055,top=.93,wspace=.105,hspace=.15)
@@ -135,9 +141,9 @@ def render(root, output, meshes):
             ax = _axes(fig,(2,3,col+4),VTK)
             # Source marching cubes treats the stored volume as (x,y,z).
             # mpl3d-vtk accepts array order (y,x,z).
-            h = m.isosurface(ax,*coords,volume.transpose(1,0,2),0,FaceColor="#18b83e",
-                             AmbientStrength=.33,DiffuseStrength=.67,SpecularStrength=.06)
-            m.light(light.direction,ax=ax)
+            h = ax.plot_isosurface(volume.transpose(1, 0, 2), coordinates=coords, level=0,
+                                  facecolor="#18b83e", ambient=.33, diffuse=.67, specular=.06)
+            ax.add_light(light.direction)
             _format(ax,[(0,50)]*3,[[0,25,50]]*3,source_style=ax_setting3D)
             ax.set_title(rf"$\bar{{\phi}}={mean:.2f}$  |  VTK",fontsize=13,pad=9)
             count_vtk = h.data.GetNumberOfPolys()
@@ -147,7 +153,7 @@ def render(root, output, meshes):
                              "matplotlib_triangles":count_native,"vtk_triangles":count_vtk,
                              "vtk_bounds":bounds_vtk.tolist(),"source_bounds":bounds_native})
         fig.savefig(output/"isosurface_comparison.png",facecolor="white")
-        m.close(fig)
+        _close_figure(fig)
     return iso_data
 
 
@@ -191,7 +197,7 @@ def _phase_bench(data, renderer, sampling, rotations, repeats, exports, source_s
                 with BytesIO() as stream:
                     export.append(_timed(lambda: fig.savefig(stream,format="png",dpi=200)))
         finally:
-            m.close(fig)
+            _close_figure(fig)
     return {"mesh":name,"vertices":len(data[1]),"triangles":len(data[2]),"renderer":renderer,
             "antialiasing":sampling,"build":_summary(build),"first_canvas_draw":_summary(first),
             "setup_to_first_image":_summary(np.add(build,first)),
@@ -240,7 +246,7 @@ def main():
             a = _axes(f,(1,1,1),renderer,aa)
             _draw_triangles(a,renderer,meshes[1],True)
             f.canvas.draw()
-            m.close(f)
+            _close_figure(f)
         for mesh in (data for data in meshes if args.mesh in ("all",data[0])):
             variants = []
             if args.renderer in ("all","matplotlib"):

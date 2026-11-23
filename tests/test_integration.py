@@ -13,7 +13,11 @@ from mpl3d_vtk._projected_ticks import apply_axes_style
 @pytest.fixture(autouse=True)
 def close_figures():
     yield
-    m.close("all")
+    for number in plt.get_fignums():
+        for ax in plt.figure(number).axes:
+            if isinstance(ax, m.VtkAxes):
+                ax.remove()
+    plt.close("all")
 
 
 def _figure(projection="vtk3d", **kwargs):
@@ -48,12 +52,12 @@ def test_identical_native_axes():
 def test_axes_defaults_and_explicit_controls():
     fig, ax = _figure()
     assert (ax.elev, ax.azim) == (30,-127.5)
-    assert m.camproj(ax=ax) == "orthographic"
+    assert np.isinf(ax._focal_length)
     assert all(not axis.pane.get_fill() for axis in (ax.xaxis,ax.yaxis,ax.zaxis))
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -5
     assert ax.xaxis._axinfo["grid"]["linewidth"] == .2
     assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
-    m.plot3(ax,[0,4],[0,2],[0,1])
+    ax.plot([0,4],[0,2],[0,1])
     ax.set(xlim=(0,4), ylim=(0,2), zlim=(0,1))
     fig.canvas.draw()
     np.testing.assert_allclose(ax.get_box_aspect()/ax.get_box_aspect()[2],[4,2,1])
@@ -65,7 +69,7 @@ def test_axes_defaults_and_explicit_controls():
     assert not ax.xaxis.pane.get_fill()
     _, supplied = _figure(azim=105, elev=15, proj_type="persp", box_aspect=(1,1,2))
     assert (supplied.elev,supplied.azim) == (15,105)
-    assert m.camproj(ax=supplied) == "perspective"
+    assert np.isfinite(supplied._focal_length)
     np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
 
 
@@ -75,23 +79,23 @@ def test_matplotlib_defaults_supply_colormap_and_color_cycle():
     with matplotlib.rc_context(style):
         _, ax = _figure()
         xyz = np.array([[0., 1.], [0., 1.]])
-        h = m.surf(ax, xyz)
+        h = ax.plot_surface([0, 1], [0, 1], xyz, values=xyz)
         assert h.get_cmap().name == "inferno"
         assert ax.get_facecolor() == matplotlib.colors.to_rgba("gray")
-        assert m.surf(ax, xyz, cmap="magma").get_cmap().name == "magma"
+        assert ax.plot_surface([0, 1], [0, 1], xyz, cmap="magma").get_cmap().name == "magma"
         surface = ax.plot_surface(xyz, xyz.T, xyz + xyz.T, cmap=None)
         assert surface.actor.GetProperty().GetColor() == (1., 0., 0.)
         lines = [ax.plot([0, 1], [0, 1], [i, i])[0] for i in (0, 1)]
         np.testing.assert_allclose([line.actor.GetProperty().GetColor() for line in lines],
                                    [matplotlib.colors.to_rgb("green"), (1., 0., 0.)])
-        points = m.scatter3(ax, [0], [0], [0])
+        points = ax.scatter([0], [0], [0], color="red")
         assert points.actor.GetProperty().GetColor() == (1., 0., 0.)
         _, native = plt.subplots()
         assert native.plot([0, 1])[0].get_color() == "red"
         assert matplotlib.rcParams["image.cmap"] == "inferno"
-        m.colormap("gray", ax=ax)
+        h.set_cmap("gray")
         ax.clear()
-        assert m.surf(ax, xyz).get_cmap().name == "inferno"
+        assert ax.plot_surface([0, 1], [0, 1], xyz, values=xyz).get_cmap().name == "inferno"
 
 
 @pytest.mark.parametrize("projection", ["persp", "ortho"])
@@ -147,13 +151,12 @@ def test_volume_axes_order_and_glyphs():
     x, y, z = (np.linspace(a,b,n) for a,b,n in [(0,3,9),(-3,1,7),(-1,1,5)])
     X,Y,Z = np.meshgrid(x,y,z)
     v = X + 2*Y + 3*Z
-    m.hold("on", ax=ax)
-    h, = m.slice(ax, x,y,z,v, [1.5], [], [])
+    h, = ax.plot_volume_slices(v, coordinates=(x,y,z), x=1.5)
     np.testing.assert_allclose(h.vertices[:,0], 1.5)
     np.testing.assert_allclose(h.get_array(), h.vertices @ [1,2,3], atol=1e-6)
-    iso = m.isosurface(ax, x,y,z,v, 1.3)
+    iso = ax.plot_isosurface(v, coordinates=(x,y,z), level=1.3)
     np.testing.assert_allclose(iso.vertices @ [1,2,3], 1.3, atol=1e-6)
-    g = m.quiver3(ax, [0,1],[0,0],[0,0],[1,2],[0,0],[0,0],0)
+    g = ax.quiver([0,1],[0,0],[0,0],[1,2],[0,0],[0,0])
     assert g.mapper.IsA("vtkGlyph3DMapper")
     ax.figure.canvas.draw()
 
@@ -161,8 +164,7 @@ def test_volume_axes_order_and_glyphs():
 def test_supersampling_softens_edges_without_darkening_transparency():
     fig, ax = _figure()
     vertices = [[-1,-.9,0], [1,-.65,0], [-.6,1,0]]
-    handle = m.trisurf(ax, [[0,1,2]], *np.asarray(vertices).T,
-                       FaceColor="red", EdgeColor="none")
+    handle = ax.plot_mesh(vertices, [[0,1,2]], color="red")
     ax.set(xlim=(-1.5,1.5), ylim=(-1.5,1.5), zlim=(-1,1))
     ax.set_axis_off()
     ax.view_init(elev=90, azim=-90)
@@ -193,9 +195,8 @@ def test_supersampling_softens_edges_without_darkening_transparency():
 
 def test_supersampling_scales_screen_space_strokes_and_restores_properties():
     fig, ax = _figure(antialiasing=3)
-    m.hold("on", ax=ax)
-    line = m.plot3(ax, [0,1],[0,1],[0,1], LineWidth=2.5)
-    point = m.scatter3(ax, [0,1],[1,0],[0,1], 49, "red")
+    line, = ax.plot([0,1],[0,1],[0,1], linewidth=2.5)
+    point = ax.scatter([0,1],[1,0],[0,1], s=49, c="red")
     stroke = line.actor.GetProperty()
     marker = point.actor.GetProperty()
     widths_during_render = []
@@ -220,11 +221,16 @@ def test_viewport_rgba_compositing_matches_matplotlib_image(extents):
     box = Bbox.from_extents(*extents)
     w, h = map(round, box.size)
     rgba = np.random.default_rng(7).integers(0, 256, size=(h, w, 4), dtype=np.uint8)
+    bounds = (9, 7, w-14, h-11)
+    left, bottom, right, top = bounds
+    rgba[:bottom] = rgba[top:] = 0
+    rgba[:, :left] = rgba[:, right:] = 0
     expected, actual = RendererAgg(240, 220, 100), RendererAgg(240, 220, 100)
     image = BboxImage(box, origin="lower", interpolation="nearest")
     image.set_data(rgba)
     image.draw(expected)
-    viewport = _Viewport(SimpleNamespace(bbox=box, pixels=lambda width, height: rgba))
+    viewport = _Viewport(SimpleNamespace(bbox=box, _viewport_extent=bounds,
+                                         pixels=lambda width, height: rgba))
     viewport._draw_frame(actual)
     reference = np.asarray(expected.buffer_rgba())
     result = np.asarray(actual.buffer_rgba())

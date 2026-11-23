@@ -1,6 +1,7 @@
 include examples/*.py
 include tests/test_*.py
 include docs/*.md
+include README.zh-CN.md
 recursive-include docs/figures *.png
 recursive-include docs/gallery *.png
 include benchmarks/*.py

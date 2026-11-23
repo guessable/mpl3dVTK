@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import vtk
 
-import mpl3d_vtk as m
-from mpl3d_vtk._geometry import iso_filter, volume_grid
+import mpl3d_vtk  # Registers the vtk3d projection.
+from mpl3d_vtk._geometry import iso_filter, line_data, surface_poly, volume_grid
 
 
 def timings(operation, frames):
@@ -33,7 +33,7 @@ def surface(n, frames):
     ax.view_init(elev=30,azim=-60)
     try:
         start = perf_counter()
-        h = m.surf(ax,x,y,z,z,EdgeColor="none",FaceColor="interp",cmap="viridis",clim=(0.,8.))
+        h = ax.plot_surface(x, y, z, values=z, cmap="viridis", vmin=0., vmax=8.)
         fig.canvas.draw()
         first_draw = 1000*(perf_counter()-start)
 
@@ -44,19 +44,30 @@ def surface(n, frames):
         heights = [z+.12*np.sin(i*.3)*np.cos(x) for i in range(frames)]
 
         def height(i):
-            h.set_zdata(heights[i])
+            h.set_heights(heights[i])
             fig.canvas.draw()
 
         def color(i):
-            h.set_cdata(heights[i])
+            h.set_values(heights[i])
             fig.canvas.draw()
 
         return {"samples":n,"quads":h.data.GetNumberOfPolys(),"first_draw_ms":round(first_draw,2),
+                "geometry_build":timings(lambda _:surface_poly(x,y,z),frames),
                 "rotation":timings(rotate,frames),"height_update":timings(height,frames),
                 "color_update":timings(color,frames),"vtk_window":ax.window.GetClassName(),
                 "renderer":ax.window.ReportCapabilities()}
     finally:
-        m.close(fig)
+        ax.remove()
+        plt.close(fig)
+
+
+def segments(count, frames):
+    x = np.arange(count, dtype=float)
+    ends = np.column_stack((x, np.zeros_like(x), np.sin(x)))
+    starts = ends.copy()
+    starts[:, 2] = 0
+    paths = np.stack((starts, ends), axis=1)
+    return {"count": count, "geometry_build": timings(lambda _: line_data(paths), frames)}
 
 
 def isosurface(n,frames):
@@ -78,9 +89,10 @@ def main():
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--surface",type=int,nargs="+",default=[128,256,512])
     cli.add_argument("--volume",type=int,nargs="+",default=[40,80,128])
+    cli.add_argument("--segments",type=int,default=20000)
     cli.add_argument("--frames",type=int,default=15)
     args = cli.parse_args()
-    if args.frames < 2 or min(args.surface+args.volume) < 2:
+    if args.frames < 2 or args.segments < 2 or min(args.surface+args.volume) < 2:
         cli.error("frame count and grid sizes must be at least two")
     warmup = surface(16,2)
     caps = warmup["renderer"].splitlines()
@@ -89,6 +101,7 @@ def main():
               "numpy":np.__version__,"frames":args.frames,
               "renderer":[line.strip() for line in caps if "OpenGL renderer string" in line],
               "surface":[surface(n,args.frames) for n in args.surface],
+              "segments":segments(args.segments,args.frames),
               "isosurface":[isosurface(n,args.frames) for n in args.volume]}
     for row in report["surface"]:
         row.pop("renderer")

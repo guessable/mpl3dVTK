@@ -1,143 +1,229 @@
-# API 参考
+# Axes and graphics API
 
-## 调用约定
+Import `mpl3d_vtk` to register `vtk3d`, then pass `projection="vtk3d"` to `Figure.add_subplot` or `plt.subplots`. Plotting calls on the same axes add to the scene. Standard Matplotlib methods control limits, labels, grid, view, annotations, legends, and colorbars.
 
-导入 `mpl3d_vtk` 后可使用 `fig.add_subplot(projection="vtk3d")` 或 `m.subplot(111)`。表中的绘图函数可把坐标轴作为首个参数，或用 `ax=ax` 传入。用 `m.hold("on", ax=ax)` 叠加高层绘图调用。原始图元 `surface`、`animatedline` 和 Matplotlib 轴方法默认叠加。
+- [Surface and line methods](#plot_surface)
+- [Axes controls](#axes-controls)
+- [Graphic handles](#graphic)
+- [Migration](#migrating-from-older-versions)
+- [VTK-specific plotting and geometry](function_reference.md)
 
-```python
-h = m.surf(ax, X, Y, Z, C, "FaceColor", "interp", "EdgeColor", "none")
-m.set(h, FaceLighting="gouraud", FaceAlpha=.8)
-fig.colorbar(h, ax=ax, label="Temperature")
-```
+## VtkAxes
 
-曲面数组采用 `(ny, nx)`，体数组采用 `(ny, nx, nz)`。这对应 NumPy 的 `np.meshgrid(x, y, z, indexing="xy")`。省略规则坐标时，从 1 开始生成坐标。几何索引默认从 0 开始，`patch`、`trisurf`、`trimesh` 和 `tetramesh` 可用 `index_base=1` 读入从 1 开始的面索引。曲面中的非有限坐标挖去相邻面，曲线中的非有限坐标断开线段。
+`VtkAxes` extends Matplotlib's 3D axes. Pass `antialiasing` in `subplot_kw` to set the VTK render scale, from 1 to 4. The default is 2. The initial camera is orthographic with elevation 30° and azimuth −127.5°. Data units have equal lengths by default. Set an explicit `box_aspect` or pass `proj_type="persp"` to change these defaults.
 
-表中省略通用的轴和样式参数。普通图返回 `Graphic`，可以直接传给 Matplotlib 色条，也可以用 `vertices`、`faces`、`data`、`mapper` 和 `actor` 访问底层数据。组合图返回多个句柄。绘图函数调用时的 `Name, Value` 使用 Python 字符串与值依次传入，也可使用 Python 关键字参数。
-
-## 曲面、图元与等高线
-
-| 函数 | 主要输入 | 返回 |
-| --- | --- | --- |
-| `surf`、`surface`、`mesh` | `Z[, C]` 或 `X,Y,Z[, C]`。规则坐标可传向量。原始 `surface` 也可用 `XData,YData,ZData,CData`。 | 单个曲面句柄 |
-| `surfl` | `Z` 或 `X,Y,Z`，可附加光源方向、反射系数和 `"light"`。 | 反射率着色曲面或带 VTK 光源的曲面 |
-| `surfnorm` | `Z` 或 `X,Y,Z`，可用 `scale=`。 | 曲面和法向量箭头 |
-| `surfc`、`meshc` | 曲面数据，`levels=` 可为数量或显式高度数组。 | 曲面和底部等高线 |
-| `meshz` | 曲面数据，`base=` 设置底部高度。 | 网格和边界帘幕 |
-| `waterfall` | 曲面数据，`base=` 设置底部高度。 | 帘幕和曲线 |
-| `ribbon` | `Z` 或 `Y,Z[,width]`，每列一条带。 | 带状曲面列表 |
-| `contour3` | `Z` 或 `X,Y,Z`，可加等高线级别和 `LineSpec`。 | 句柄。设 `return_matrix=True` 返回 `(M, handle)`。 |
-| `fsurf`、`fmesh` | `f[, bounds]` 或 `fx,fy,fz[, bounds]`，`MeshDensity` 或 `samples=` 设采样密度，`ShowContour` 显示底部等高线。 | 曲面句柄或带等高线的组合 |
-| `fimplicit3` | `f(x,y,z)[, bounds]`，`MeshDensity` 或 `samples=`。 | 零等值面 |
-| `patch`、`fill3` | `X,Y,Z[, C]` 或 `patch(Faces=..., Vertices=..., FaceVertexCData=...)`。面可使用不同长度或 NaN 填充。 | 多边形句柄 |
-| `trisurf`、`trimesh` | `TRI,X,Y,Z[, C]`。 | 三角面或网格 |
-| `tetramesh` | `T, XYZ[, C]`。 | 四面体网格 |
-| `pcolor` | `C` 或 `X,Y,C`。 | 位于 XY 平面的伪彩色曲面 |
-| `surf2patch` | 曲面数据，可加 `"triangles"`。 | 适用于 `patch` 的字典 |
-| `reducepatch`、`shrinkfaces` | 几何字典、图形句柄或 `faces,vertices`，随后可给比例。 | 包含面和顶点的字典 |
-
-## 曲线、散点、统计与动画
-
-| 函数 | 参数 |
-| --- | --- |
-| `plot3` | `X,Y,Z[,LineSpec]`，可重复数据组。支持矩阵系列以及 `table,xvar,yvar,zvar` 形式。表可以是按列名索引的字典或 DataFrame。 |
-| `fplot3` | `fx,fy,fz[,interval]`，以 `samples=` 控制采样。 |
-| `scatter3` | `X,Y,Z[,S[,C]][,marker][,"filled"]`。大小和颜色支持逐点数组。 |
-| `bubblechart3` | `X,Y,Z,S[,C]`。大小按输入范围映射。 |
-| `swarmchart3` | `X,Y,Z[,S[,C]]`，设 `width=` 控制组内偏移。 |
-| `stem3` | `Z` 或 `X,Y,Z`，可加 `LineSpec`、`BaseValue`。 |
-| `bar3`、`bar3h` | `Z` 或 `Y,Z`，可加宽度和 `"detached"`、`"grouped"`、`"stacked"`。 |
-| `histogram2` | `X,Y[,bins]`，支持 `NumBins`、`XBinEdges`、`YBinEdges`、`Normalization`、`DisplayStyle` 和 `ShowEmptyBins`。 |
-| `pie3` | `X[,explode][,labels]`。 |
-| `comet3` | `Z` 或 `X,Y,Z[,tail]`。返回动画，用 `set_frame(i)` 选择离屏导出帧。 |
-| `animatedline` | 可空调用或传 `X,Y[,Z]`，支持 `MaximumNumPoints`。用 `addpoints`、`getpoints`、`clearpoints` 管理数据。 |
-
-`histogram2` 接受 `count`、`countdensity`、`probability`、`pdf`、`cumcount`、`cdf`。柱形模式的句柄带有 `values`、`x_bin_edges` 和 `y_bin_edges`。
-
-## 体数据
-
-| 函数 | 参数与结果 |
-| --- | --- |
-| `isosurface` | `V[,level[,colors]]` 或 `X,Y,Z,V[,level[,colors]]`。支持 `"noshare"` 展开面顶点和 `"verbose"` 输出网格统计。 |
-| `isosurface_geometry` | 同上，返回 `faces`、`vertices`、可选 `facevertexcdata` 的字典。 |
-| `slice` | `V,xs,ys,zs` 或 `X,Y,Z,V,xs,ys,zs`。三个空列表中的空项表示跳过该方向。三个矩阵可定义一张曲面。 |
-| `contourslice` | 切片输入，可加末尾 `levels`。 |
-| `isocaps` | 体数据、等值、可选 `"above"` 或 `"below"`，以及 `"xmin"` 等边界名。 |
-| `isocolors`、`isonormals` | 输入体数据和顶点数组或句柄。前者还接受三个颜色分量体数组，后者支持 `"negate"`。 |
-| `smooth3` | `V[,method[,size[,sigma]]]`，方法为 `"box"` 或 `"gaussian"`。 |
-| `reducevolume`、`subvolume` | 输入体数据和步长或边界，返回 `X,Y,Z,V`。 |
-| `volumebounds` | 输入标量或向量体数据，返回坐标边界及标量色标边界。 |
-
-切片的插值方法可用末尾字符串或 `method=` 指定，支持 `"linear"`、`"nearest"`、`"cubic"`。最近邻和三次插值要求直角网格。三次插值使用局部张量积多项式。多张切片默认使用原体数据的共同色域。用 `colors` 给等值面着色时，等值决定几何位置，颜色场决定色条。
-
-## 向量与流线
-
-| 函数 | 参数 |
-| --- | --- |
-| `quiver3` | `[X,Y,]Z,U,V,W[,scale][,LineSpec][,"filled"]`，支持 `AutoScale`、`AutoScaleFactor`、`MaxHeadSize`、`ShowArrowHead`。 |
-| `coneplot` | `[X,Y,Z,]U,V,W,Cx,Cy,Cz`，可加缩放或颜色、`"quiver"` 和插值方法。完整位置和分量可用 `"nointerp"`。 |
-| `stream2`、`stream3` | 向量场、种子点及可选 `[step,max_steps]`，返回顶点数组列表。 |
-| `streamline` | 路径列表或向量场及种子点。 |
-| `streamslice` | 向量场和轴向切片位置，二维场可省略切片位置。支持 `density`、`"arrows"`、`"noarrows"`。 |
-| `streamtube` | 路径、管宽或散度，也可给体向量场和种子点。可附加 `[scale,sides]`。 |
-| `streamribbon` | 路径及扭转角、旋度和速度体数据，或体向量场与种子点。可指定 `width`。 |
-| `streamparticles` | 路径和粒子数，返回可用 `set_frame` 定位的动画。 |
-| `curl`、`divergence`、`interpstreamspeed` | 直角网格向量场分析和流线重采样。 |
-
-流线使用 VTK 的 RK4 和线性场插值。箭头自动缩放、流线种子分布和积分结果依数据与网格而变，允许在比较图形时显式锁定种子点、步长和缩放。
-
-## 样式、光照与坐标轴
-
-- 曲面支持 `FaceColor="flat"|"interp"|"none"` 或固定颜色，`EdgeColor` 独立设置，`FaceAlpha` 可给常数或配合 `AlphaData` 使用 `"interp"`、`"flat"`。用 `clim`、`caxis` 和 `alim` 设置映射区间。
-- `CDataMapping="direct"` 使用从 1 起的色表索引。支持 Matplotlib 色图名和 RGB(A) 色表数组。默认的 `scaled` 对标量数据使用归一化。
-- `lighting`、`camlight`、`light`、`lightangle`、`material` 管理光照。曲面可调 `AmbientStrength`、`DiffuseStrength`、`SpecularStrength`、`SpecularExponent`。
-- `view(az, el)` 以负 y 轴为方位角零点，正角朝正 x 轴旋转。换算为原生方法是 `ax.view_init(elev=el, azim=az-90)`。用 `camproj` 或 `ax.set_proj_type` 设置投影。
-- `DisplayName` 对应原生 `ax.legend()`，`Visible`、`FaceColor`、`LineWidth` 等可通过 `m.set` 或句柄方法修改。用 `set_zdata()`、`set_cdata()` 批量更新曲面。
-
-### 默认三维坐标轴
-
-`projection="vtk3d"` 默认使用正交投影，仰角为 30°，原生方位角为 −127.5°。坐标轴使用等数据单位比例、灰色无填充轴框、0.2 pt 网格线和向外刻度。刻度线长度取最长投影轴的 2%，轴范围及刻度位置由当前数据和 Matplotlib 的定位器确定。
-
-背景、色图和颜色循环取自 Matplotlib 当前样式。标量着色默认使用 `rcParams["image.cmap"]`。绘图调用中的 `cmap` 和 `Color` 可指定具体图元的配色。
-
-### 抗锯齿
-
-每个 `vtk3d` 坐标轴默认按宽高各 2 倍渲染 VTK 场景，再降采样到输出尺寸。曲面轮廓、细线、散点、图像平面及透明图元共用这一设置，Matplotlib 的坐标和文字使用其自身的抗锯齿。
+The examples below share this setup. Use `ax.clear()` between examples to start a new scene.
 
 ```python
-ax = fig.add_subplot(111, projection="vtk3d", antialiasing=2)
-ax.set_antialiasing(4)
-fig.savefig("surface.png", dpi=175)
+import matplotlib.pyplot as plt
+import numpy as np
+import mpl3d_vtk
+
+fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
+t = np.linspace(-2, 2, 61)
+x, y = np.meshgrid(t, t)
+z = np.exp(x * np.sin(y))
 ```
 
-`antialiasing` 接受整数 1 到 4。1 按原始分辨率出图，2 是默认，4 适合导出后需要放大查看的图。每个坐标轴可独立设置，也可用 `ax.get_antialiasing()` 查看。倍数越高，离屏缓冲区、GPU 光栅化和读取像素的开销越大。数据顶点和连接关系由原始输入决定，抗锯齿处理的是渲染后的像素边缘。
+## Common style options
 
-## 三维网络图和图像
+Methods with `**style` accept the following keyword arguments. Each method also documents its own options.
 
-| 函数 | 参数与结果 |
+| Option | Meaning |
 | --- | --- |
-| `plot`、`graphplot` | `edges[, xyz]`，边为零基整数对，位置可为 N×3 数组或 XData、YData、ZData。无坐标时用 VTK 的 force3。可设 directed、ShowArrows、NodeLabel、NodeColor、MarkerSize、LineWidth。 |
-| `image` | `C` 或 `X,Y,C`。支持索引色、RGB(A)，默认 z=0。X、Y 的首尾位置是首尾像素中心。 |
-| `imagesc` | 图像数据及可选 `clims`，使用缩放色图。可接原生 Matplotlib 色条。 |
+| `color`, `facecolor`, `edgecolor` | A Matplotlib color name, hex color, or RGB tuple. `facecolor` overrides the fixed face color. `edgecolor="none"` hides polygon edges. Use `wireframe=True` to draw edges only. |
+| `alpha`, `edge_alpha`, `vertex_alpha` | Overall opacity, edge opacity, or opacity broadcast across the associated color values. Use values from 0 to 1. With `association="cell"`, `vertex_alpha` is paired with face values. |
+| `linewidth`, `linestyle` | Line width in output pixels and a style from `"-"`, `"--"`, `":"`, `"-."`, or `"none"`. Line appearance depends on the rendering backend. |
+| `cmap`, `norm`, `vmin`, `vmax` | Scalar color mapping. Accepts Matplotlib colormaps and normalization objects. `cmap` also accepts an RGB(A) table. A fixed color takes precedence on the geometry. |
+| `lighting`, `ambient`, `diffuse`, `specular`, `specular_power` | Lighting can be a boolean or `"flat"`, `"gouraud"`, or `"phong"`. The other arguments control the material's ambient, diffuse, and specular response. |
+| `label`, `visible` | Legend label and visibility. |
 
-`image` 和 `imagesc` 使用一个四边形及 VTK 纹理。可设置 `AlphaData`、`AlphaDataMapping`、`Interpolation`，用 `set_cdata` 在原尺寸更新像素。 [图像示例](function_reference.md#image)
+## plot_surface
 
-## 支持范围
+```text
+ax.plot_surface(x, y, z, *, values=None, rcount=None, ccount=None,
+                rstride=None, cstride=None, facecolors=None, shade=None, **style)
+```
 
-[三维绘图图集](plot_catalog.md)列出主要绘图入口及数据辅助函数。各函数支持的签名、属性和代码见 [逐函数参考](function_reference.md)。线型及标记的屏幕尺寸受渲染后端与绘图方式影响。
+Plot a regular height grid. Use one-dimensional X and Y coordinate vectors or broadcastable grids with a two-dimensional `z` array. The resulting grid must have at least two rows and columns. Cells with nonfinite vertex coordinates are skipped.
 
-## 图窗和动画辅助
+`values` accepts one scalar per vertex or an array shaped `(ny, nx, 3)` or `(ny, nx, 4)` for RGB(A). `facecolors` is an alternative name for this input. With a colormap and no explicit values, the surface is colored by height. Unless sampling is requested, all input points are kept. Use either a count of at least two or a positive stride per direction. Both modes retain the grid boundary. Set `shade=True` for lighting or choose an interpolation mode with `lighting`.
 
-| 函数 | 用法 |
+Returns a [`Graphic`](#graphic) that supports colorbars, `set_heights()`, and `set_values()`.
+
+```python
+surface = ax.plot_surface(t, t, z, cmap="viridis", vmin=0, vmax=8)
+fig.colorbar(surface, ax=ax)
+surface.set_heights(z + .2)
+```
+
+## plot_wireframe
+
+```text
+ax.plot_wireframe(x, y, z, *, rcount=None, ccount=None, rstride=None, cstride=None, **style)
+```
+
+Draw a regular grid as lines. The coordinate arrays and sampling parameters follow [`plot_surface`](#plot_surface). Use `color` for a uniform line color or a `cmap` to map height to line color. Returns a `Graphic` with `set_heights()`.
+
+```python
+wireframe = ax.plot_wireframe(x, y, z, rstride=4, cstride=4, color="0.25", linewidth=1)
+```
+
+## plot_trisurf
+
+```text
+ax.plot_trisurf(x, y=None, z=None, *, triangles=None,
+                values=None, association="point", shade=None, **style)
+```
+
+Plot triangles from one-dimensional X and Y coordinates and Z heights. Provide zero-based `(n, 3)` triangle indices or let Matplotlib triangulate XY. You can also call `ax.plot_trisurf(triangulation, z, ...)` with a Matplotlib `Triangulation`. Its mask selects which faces are rendered.
+
+Color `values` correspond to vertices by default or to retained faces with `association="cell"`. When a colormap is supplied without values, the handle colors by vertex height or mean face height. Returns a `Graphic`. Use [`plot_mesh`](function_reference.md#plot_mesh) for meshes with vertices at arbitrary XYZ positions.
+
+```python
+triangles = [[0, 1, 2], [1, 3, 2]]
+surface = ax.plot_trisurf([0, 1, 0, 1], [0, 0, 1, 1], [0, 0, 1, 2],
+                          triangles=triangles, cmap="plasma")
+```
+
+## plot
+
+```text
+ax.plot(x, y, z=0, *, zdir="z", color=None, linestyle="-", marker=None, markersize=6, **style)
+```
+
+Draw one or more 3D polylines. Coordinates broadcast, and columns of 2D inputs can represent separate lines. Nonfinite vertices split a line into segments. A scalar `z` sets a common height. Use `zdir="x"` or `"y"` to place the third coordinate on another axis. Optional markers use `marker` and `markersize`.
+
+Returns a list of `Graphic` objects. Each line and its optional markers occupy separate handles.
+
+```python
+line, = ax.plot(np.cos(t), np.sin(t), t, color="tab:blue", linewidth=2, label="helix")
+ax.legend()
+```
+
+## scatter
+
+```text
+ax.scatter(x, y, z=0, *, s=20, c=None, zdir="z", marker="o", filled=True, **style)
+```
+
+Plot markers at broadcastable coordinates. Nonfinite coordinates are omitted. Supply a nonnegative marker area `s` as a scalar or per-point array. `c` accepts a color, per-point scalar values, or RGB(A) colors. If no color is supplied, scatter uses the current Matplotlib color cycle.
+
+Common marker shapes include circles, squares, diamonds, triangles, and crosses. Equal-size circles use screen-space markers. Other shapes or varying sizes use camera-facing geometry in the scene. Returns a `Graphic`. Add a colorbar when `c` contains scalar values.
+
+```python
+points = ax.scatter(np.cos(t), np.sin(t), t, s=24, c=t, cmap="viridis")
+fig.colorbar(points, ax=ax)
+```
+
+## quiver
+
+```text
+ax.quiver(x, y, z, u, v, w, *, length=1., normalize=False,
+          arrow_length_ratio=.2, show_heads=True, **style)
+```
+
+Draw vectors `(u, v, w)` at positions `(x, y, z)`. All six arrays broadcast together. `length` multiplies the vector magnitudes. `normalize=True` assigns a common length to all nonzero vectors. `arrow_length_ratio` is the fraction of the arrow occupied by its head, between 0 and 1. `show_heads=False` draws shafts only.
+
+Returns a `Graphic` for the instanced arrows. Set `cmap` to color by the scaled vector magnitude.
+
+```python
+arrows = ax.quiver([0, 1], [0, 1], 0, [1, 0], [0, 1], 0, length=.4, color="tab:orange")
+```
+
+## contour
+
+```text
+ax.contour(x, y, z, *, levels=10, offset=None, **style)
+```
+
+Extract contour lines from a gridded height field. Coordinates follow [`plot_surface`](#plot_surface). Set `levels` to a positive count or a sequence of values. By default, each line lies at its own height. Set `offset` to project all lines onto a single Z plane.
+
+Returns a `Graphic` with `contour_levels` and VTK line connectivity in `data.GetLines()`.
+
+```python
+surface = ax.plot_surface(t, t, z, cmap="viridis", alpha=.65)
+lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
+```
+
+## bar3d
+
+```text
+ax.bar3d(x, y, z, dx, dy, dz, *, shade=True, **style)
+```
+
+Draw cuboids anchored at `(x, y, z)` with width `dx`, depth `dy`, and Z height `dz`. All inputs broadcast together. `shade` controls lighting. A colormap uses the top Z coordinate of each bar. Returns one `Graphic` for all bars.
+
+```python
+bars = ax.bar3d([0, 1, 2], 0, 0, .7, .6, [2, 5, 3], cmap="plasma")
+```
+
+## stem
+
+```text
+ax.stem(x, y, z, *, bottom=0, marker="o", markersize=6, **style)
+```
+
+Draw vertical lines from `bottom` to each sample. Positions and heights broadcast together. Returns `(stems, markers)` when markers are enabled or a single `Graphic` when `marker=None`. Removing the stems also removes their markers.
+
+```python
+stems, markers = ax.stem(t[::8], 0, np.cos(t[::8]), bottom=-1, color="tab:green")
+```
+
+## Axes controls
+
+| Method | Parameters and result |
 | --- | --- |
-| `figure(*args, **kwargs)` | 按 Matplotlib Figure 的参数创建或激活图窗。 |
-| `subplot(*args, **kwargs)` | 创建三维子图，如 `m.subplot(221)`。也可用 Matplotlib 的 `fig.add_subplot(..., projection="vtk3d")`。 |
-| `gca()` | 获取当前三维轴，或在当前 Figure 中创建。 |
-| `show(*args, **kwargs)` | 将调用转给 `matplotlib.pyplot.show`，在交互后端显示窗口。 |
-| `savefig(path, **kwargs)` | 把当前 Figure 写到文件，可用 `dpi`、`transparent` 等 Matplotlib 参数。 |
-| `close(fig=None)` | 关闭图形并释放 VTK 窗口。可传 Figure 或 `"all"`。 |
-| `drawnow(ax=ax)` | 立即重绘当前 Figure 并处理事件。 |
-| `addpoints(handle, x, y, z=0)` | 将新样本加入 `animatedline`，在重绘时刷新几何。 |
-| `getpoints(handle)` | 返回当前动画的三个坐标数组副本。 |
-| `clearpoints(handle)` | 清空动画轨迹和待追加样本。 |
+| `get_antialiasing()` | Return the offscreen render scale per image dimension. |
+| `set_antialiasing(factor)` | Set an integer scale from 1 to 4. At 1, VTK renders at the final pixel size. At 2, it renders at twice the width and height before downsampling. |
+| `set_box_aspect(aspect, *, zoom=1)` | Set the three display-box ratios and the camera zoom. Explicit ratios take precedence over the style default. |
+| `fit()` | Recompute data bounds and apply the enabled autoscaling settings. The axes also update bounds on draw when geometry changes. |
+| `clear_scene()` | Remove VTK plots and their dependent artists while keeping axes settings and independent Matplotlib artists. |
+| `clear()` | Reset the subplot and reapply the `vtk3d` axes style. |
+| `remove()` | Remove the subplot from its figure and release the VTK window. |
+| `pixels(width, height)` | Render a `(height, width, 4)` RGBA array of `uint8` with its bottom row first. Copy the result before editing because it can be a cached frame. |
+| `get_legend_handles_labels()` | Return two lists for the legend handles and labels. VTK plots contribute Matplotlib proxy artists. |
+| `legend(*args, **kwargs)` | Create a Matplotlib legend with automatic or explicit handles and labels. |
+| `add_collection3d(...)` | Raises `NotImplementedError` for native 3D collections. Use `plot_mesh` for polygons and `plot` for lines in the VTK scene. |
 
-图窗、色条与动画的完整示例见 [带图函数参考](function_reference.md)。
+`plot3D`, `scatter3D`, `quiver3D`, and `contour3D` are Matplotlib aliases with the same arguments and return values as the methods above.
+
+## Graphic
+
+`Graphic` is a Matplotlib artist and scalar mappable. Plotting methods create it automatically. Advanced callers can wrap a VTK dataset with `Graphic(ax, data, values=None, *, association="point", mapper=None, **style)`. Set `association="cell"` to bind values to cells. Access `data`, `mapper`, and `actor` to use native VTK APIs. After modifying VTK arrays directly, call `Modified()` on the changed objects.
+
+| Property or method | Result |
+| --- | --- |
+| `vertices`, `faces` | Copies of the XYZ coordinates and zero-based face indices. Equal-size faces return a 2D array. Mixed faces return a list of arrays. |
+| `set_heights(z)` | Update a gridded surface in place. The new array must match the original shape. Changes to finite coordinates update face connectivity. Height-based colors follow the new heights. Explicit color values are retained. Returns the handle. |
+| `set_values(values)` | Replace scalars or RGB(A) values for the existing vertices or cells and return the handle. `None` clears the values on ordinary meshes. An image plane uses this method to update its pixels without resizing. |
+| `set_array(values)`, `get_array()` | Set or retrieve the Matplotlib scalar array used for normalization and colorbars. |
+| `set_cmap(cmap)`, `set_clim(vmin, vmax)` | Update the colormap or range and refresh attached colorbars. |
+| `set_color(color)`, `set_facecolor(color)`, `set_edgecolor(color)` | Set a fixed color, face color, or edge color. Use `set_edgecolor("none")` to hide edges. `set_facecolor(None)` restores the underlying color choice. |
+| `set_alpha(alpha)`, `set_visible(visible)` | Set opacity from 0 to 1 or change visibility. `alpha=None` restores the default opacity. |
+| `set_linewidth(width)`, `set_linestyle(style)`, `set_lighting(lighting)` | Update line width, line pattern, or lighting using the common style options. |
+| `remove()` | Remove the plot and its dependent markers or annotations from the axes. |
+
+```python
+surface = ax.plot_surface(t, t, z, cmap="viridis")
+surface.set_values(np.sin(x) * np.cos(y))
+surface.set_clim(-1, 1)
+surface.set_alpha(.8)
+fig.colorbar(surface, ax=ax)
+```
+
+## Migrating from older versions
+
+Use Matplotlib for figure operations and call plotting methods on a `vtk3d` axes. Ordinary Python keyword arguments control style and slicing.
+
+| Older call | Current call |
+| --- | --- |
+| `m.figure()`, `m.subplot()`, `m.savefig()` | `plt.figure()`, `fig.add_subplot(..., projection="vtk3d")`, `fig.savefig(...)` |
+| `m.surf(ax, x, y, z, FaceAlpha=.5)` | `ax.plot_surface(x, y, z, alpha=.5)` |
+| `m.trisurf(ax, triangles, x, y, z)` | `ax.plot_mesh(np.column_stack((x, y, z)), triangles)` |
+| `m.isosurface(ax, x, y, z, volume, level)` | `ax.plot_isosurface(volume, coordinates=(x, y, z), level=level)` |
+| `m.slice(ax, x, y, z, volume, [], [], [0])` | `ax.plot_volume_slices(volume, coordinates=(x, y, z), z=0)` |
+| `m.hold("on")` | Add more plots to the same axes. |
+| `handle.set_zdata(z)`, `handle.set_cdata(c)` | `handle.set_heights(z)`, `handle.set_values(c)` |
+| MATLAB-style options or positional flags | Set keyword arguments such as `color="red"`, `alpha=.5`, and `lighting="gouraud"`. |
+| `m.close(fig)` in an Agg batch job | Call `ax.remove()` for each VTK subplot, then `plt.close(fig)`. |

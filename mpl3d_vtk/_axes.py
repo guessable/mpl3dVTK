@@ -6,12 +6,15 @@ import numpy as np
 from PIL import Image
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
-import matplotlib as mpl
 from matplotlib.artist import Artist, allow_rasterization
+from matplotlib.colors import to_rgb
 from matplotlib.projections import register_projection
+from matplotlib.tri import Triangulation
 from matplotlib.transforms import Bbox
 from mpl_toolkits.mplot3d import Axes3D
 
+from . import charts, graphs, planes, spatial, surfaces, vectors, volumes
+from ._geometry import surface_arrays
 from ._projected_ticks import apply_axes_style
 
 
@@ -66,6 +69,17 @@ class _Viewport(Artist):
         # Only account for subpixel placement and clipping on the final canvas.
         columns = self._nearest(x0, x1, box.x0*mag, box.x1*mag, width)
         rows = self._nearest(y0, y1, box.y0*mag, box.y1*mag, height)
+        extent = getattr(self.scene, "_viewport_extent", None)
+        if extent is not None:
+            left, bottom, right, top = extent
+            first_col, last_col = np.searchsorted(columns, (left, right))
+            first_row, last_row = np.searchsorted(rows, (bottom, top))
+            if first_col >= last_col or first_row >= last_row:
+                return
+            columns = columns[first_col:last_col]
+            rows = rows[first_row:last_row]
+            x0 += first_col
+            y0 += first_row
         if np.all(np.diff(columns) == 1) and np.all(np.diff(rows) == 1):
             rgba = rgba[rows[0]:rows[-1]+1, columns[0]:columns[-1]+1]
         else:
@@ -94,7 +108,7 @@ class VtkAxes(Axes3D):
                           and np.isfinite(focal_length) else "ortho")
         self._antialiasing = _sampling_factor(antialiasing)
         super().__init__(*args, **kwargs)
-        self._apply_visual_defaults()
+        apply_axes_style(self)
         if use_default_aspect:
             super().set_aspect("equal")
             self._default_equal_aspect = True
@@ -118,30 +132,13 @@ class VtkAxes(Axes3D):
         self._pixel_buffer = vtk.vtkUnsignedCharArray()
         self.camera = self.renderer.GetActiveCamera()
         self.handles = []
-        self.color_limits = None
-        self.alpha_limits = (0.,1.)
-        self.holding = False
-        self._inside_plot = False
         self._limits_dirty = False
         self._viewport = _Viewport(self)
         self.add_artist(self._viewport)
         self._close_id = self.figure.canvas.mpl_connect("close_event", self._close)
         self._viewport_key = None
         self._viewport_frame = None
-
-    @property
-    def _azimuth(self):
-        return self.azim+90
-
-    @property
-    def _elevation(self):
-        return self.elev
-
-    def set_view(self, az, el):
-        self.view_init(elev=el, azim=az-90)
-
-    def set_plot_box_aspect(self, ratios):
-        self.set_box_aspect(ratios)
+        self._viewport_extent = None
 
     def set_box_aspect(self, aspect, *, zoom=1):
         # Explicit Matplotlib settings take precedence over the style default.
@@ -157,11 +154,8 @@ class VtkAxes(Axes3D):
         self._antialiasing = _sampling_factor(factor)
         self.stale = True
 
-    def _apply_visual_defaults(self):
-        apply_axes_style(self)
-        self.default_cmap = mpl.rcParams["image.cmap"]
-
     def clear_scene(self):
+        """Remove VTK plots while keeping axes settings and Matplotlib artists."""
         for handle in self.handles.copy():
             handle.remove()
 
@@ -170,11 +164,9 @@ class VtkAxes(Axes3D):
             self.clear_scene()
         super().clear()
         if hasattr(self, "_viewport"):
-            self.color_limits = None
-            self.alpha_limits = (0.,1.)
             self.renderer.RemoveAllLights()
             self.add_artist(self._viewport)
-            self._apply_visual_defaults()
+            apply_axes_style(self)
 
     def _fit_style_aspect(self):
         if self._default_equal_aspect and self.get_aspect() == "equal":
@@ -187,7 +179,7 @@ class VtkAxes(Axes3D):
 
     def fit(self):
         if self.handles:
-            records = [h.raw_bounds() for h in self.handles]
+            records = [h._raw_bounds() for h in self.handles]
             records = [r for r in records if r[0] <= r[1] and np.isfinite(r).all()]
             if records:
                 data = np.asarray(records).reshape(-1,3,2)
@@ -196,16 +188,15 @@ class VtkAxes(Axes3D):
         self._limits_dirty = False
 
     def draw(self, renderer):
-        from .charts import AnimatedLine
         for handle in self.handles:
-            if isinstance(handle, AnimatedLine):
+            if isinstance(handle, charts._StreamingLine):
                 handle._flush()
         if self._limits_dirty:
             self.fit()
         self._fit_style_aspect()
         super().draw(renderer)
 
-    def _sync_camera(self):
+    def _sync_camera(self, projection, affine):
         # Matplotlib first projects data with get_proj(), then maps xy with
         # transData. OpenGL instead takes clip coordinates in [-w,w].
         limits = np.array(self.get_w_lims()).reshape(3,2)
@@ -215,18 +206,17 @@ class VtkAxes(Axes3D):
             if nonlinear[i]:
                 limits[i] = scales[i].transform(limits[i])
         for h in self.handles:
-            h.sync_geometry(scales,nonlinear)
+            h._sync_geometry(scales,nonlinear)
         box = self.bbox
-        affine = self.transData.get_affine().get_matrix()
         ndc = np.array([[2/box.width,0,-1-2*box.x0/box.width],
                         [0,2/box.height,-1-2*box.y0/box.height], [0,0,1]])
         plane = ndc @ affine
-        m = self.get_proj()
+        m = projection
         combined = m.copy()
         combined[:2] = plane[:2] @ m[[0,1,3]]
         bounds = limits.copy()
         for h in self.handles:
-            b = np.asarray(h.mapper.GetBounds()).reshape(3,2)
+            b = np.asarray(h._render_bounds()).reshape(3,2)
             if b[0,0] <= b[0,1]:
                 bounds[:,0] = np.minimum(bounds.min(axis=1), b[:,0])
                 bounds[:,1] = np.maximum(bounds.max(axis=1), b[:,1])
@@ -263,18 +253,17 @@ class VtkAxes(Axes3D):
         self.camera.SetExplicitProjectionTransformMatrix(explicit)
         self.camera.UseExplicitProjectionTransformMatrixOn()
 
-    def _frame_key(self, width, height):
+    def _frame_key(self, width, height, projection, affine):
         lights = tuple(light.GetMTime() for light in self.renderer.GetLights())
-        return (width, height, self._antialiasing, tuple(self.get_proj().ravel()),
-                tuple(self.transData.get_affine().get_matrix().ravel()),
+        return (width, height, self._antialiasing, projection.tobytes(), affine.tobytes(),
                 lights, self.renderer.GetMTime(),
                 tuple((h.get_visible(), h.actor.GetMTime(), h.mapper.GetMTime(), h.data.GetMTime())
                       for h in self.handles))
 
-    def _render_frame(self, width, height, factor):
+    def _render_frame(self, width, height, factor, projection, affine):
         render_size = (width*factor, height*factor)
         self.window.SetSize(*render_size)
-        self._sync_camera()
+        self._sync_camera(projection, affine)
 
         # Lines and point sprites use framebuffer pixels. Scale them for the
         # high-resolution pass and restore their VTK properties afterwards.
@@ -314,6 +303,7 @@ class VtkAxes(Axes3D):
             image = Image.frombuffer("RGBa", render_size, rgba, "raw", "RGBa", 0, 1)
             if factor > 1:
                 image = image.reduce(factor)
+            self._viewport_extent = image.getbbox() or (0, 0, 0, 0)
             # Matplotlib's Agg renderer requires a writable pixel buffer.
             return np.array(image.convert("RGBA"))
         finally:
@@ -326,11 +316,13 @@ class VtkAxes(Axes3D):
     def pixels(self, width, height):
         if self._limits_dirty:
             self.fit()
-        key = self._frame_key(width, height)
+        projection = self.get_proj()
+        affine = self.transData.get_affine().get_matrix()
+        key = self._frame_key(width, height, projection, affine)
         if key == self._viewport_key:
             return self._viewport_frame
-        self._viewport_frame = self._render_frame(width, height, self._antialiasing)
-        self._viewport_key = self._frame_key(width, height)
+        self._viewport_frame = self._render_frame(width, height, self._antialiasing, projection, affine)
+        self._viewport_key = self._frame_key(width, height, projection, affine)
         return self._viewport_frame
 
     def _close(self, event=None):
@@ -338,20 +330,12 @@ class VtkAxes(Axes3D):
         self._pixel_buffer.Initialize()
         self._viewport_key = None
         self._viewport_frame = None
+        self._viewport_extent = None
 
     def remove(self):
         self.figure.canvas.mpl_disconnect(self._close_id)
         self._close()
         super().remove()
-
-    def _add_plot(self, fn, *args, **kwargs):
-        # Axes methods follow Matplotlib's additive semantics.
-        holding = self.holding
-        self.holding = True
-        try:
-            return fn(self,*args,**kwargs)
-        finally:
-            self.holding = holding
 
     def get_legend_handles_labels(self, legend_handler_map=None):
         from matplotlib.lines import Line2D
@@ -360,11 +344,12 @@ class VtkAxes(Axes3D):
             label = h.get_label()
             if not label or label.startswith("_"):
                 continue
-            color = h.constant_color if h.constant_color is not None else h.get_cmap()(.5)
-            prop = h.actor.GetProperty()
-            is_point = bool(h.data.GetNumberOfVerts())
-            handles.append(Line2D([],[],color=color,alpha=prop.GetOpacity(),
-                                  linewidth=prop.GetLineWidth(),label=label,
+            color = getattr(h, "constant_color", None)
+            color = h.get_cmap()(.5) if color is None else color
+            prop = h.actor.GetProperty() if h.actor.IsA("vtkActor") else None
+            is_point = prop is not None and bool(h.data.GetNumberOfVerts())
+            handles.append(Line2D([],[],color=color,alpha=prop.GetOpacity() if prop else 1.,
+                                  linewidth=prop.GetLineWidth() if prop else 1.,label=label,
                                   marker="o" if is_point else None,
                                   linestyle="none" if is_point else "-"))
             labels.append(label)
@@ -375,92 +360,149 @@ class VtkAxes(Axes3D):
             args = self.get_legend_handles_labels(kwargs.get("handler_map"))
         return super().legend(*args, **kwargs)
 
-    @staticmethod
-    def _sample_grid(X, Y, Z, rcount, ccount, rstride, cstride):
-        from ._geometry import numeric
-        xyz = np.broadcast_arrays(*map(numeric, (X,Y,Z)))
-        if xyz[0].ndim != 2:
-            raise ValueError("surface arrays must be two-dimensional")
-        cuts = []
-        for n,count,stride in zip(xyz[0].shape,(rcount,ccount),(rstride,cstride)):
-            if count is not None and stride is not None:
-                raise ValueError("choose a count or stride per dimension")
-            if any(v is not None and (int(v) != v or v <= 0) for v in (count,stride)):
-                raise ValueError("sample counts and strides must be positive integers")
-            step = int(stride or (np.ceil(n/count) if count else 1))
-            cuts.append(np.unique(np.r_[np.arange(0,n,step),n-1]))
-        return xyz, np.ix_(*cuts)
-
-    def plot_surface(self, X, Y, Z, *, rcount=None, ccount=None, rstride=None,
-                     cstride=None, facecolors=None, shade=None, **kwargs):
-        from .surfaces import surf
-        xyz, index = self._sample_grid(X,Y,Z,rcount,ccount,rstride,cstride)
-        args = [a[index] for a in xyz]
+    def plot_surface(self, x, y, z, *, values=None, rcount=None, ccount=None,
+                     rstride=None, cstride=None, facecolors=None, shade=None, **style):
+        """Draw a surface from coordinate vectors or matching grids."""
+        xyz = surface_arrays(x, y, z)
         if facecolors is not None:
-            args.append(np.asarray(facecolors)[index])
-        cmap = kwargs.pop("cmap", None)
-        if cmap is not None:
-            kwargs["cmap"] = cmap
-        elif facecolors is None and "facecolor" not in kwargs and kwargs.get("color") is None:
-            kwargs["color"] = self._get_lines.get_next_color()
-        kwargs.setdefault("lighting", shade if shade is not None else cmap is None)
-        return self._add_plot(surf,*args,**{"facecolor":"interp","edgecolor":"none",**kwargs})
+            if values is not None:
+                raise TypeError("supply either values or facecolors")
+            values = facecolors
+        if values is not None:
+            values = np.asanyarray(values)
+            if values.shape not in (xyz[2].shape, xyz[2].shape + (3,), xyz[2].shape + (4,)):
+                raise ValueError("values must match the surface grid with optional RGB(A) channels")
+        if any(option is not None for option in (rcount, ccount, rstride, cstride)):
+            sample = self._grid_indices(xyz[2].shape, (rcount, ccount), (rstride, cstride))
+            xyz = tuple(axis[sample] for axis in xyz)
+            if values is not None:
+                values = values[sample]
+        if values is None and all(style.get(k) is None for k in ("cmap", "norm", "color", "facecolor")):
+            style["color"] = self._get_lines.get_next_color()
+        style.setdefault("lighting", shade if shade is not None else style.get("cmap") is None and values is None)
+        return surfaces._surface(self, *xyz, values, style)
 
-    def plot_wireframe(self,X,Y,Z,*,rcount=None,ccount=None,rstride=None,cstride=None,**kwargs):
-        from .surfaces import mesh
-        xyz, index = self._sample_grid(X,Y,Z,rcount,ccount,rstride,cstride)
-        return self._add_plot(mesh,*(a[index] for a in xyz),**kwargs)
+    @staticmethod
+    def _grid_indices(shape, counts, strides):
+        cuts = []
+        for size, count, stride in zip(shape, counts, strides):
+            if count is not None and stride is not None:
+                raise ValueError("choose a count or stride per axis")
+            if count is not None:
+                count = index(count)
+                if count < 2:
+                    raise ValueError("sample counts must be at least two")
+                indices = np.linspace(0, size - 1, min(count, size), dtype=np.intp)
+            else:
+                step = 1 if stride is None else index(stride)
+                if step < 1:
+                    raise ValueError("sample strides must be positive")
+                indices = np.arange(0, size, step)
+                if indices[-1] != size - 1:
+                    indices = np.r_[indices, size - 1]
+            cuts.append(indices)
+        return np.ix_(*cuts)
 
-    def plot(self,xs,ys,*args,zs=0,zdir="z",**kwargs):
-        from .charts import plot3
-        if args and not isinstance(args[0],str):
-            zs,args = args[0],args[1:]
-        x,y,z = self._oriented(xs,ys,zs,zdir)
-        result = self._add_plot(plot3,x,y,z,*args,**kwargs)
-        return result if isinstance(result,list) else [result]
+    def plot_wireframe(self, x, y, z, *, rcount=None, ccount=None, rstride=None, cstride=None, **style):
+        """Draw grid lines, optionally downsampling rows and columns."""
+        xyz = surface_arrays(x, y, z)
+        if any(option is not None for option in (rcount, ccount, rstride, cstride)):
+            sample = self._grid_indices(xyz[2].shape, (rcount, ccount), (rstride, cstride))
+            xyz = tuple(axis[sample] for axis in xyz)
+        if "color" not in style and "cmap" not in style:
+            style["color"] = self._get_lines.get_next_color()
+        style["wireframe"] = True
+        self.renderer.UseHiddenLineRemovalOn()
+        return surfaces._surface(self, *xyz, None, style)
+
+    def plot(self, x, y, z=0, *, zdir="z", color=None, linestyle="-", marker=None, markersize=6, **style):
+        """Draw one or more lines from coordinate arrays."""
+        return charts._line(self, *self._oriented(x, y, z, zdir), color=color, linestyle=linestyle,
+                            marker=marker, markersize=markersize, **style)
+
     plot3D = plot
 
     @staticmethod
-    def _oriented(x,y,z,direction):
-        return {"z":(x,y,z),"x":(z,x,y),"y":(x,z,y)}[direction]
+    def _oriented(x, y, z, direction):
+        return {"z": (x, y, z), "x": (z, x, y), "y": (x, z, y)}[direction]
 
-    def scatter(self,xs,ys,zs=0,zdir="z",s=20,c=None,**kwargs):
-        from .charts import scatter3
-        return self._add_plot(scatter3,*self._oriented(xs,ys,zs,zdir),s,c,**kwargs)
+    def scatter(self, x, y, z=0, *, s=20, c=None, zdir="z", marker="o", filled=True, **style):
+        """Draw 3-D markers with area s and an optional color or scalar array c."""
+        return charts._scatter(self, *self._oriented(x, y, z, zdir), s=s, c=c, marker=marker,
+                               filled=filled, **style)
+
     scatter3D = scatter
 
-    def plot_trisurf(self,*args,**kwargs):
-        from matplotlib.tri import Triangulation
-        from .surfaces import trisurf
-        tri,args,kwargs = Triangulation.get_from_args_and_kwargs(*args,**kwargs)
-        z = args[0] if args else kwargs.pop("Z")
-        return self._add_plot(trisurf,tri.get_masked_triangles(),tri.x,tri.y,z,
-                              **{"edgecolor":"none",**kwargs})
+    def plot_trisurf(self, x, y=None, z=None, *, triangles=None, values=None,
+                     association="point", shade=None, **style):
+        """Draw a triangulation of x and y at heights z, with optional scalar values."""
+        if isinstance(x, Triangulation):
+            if triangles is not None or (y is not None and z is not None):
+                raise TypeError("supply a Triangulation and one height array")
+            triangulation, z = x, z if y is None else y
+        else:
+            triangulation = Triangulation(x, y, triangles)
+        z = np.asarray(z)
+        if z.shape != triangulation.x.shape:
+            raise ValueError("z must have one height per triangulation vertex")
+        faces = triangulation.get_masked_triangles()
+        if values is None and style.get("cmap") is not None:
+            values = z[faces].mean(axis=1) if association == "cell" else z
+        style.setdefault("lighting", shade if shade is not None else style.get("cmap") is None)
+        return self.plot_mesh(np.column_stack((triangulation.x, triangulation.y, z)), faces,
+                              values=values, association=association, **style)
 
-    def quiver(self,x,y,z,u,v,w,*,length=1.,normalize=False,**kwargs):
-        from .vectors import quiver3
-        vec = np.array(np.broadcast_arrays(u,v,w),dtype=float)
-        if normalize:
-            vec /= np.maximum(np.linalg.norm(vec,axis=0),1e-30)
-        return self._add_plot(quiver3,x,y,z,*(vec*length),0,**kwargs)
+    def quiver(self, x, y, z, u, v, w, *, length=1., normalize=False, arrow_length_ratio=.2,
+               show_heads=True, **style):
+        """Draw vectors with proportional or normalized lengths."""
+        return vectors._quiver(self, x, y, z, u, v, w, length=length, normalize=normalize,
+                                arrow_length_ratio=arrow_length_ratio, show_heads=show_heads, **style)
+
     quiver3D = quiver
 
-    def contour(self,*args,**kwargs):
-        from .surfaces import contour3
-        return self._add_plot(contour3,*args,**kwargs)
+    def contour(self, x, y, z, *, levels=10, offset=None, **style):
+        """Draw contours on a height grid or project them to offset along z."""
+        return surfaces._contour(self, *surface_arrays(x, y, z), levels=levels, offset=offset, **style)
+
     contour3D = contour
 
-    def bar3d(self,x,y,z,dx,dy,dz,**kwargs):
-        from .charts import _bars
-        x,y,z,dx,dy,dz = np.broadcast_arrays(x,y,z,dx,dy,dz)
-        handle = _bars(self,x+dx/2,y+dy/2,z,z+dz,dx,dy,False,kwargs)
-        self.fit()
-        return handle
+    def bar3d(self, x, y, z, dx, dy, dz, *, shade=True, **style):
+        """Draw bars from base coordinates and their widths, depths and heights."""
+        x, y, z, dx, dy, dz = np.broadcast_arrays(x, y, z, dx, dy, dz)
+        style.setdefault("lighting", shade)
+        return charts._bars(self, x + dx/2, y + dy/2, z, z + dz, dx, dy, style)
 
-    def stem(self,x,y,z,*,bottom=0,**kwargs):
-        from .charts import stem3
-        return self._add_plot(stem3,x,y,z,baseline=bottom,**kwargs)
-    stem3D = stem
+    def stem(self, x, y, z, *, bottom=0, marker="o", markersize=6, **style):
+        """Draw stems between a constant baseline and the supplied points."""
+        return charts._stem(self, x, y, z, bottom=bottom, marker=marker, markersize=markersize, **style)
+
+    def add_light(self, position, *, focal_point=(0., 0., 0.), color="white", positional=False):
+        """Add a directional or positional VTK light in world coordinates."""
+        source = vtk.vtkLight()
+        source.SetLightTypeToSceneLight()
+        source.SetPosition(*position)
+        source.SetFocalPoint(*focal_point)
+        source.SetColor(to_rgb(color))
+        source.SetPositional(positional)
+        self.renderer.AddLight(source)
+        self.stale = True
+        return source
+
+    plot_mesh = surfaces.plot_mesh
+    plot_isosurface = volumes.plot_isosurface
+    plot_volume_slices = volumes.plot_volume_slices
+    plot_slice_contours = volumes.plot_slice_contours
+    plot_volume = spatial.plot_volume
+    plot_point_cloud = spatial.plot_point_cloud
+    plot_coordinate_frames = spatial.plot_coordinate_frames
+    plot_alpha_shape = spatial.plot_alpha_shape
+    plot_vector_samples = vectors.plot_vector_samples
+    plot_streamlines = vectors.plot_streamlines
+    plot_streamtubes = vectors.plot_streamtubes
+    plot_streamribbons = vectors.plot_streamribbons
+    plot_graph = graphs.plot_graph
+    plot_image_plane = planes.plot_image_plane
+    add_streaming_line = charts.add_streaming_line
 
     def add_collection3d(self, *args, **kwargs):
         raise NotImplementedError("Use the VTK plotting methods to add three-dimensional geometry.")
