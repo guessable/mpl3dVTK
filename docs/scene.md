@@ -131,6 +131,8 @@ ax.set_aspect(aspect, adjustable=None)
 
 Use `"auto"` for the display box's usual proportions or `"equal"` to give one data unit the same length on every axis. The modes `"equalxy"`, `"equalxz"`, and `"equalyz"` match units on two axes. Matplotlib adjusts the box by default. Pass `adjustable="datalim"` to adjust the data limits instead.
 
+Equal scaling is reapplied when the VTK scene automatically fits new or updated geometry. An explicit call to `set_box_aspect()` takes precedence during subsequent fits.
+
 ```python
 fig, (auto, equal) = new_scene(2)
 for ax in (auto, equal):

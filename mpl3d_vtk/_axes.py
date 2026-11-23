@@ -108,6 +108,7 @@ class VtkAxes(Axes3D):
         kwargs.setdefault("proj_type", "persp" if focal_length is not None
                           and np.isfinite(focal_length) else "ortho")
         self._antialiasing = _sampling_factor(antialiasing)
+        self._fit_aspect = False
         super().__init__(*args, **kwargs)
         apply_axes_style(self)
         self.renderer = vtk.vtkRenderer()
@@ -147,6 +148,16 @@ class VtkAxes(Axes3D):
         self._antialiasing = _sampling_factor(factor)
         self.stale = True
 
+    def set_aspect(self, aspect, adjustable=None, *args, **kwargs):
+        """Set the data aspect and preserve equal scaling when fitting the scene."""
+        super().set_aspect(aspect, adjustable, *args, **kwargs)
+        self._fit_aspect = aspect != "auto"
+
+    def set_box_aspect(self, aspect, *, zoom=1):
+        """Set the display-box proportions and zoom explicitly."""
+        super().set_box_aspect(aspect, zoom=zoom)
+        self._fit_aspect = False
+
     def clear_scene(self):
         """Remove VTK plots while keeping axes settings and Matplotlib artists."""
         for handle in self.handles.copy():
@@ -169,6 +180,8 @@ class VtkAxes(Axes3D):
                 data = np.asarray(records).reshape(-1,3,2)
                 bounds = np.stack((data[:,:,0].min(axis=0),data[:,:,1].max(axis=0)),axis=1)
                 self.auto_scale_xyz(*bounds, had_data=False)
+                if self._fit_aspect:
+                    self.set_aspect(self.get_aspect(), self.get_adjustable())
         self._limits_dirty = False
 
     def draw(self, renderer):

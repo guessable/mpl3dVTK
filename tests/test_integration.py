@@ -81,6 +81,32 @@ def test_axes_defaults_and_explicit_controls():
     assert explicit_equal.get_aspect() == "equal"
 
 
+@pytest.mark.parametrize("set_aspect_before_plot", [False, True])
+@pytest.mark.parametrize("adjustable", ["box", "datalim"])
+def test_equal_aspect_tracks_vtk_autoscaling(set_aspect_before_plot, adjustable):
+    fig, ax = _figure()
+    if set_aspect_before_plot:
+        ax.set_aspect("equal", adjustable=adjustable)
+    x, y = [0, 4], [0, 2]
+    heights = np.array([[0., 1.], [0., 1.]])
+    surface = ax.plot_surface(x, y, heights)
+    if not set_aspect_before_plot:
+        ax.set_aspect("equal", adjustable=adjustable)
+
+    for scale in (1, 8):
+        surface.set_heights(heights * scale)
+        fig.canvas.draw()
+        spans = np.ptp(np.reshape(ax.get_w_lims(), (3, 2)), axis=1)
+        data_scale = ax.get_box_aspect() / spans
+        np.testing.assert_allclose(data_scale, data_scale[0])
+
+    ax.set_box_aspect((1, 1, 2))
+    surface.set_heights(heights)
+    fig.canvas.draw()
+    box = ax.get_box_aspect()
+    np.testing.assert_allclose(box / box[0], (1, 1, 2))
+
+
 def test_matplotlib_defaults_supply_colormap_and_color_cycle():
     style = {"image.cmap": "inferno", "axes.facecolor": "gray",
              "axes.prop_cycle": matplotlib.cycler(color=["red", "green"])}
