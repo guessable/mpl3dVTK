@@ -20,7 +20,7 @@ DOCS = ROOT / "docs"
 SOURCES = ROOT / "examples/reference"
 RANDOM_IMAGE = "gallery/random_isosurface.png"
 RANDOM_SOURCE = ROOT / "examples/random_isosurface.py"
-DATA_DIR = ROOT.parent / "my-mpl-style/data"
+DATA_DIR = ROOT / "data"
 PAGES = ("api.md", "function_reference.md", "scene.md")
 MESH_EXAMPLES = ("plot_trisurf", "plot_mesh")
 CODE_BLOCK = re.compile(r"^\x60\x60\x60python\n(.*?)^\x60\x60\x60$", re.MULTILINE | re.DOTALL)
@@ -160,7 +160,7 @@ import mpl3d_vtk'''
     parser.add_argument("output", nargs="?", type=Path, default=Path("{example.name}.png"))'''
     if dataset:
         cli += f'''
-    parser.add_argument("--data-dir", type=Path, default=Path("../my-mpl-style/data"))
+    parser.add_argument("--data-dir", type=Path, default=Path(__file__).resolve().parents[2] / "data")
     args = parser.parse_args()
     if not (args.data_dir / "{dataset}").is_file():
         parser.error(f"Use --data-dir to locate {dataset}. File not found in {{args.data_dir}}.")
@@ -171,8 +171,13 @@ import mpl3d_vtk'''
 
 
 def write_gallery(examples):
+    def figure_links(reference, source):
+        return f"[Documentation]({reference}) · [Source code]({source})"
+
     by_name = {example.name: example for example in examples}
     random = by_name["random_isosurface"]
+    random_reference = f"{random.page}#{slug(random.title)}"
+    turing_reference = "function_reference.md#mesh-color-interpolation"
     groups = {"Isosurfaces and triangle meshes": [by_name[name] for name in MESH_EXAMPLES]}
     for example in examples:
         if example.name not in MESH_EXAMPLES and example is not random:
@@ -180,7 +185,7 @@ def write_gallery(examples):
 
     page = [
         "# Gallery", "",
-        "Click a figure to open its API reference. The link below it opens its own runnable Python script.",
+        "Each figure links to its documentation and has a runnable Python script.",
         "",
         "- **Plot data** · [Isosurfaces and triangle meshes](#isosurfaces-and-triangle-meshes) · [Surfaces](#surfaces-and-contours) · [Charts](#lines-points-and-charts) · [Scalar fields](#meshes-and-scalar-fields) · [Vector fields](#vector-fields-and-streamlines) · [Spatial geometry](#point-clouds-and-other-geometry) · [Matplotlib aliases](#matplotlib-aliases)",
         "- **Manage the scene** · [Axes](#axes-controls) · [Streaming lines and lights](#streaming-lines-and-lights) · [Matplotlib controls](#matplotlib-controls) · [Renderer integration](#renderer-integration)",
@@ -193,7 +198,7 @@ def write_gallery(examples):
         if featured:
             page.extend([
                 "The triangle mesh figures use the original cheese and peanut datasets.",
-                "[Get the upstream data](examples.md#upstream-data) · [Compare with mplot3d](../benchmarks/results/my_mpl_style/README.md)", "",
+                "[Example datasets](../data/README.md) · [Compare with mplot3d](../benchmarks/results/my_mpl_style/README.md)", "",
             ])
         page.extend(["|" + " |" * columns, "|" + " :---: |" * columns])
         for offset in range(0, len(entries), columns):
@@ -201,7 +206,7 @@ def write_gallery(examples):
             for entry in entries[offset:offset+columns]:
                 href = f"{entry.page}#{slug(entry.title)}"
                 alt = f"{entry.title}. {entry.alt}".replace("|", r"\|")
-                cells.append(f"[![{alt}]({entry.image})]({href})<br>[Source code]({entry.source_href})")
+                cells.append(f"[![{alt}]({entry.image})]({href})<br>{figure_links(href, entry.source_href)}")
             cells.extend([""] * (columns - len(cells)))
             page.append("| " + " | ".join(cells) + " |")
         if featured:
@@ -209,14 +214,19 @@ def write_gallery(examples):
                 "", "### Random isosurface", "",
                 "The zero level of a 19 × 19 × 19 field of uniform random samples in [−1, 1], with seed 42. Colors show vertex height.",
                 "",
-                f"[![{random.title}. {random.alt}]({random.image})]({random.page}#{slug(random.title)})",
+                f"[![{random.title}. {random.alt}]({random.image})]({random_reference})",
                 "",
-                f"[Source code]({random.source_href})",
+                figure_links(random_reference, random.source_href),
             ])
     page.extend([
         "", "## More examples", "",
         "- [Three intersecting planes](examples.md#three-intersecting-planes)",
         "- [Run the examples or regenerate these figures](examples.md#regenerate-the-reference-figures)",
+        "",
+        "### Turing patterns", "",
+        f"[![plot_mesh. Turing patterns with face averages and interpolated vertex colors](gallery/turing-pattern-comparison.png)]({turing_reference})",
+        "",
+        figure_links(turing_reference, "../examples/plot_turing_pattern.py"),
     ])
     (DOCS / "plot_catalog.md").write_text("\n".join(page) + "\n", encoding="utf-8")
 
@@ -237,7 +247,7 @@ def main(destination, data_dir):
     datasets = {example.dataset for example in generated if example.dataset}
     missing = sorted(name for name in datasets if not (data_dir / name).is_file())
     if missing:
-        raise SystemExit(f"Use --data-dir to point to my-mpl-style/data. Missing in {data_dir}: {', '.join(missing)}")
+        raise SystemExit(f"Use --data-dir to locate the example datasets. Missing in {data_dir}: {', '.join(missing)}")
     SOURCES.mkdir(parents=True, exist_ok=True)
     destination.mkdir(parents=True, exist_ok=True)
     for example in generated:

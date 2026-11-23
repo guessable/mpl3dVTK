@@ -47,5 +47,6 @@ Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.
 
 - [Gallery](https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
 - [Examples and export](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md) · Run a complete script or save a figure.
+- [Example datasets](https://github.com/guessable/mpl3dVTK/blob/main/data/README.md) · Load triangle meshes and Turing fields from NumPy archives.
 - API reference · [Plotting](https://github.com/guessable/mpl3dVTK/blob/main/docs/api.md), [VTK geometry](https://github.com/guessable/mpl3dVTK/blob/main/docs/function_reference.md), and [Scene and handles](https://github.com/guessable/mpl3dVTK/blob/main/docs/scene.md).
 - [Benchmarks](https://github.com/guessable/mpl3dVTK/blob/main/benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.

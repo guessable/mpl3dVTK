@@ -12,6 +12,7 @@ Use these controls to manage a plotted scene and edit its existing geometry. For
 | Change the view, axes, or color mapping | [Matplotlib controls](#matplotlib-controls) |
 | Edit a volume, an image, or a streaming line | [Specialized handles](#specialized-handles) |
 | Integrate with the Matplotlib renderer | [Renderer integration](#renderer-integration) |
+| Set several properties at once | [Axes property keywords](#axes-property-keywords), [Handle property keywords](#handle-property-keywords) |
 
 ## Run the examples
 
@@ -49,7 +50,73 @@ def sample(ax, **style):
 fig.add_subplot(..., projection="vtk3d", antialiasing=2)
 ```
 
-Create a Matplotlib subplot that renders geometry with VTK. The default camera is orthographic at elevation 30° and azimuth −127.5°. The default `aspect="auto"` uses the normal Matplotlib box proportions. Pass `antialiasing` from 1 to 4.
+Create a Matplotlib 3D subplot that renders geometry with VTK. Use `fig.add_subplot(..., projection="vtk3d")` or `plt.subplots(subplot_kw={"projection": "vtk3d"})`.
+
+**Parameters**
+
+- **`fig`** (Matplotlib `Figure`, required for direct construction)
+
+  Parent figure. Subplot factories supply it.
+
+- **`rect`** (four floats or `None`, default `None`)
+
+  Axes rectangle `(left, bottom, width, height)` in figure fractions for direct construction. Subplot factories position the axes via the subplot specification.
+
+- **`antialiasing`** (int, default `2`)
+
+  VTK supersampling factor per output dimension, from 1 to 4.
+
+- **`elev`** (float, default `30`)
+
+  Camera elevation in degrees.
+
+- **`azim`** (float, default `-127.5`)
+
+  Camera azimuth in degrees.
+
+- **`roll`** (float, default `0`)
+
+  Camera roll in degrees about the viewing direction.
+
+- **`shareview`** (`Axes3D` or `None`, default `None`)
+
+  Share view angles with another 3D axes.
+
+- **`sharez`** (`Axes3D` or `None`, default `None`)
+
+  Share Z-axis limits and scale with another 3D axes.
+
+- **`proj_type`** (str, default `"ortho"`)
+
+  Use `"ortho"` or `"persp"`. If omitted with a finite `focal_length`, defaults to `"persp"`.
+
+- **`focal_length`** (float or `None`, default `None`)
+
+  Camera focal length, as described under [`set_proj_type`](#set_proj_type).
+
+- **`aspect`** (str, default `"auto"`)
+
+  Data aspect mode, as described under [`set_aspect`](#set_aspect).
+
+- **`box_aspect`** (three floats or `None`, default `None`)
+
+  Display lengths ratio of the three box axes. `None` uses Matplotlib's default `4:4:3`.
+
+- **`computed_zorder`** (bool, default `True`)
+
+  Controls Matplotlib's automatic ordering of its supported artists. VTK geometry shares VTK's depth buffer.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Additional Matplotlib axes options, such as `xlabel` or `facecolor`. See [`Axes3D`](https://matplotlib.org/stable/api/toolkits/mplot3d/axes3d.html).
+
+**Returns**
+
+- **`ax`** (`VtkAxes`)
+
+  The axes object returned by a Matplotlib subplot factory when using the `"vtk3d"` projection.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -67,7 +134,21 @@ ax.view_init(elev=24, azim=-60)
 ax.set(**properties)
 ```
 
-Set several axes properties in one Matplotlib call. Common keywords include `xlabel`, `ylabel`, `zlabel`, `title`, and axis limits.
+Set several axes properties with a single call.
+
+**Parameters**
+
+- __`**properties`__ (keyword arguments)
+
+  Each name selects its Matplotlib or VTK axes setter. See [axes property keywords](#axes-property-keywords) for valid names and their meanings.
+
+**Returns**
+
+- **`results`** (list)
+
+  The results from the selected setters.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -86,7 +167,15 @@ ax.set(xlabel="Longitude", ylabel="Latitude", zlabel="Elevation", title="Labeled
 ax.get_antialiasing()
 ```
 
-Return the current integer supersampling scale per image dimension.
+Get the current VTK supersampling factor.
+
+**Returns**
+
+- **`factor`** (int)
+
+  The current supersampling factor per output dimension.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -104,7 +193,27 @@ ax.set_title(f"{ax.get_antialiasing()}× supersampling")
 ax.set_antialiasing(factor)
 ```
 
-Set a supersampling scale from 1 to 4. A factor of 1 renders at the output dimensions. A factor of 2 renders at twice the width and height, then downsamples. This example enlarges both low-resolution viewport renders to expose the effect on edges.
+Set the supersampling factor for the VTK layer.
+
+**Parameters**
+
+- **`factor`** (int)
+
+  Factor from 1 to 4. At 1 the scene uses the output dimensions. At 2 the VTK raster doubles both dimensions before downsampling. Run-time and raster memory can increase at larger factors.
+
+**Returns**
+
+`None`
+
+**Raises**
+
+- **`ValueError`**
+
+  If `factor` is outside the integer range 1 through 4.
+
+**Examples**
+
+Compare enlarged viewport edges at two supersampling factors.
 
 ```python
 source, ax = new_scene()
@@ -126,12 +235,38 @@ for panel, factor in zip(panels, (1, 4)):
 ### `set_aspect`
 
 ```text
-ax.set_aspect(aspect, adjustable=None)
+ax.set_aspect(aspect, adjustable=None, anchor=None, share=False)
 ```
 
-Use `"auto"` for the display box's usual proportions or `"equal"` to give one data unit the same length on every axis. The modes `"equalxy"`, `"equalxz"`, and `"equalyz"` match units on two axes. Matplotlib adjusts the box by default. Pass `adjustable="datalim"` to adjust the data limits instead.
+Set the scale of data units.
 
-Equal scaling is reapplied when the VTK scene automatically fits new or updated geometry. An explicit call to `set_box_aspect()` takes precedence during subsequent fits.
+**Parameters**
+
+- **`aspect`** (str)
+
+  `"auto"` uses automatic proportions. `"equal"` gives the same display length to one data unit on every axis. `"equalxy"`, `"equalxz"`, and `"equalyz"` apply this to the named pair of axes.
+
+- **`adjustable`** (str or `None`, default `None`)
+
+  `"box"` changes display box proportions. `"datalim"` adjusts the coordinate limits. `None` uses Matplotlib's default `"box"`.
+
+- **`anchor`** (deprecated, default `None`)
+
+  Legacy Matplotlib compatibility argument with no effect on this 3D method.
+
+- **`share`** (deprecated, default `False`)
+
+  Legacy Matplotlib compatibility argument with no effect on this 3D method.
+
+**Returns**
+
+`None`
+
+**Notes**
+
+Equal modes are reapplied when VTK fits new or updated geometry. An explicit call to `set_box_aspect()` takes precedence during subsequent fits.
+
+**Examples**
 
 ```python
 fig, (auto, equal) = new_scene(2)
@@ -153,7 +288,23 @@ equal.set_title("Equal length per data unit")
 ax.set_box_aspect(aspect, *, zoom=1)
 ```
 
-Set the display box's three axis ratios and its zoom. The input coordinates are unchanged. Pass `None` for Matplotlib's default box ratios.
+Set the display box's proportions independently of the data coordinates.
+
+**Parameters**
+
+- **`aspect`** (three floats or `None`)
+
+  Relative display lengths along X, Y, and Z. `None` restores Matplotlib's default `4:4:3`.
+
+- **`zoom`** (float, default `1`)
+
+  Positive multiplier for the overall size of the axes box.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (auto, fixed) = new_scene(2)
@@ -174,7 +325,17 @@ fixed.set_title("Taller Z axis")
 ax.fit()
 ```
 
-Update data bounds from the VTK geometry and apply enabled autoscaling. A normal draw runs this after geometry changes. Call fit explicitly when you need the updated limits before drawing.
+Update data bounds from the VTK geometry and apply enabled autoscaling.
+
+**Returns**
+
+`None`
+
+**Notes**
+
+A normal draw fits the scene after geometry changes. Call `fit()` explicitly when you need the current limits before drawing.
+
+**Examples**
 
 ```python
 fig, (fixed, fitted) = new_scene(2)
@@ -199,6 +360,12 @@ ax.clear_scene()
 
 Remove VTK plots and their dependent artists. Retain axes settings and independently added Matplotlib artists.
 
+**Returns**
+
+`None`
+
+**Examples**
+
 ```python
 fig, (before, after) = new_scene(2)
 for ax in (before, after):
@@ -222,6 +389,12 @@ ax.clear()
 
 Reset the axes and reapply the vtk3d style. The subplot stays in its figure, ready for another plot.
 
+**Returns**
+
+`None`
+
+**Examples**
+
 ```python
 fig, (before, after) = new_scene(2)
 for ax in (before, after):
@@ -243,6 +416,12 @@ ax.remove()
 
 Remove the subplot from its figure and release the VTK window. This is useful after saving an offscreen figure.
 
+**Returns**
+
+`None`
+
+**Examples**
+
 ```python
 fig, (keep, discard) = new_scene(2)
 sample(keep, color="tab:blue")
@@ -258,10 +437,28 @@ keep.set_title("Remaining subplot")
 ### `get_legend_handles_labels`
 
 ```text
-ax.get_legend_handles_labels()
+ax.get_legend_handles_labels(legend_handler_map=None)
 ```
 
-Return a pair of lists containing Matplotlib proxy handles and their labels. Use the result when selecting or reordering legend entries.
+Get the entries available for a legend.
+
+**Parameters**
+
+- **`legend_handler_map`** (mapping or `None`, default `None`)
+
+  Optional Matplotlib legend handlers for native artists. Mapping keys can be artist instances or types, with handlers as values.
+
+**Returns**
+
+- **`handles`** (list of Matplotlib artists)
+
+  Handles eligible for a legend, including proxies for VTK plots.
+
+- **`labels`** (list of str)
+
+  Labels in the same order as `handles`.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -281,7 +478,25 @@ ax.legend(handles[::-1], labels[::-1], loc="upper left")
 ax.legend(*args, **kwargs)
 ```
 
-Create a Matplotlib legend from labeled plots. Pass explicit handles and labels to choose specific entries. The method returns a Matplotlib Legend.
+Draw a Matplotlib legend for the axes, including proxies for VTK plots.
+
+**Parameters**
+
+- __`*args`__ (optional positional arguments)
+
+  Use no arguments for automatic labeled entries, or give explicit `handles` and `labels` to choose or reorder entries.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Matplotlib legend options such as `handles`, `labels`, `loc`, `title`, `fontsize`, and `ncols`. See [`Axes.legend`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.legend.html).
+
+**Returns**
+
+- **`legend`** (`matplotlib.legend.Legend`)
+
+  The legend attached to the axes.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -300,7 +515,25 @@ ax.legend(loc="upper left")
 ax.pixels(width, height)
 ```
 
-Render the current VTK viewport to a uint8 RGBA array of shape `(height, width, 4)`. The first row is the bottom of the viewport. Copy the result before editing a cached frame.
+Render the VTK viewport into an RGBA image. Matplotlib ticks, labels, and other overlays are drawn by the full figure canvas.
+
+**Parameters**
+
+- **`width`** (int)
+
+  Output width in pixels.
+
+- **`height`** (int)
+
+  Output height in pixels.
+
+**Returns**
+
+- **`rgba`** (ndarray of uint8)
+
+  Image of shape `(height, width, 4)` whose first row is the bottom of the viewport. Copy it before editing a cached frame.
+
+**Examples**
 
 ```python
 source, ax = new_scene()
@@ -329,7 +562,25 @@ preview.set(title=f"RGBA snapshot: {rgba.shape[1]} × {rgba.shape[0]} pixels",
 ax.add_streaming_line(*, max_points=None, **style)
 ```
 
-Create an initially empty Graphic that accepts incremental updates. A positive max_points retains the latest points. With no limit, the handle retains the full history. Pending updates are combined on the next draw.
+Create a line that accepts incremental updates. Pending points are combined on the next draw.
+
+**Parameters**
+
+- **`max_points`** (int or `None`, default `None`)
+
+  Positive capacity for the latest points. `None` keeps the full history.
+
+- __`**style`__ (keyword arguments)
+
+  See [common style options](api.md#common-style-options). The default line color comes from the axes cycle.
+
+**Returns**
+
+- **`line`** ([`StreamingLine`](#streaming-lines-and-lights))
+
+  The streaming artist, with `append()`, `get_points()`, and `clear_points()`.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -348,7 +599,27 @@ ax.set_title("Latest 31 points")
 line.append(x, y, z=0)
 ```
 
-Queue broadcastable XYZ coordinates on a streaming line. The visible path updates on the next draw.
+Queue coordinates on a streaming line. A draw or `get_points()` applies the pending records.
+
+**Parameters**
+
+- **`x`** (scalar or `array_like`)
+
+  X coordinates of new points.
+
+- **`y`** (scalar or `array_like`)
+
+  Y coordinates. Inputs must broadcast to a common shape.
+
+- **`z`** (scalar or `array_like`, default `0`)
+
+  Z coordinates. A scalar broadcasts across all new points.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -370,7 +641,15 @@ ax.legend(loc="upper left")
 line.get_points()
 ```
 
-Apply pending updates and return copies of the three coordinate arrays in X, Y, Z order.
+Read all points currently stored by the streaming line.
+
+**Returns**
+
+- **`x`, `y`, `z`** (tuple of ndarray)
+
+  Copies of the three coordinate arrays in XYZ order, after pending points are applied.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -392,6 +671,12 @@ line.clear_points()
 ```
 
 Discard the visible points and pending updates. The line handle keeps its style and accepts new points.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -415,7 +700,33 @@ after.set_title("Replacement points")
 ax.add_light(position, *, focal_point=(0., 0., 0.), color="white", positional=False)
 ```
 
-Add a light with a world-space position and focal point. Set positional=True for a point light. The method returns a vtkLight, whose intensity and other settings you can change. Set lighting on a plot to use the light.
+Add a VTK light in world coordinates. Set lighting on a plot to use the light.
+
+**Parameters**
+
+- **`position`** (three floats)
+
+  XYZ position of the light.
+
+- **`focal_point`** (three floats, default `(0., 0., 0.)`)
+
+  XYZ point the light is aimed at. The vector from position to focal point determines the direction.
+
+- **`color`** (Matplotlib color, default `"white"`)
+
+  Color of the illumination.
+
+- **`positional`** (bool, default `False`)
+
+  `False` uses a directional light. `True` uses a positional light.
+
+**Returns**
+
+- **`light`** (`vtkLight`)
+
+  The native VTK light. Set its intensity and other native properties through this object.
+
+**Examples**
 
 ```python
 fig, (left, right) = new_scene(2)
@@ -441,7 +752,53 @@ right.set_title("Directional light")
 mpl3d_vtk.Graphic(ax, data, values=None, *, association="point", mapper=None, **style)
 ```
 
-A Graphic is both a Matplotlib artist and scalar mappable. Plotting methods return these handles. You can also wrap an existing vtkPolyData directly. Bind values per point or per cell with association and pass a custom mapper when needed. Use the data, mapper, and actor attributes for VTK access. Call Modified() on VTK objects changed directly.
+A Matplotlib artist and scalar mappable that owns a VTK actor. Plotting methods typically construct it for you.
+
+**Parameters**
+
+- **`ax`** (`VtkAxes`)
+
+  Axes that receives the artist and its VTK actor.
+
+- **`data`** (`vtkPolyData`)
+
+  Geometry containing the points and cells.
+
+- **`values`** (`array_like` or `None`, default `None`)
+
+  Scalar or RGB(A) values indexed by `association`. Existing active point scalars are used if omitted with point association.
+
+- **`association`** (str, default `"point"`)
+
+  Index color values by vertices with `"point"` or by cells with `"cell"`. See [mesh color interpolation](function_reference.md#mesh-color-interpolation).
+
+- **`mapper`** (VTK mapper or `None`, default `None`)
+
+  Custom mapper that accepts `data`. The default is `vtkPolyDataMapper`.
+
+- __`**style`__ (keyword arguments)
+
+  All [common style options](api.md#common-style-options), whose defaults are listed there.
+
+**Attributes**
+
+- **`data`** (vtkPolyData)
+
+  Source geometry.
+
+- **`mapper`** (VTK mapper)
+
+  Maps the geometry and its associated values.
+
+- **`actor`** (vtkActor)
+
+  Renderable actor for this handle.
+
+**Notes**
+
+Call `Modified()` on any native VTK object that you change directly.
+
+**Examples**
 
 ```python
 import vtk
@@ -464,7 +821,15 @@ handle = mpl3d_vtk.Graphic(ax, sphere.GetOutput(), color="tab:blue", lighting=Tr
 handle.vertices
 ```
 
-Return a copy of the geometry's XYZ vertices as an (n, 3) array.
+Coordinates of the handle's geometry.
+
+**Returns**
+
+- **`vertices`** (ndarray)
+
+  Copy of the geometry's XYZ coordinates with shape `(n_vertices, 3)`.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -483,7 +848,15 @@ ax.legend(loc="upper left")
 handle.faces
 ```
 
-Return copies of the zero-based face indices. Equal-size faces use a 2D array. Mixed polygon sizes return a list of arrays.
+Connectivity of the polygon geometry.
+
+**Returns**
+
+- **`faces`** (ndarray or list of ndarray)
+
+  Copies of zero-based face indices. Equal-size faces use a 2D array, mixed polygon sizes use a list of rows.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -503,7 +876,15 @@ for number, face in enumerate(handle.faces):
 handle.get_array()
 ```
 
-Return the scalar array used as input to the handle's normalization.
+Get the scalar data associated with the mappable.
+
+**Returns**
+
+- **`values`** (array or `None`)
+
+  The scalar array passed to the normalization. Direct RGB(A) colors do not populate this array.
+
+**Examples**
 
 ```python
 fig, panels = plt.subplots(1, 2, figsize=(6.5, 3.1),
@@ -527,7 +908,15 @@ histogram.set(xlabel="Scalar value", ylabel="Count", title="Returned array")
 handle.get_cmap()
 ```
 
-Return the Matplotlib colormap used by the handle.
+Get the colormap associated with the handle.
+
+**Returns**
+
+- **`cmap`** (`matplotlib.colors.Colormap`)
+
+  The current colormap, including when the handle uses a fixed color.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -546,7 +935,15 @@ ax.set_title(f"Shared {first.get_cmap().name} colormap")
 handle.get_clim()
 ```
 
-Return the lower and upper bounds of the current scalar mapping.
+Get the active scalar color limits.
+
+**Returns**
+
+- **`vmin`, `vmax`** (tuple of float or `None`)
+
+  Current lower and upper mapping bounds. An uninitialized bound can be `None`.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -570,7 +967,27 @@ ax.set_title(f"Color limits: {limits[0]:.1f} to {limits[1]:.1f}")
 handle.set_heights(z)
 ```
 
-Update a gridded surface in place using the shape of the original grid. Finite-coordinate changes update face connectivity. Height-based colors follow the new data. Explicit color values keep their original association. Returns the same handle.
+Update Z coordinates in place on a gridded surface. Connectivity is adjusted when vertex validity changes. Colors originally derived from heights follow the new data.
+
+**Parameters**
+
+- **`z`** (2D array)
+
+  Replacement heights of exactly the same shape as the original rendered grid, after any row/column sampling.
+
+**Returns**
+
+- **`handle`** ([`Graphic`](#graphic))
+
+  The same handle, with updated coordinates.
+
+**Raises**
+
+- **`ValueError`**
+
+  If the handle is not a gridded surface or the replacement heights have the wrong shape.
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -592,7 +1009,27 @@ after.set_title("Inverted height")
 handle.set_values(values)
 ```
 
-Replace scalar or RGB(A) data for existing vertices or cells and return the handle. Pass None to clear scalar values on ordinary meshes. For image planes, pass new pixels of the same dimensions.
+Replace the color data on a geometry handle.
+
+**Parameters**
+
+- **`values`** (`array_like` or `None`)
+
+  One scalar or RGB(A) row per vertex or cell as selected at construction. Pass `None` to clear the color data of ordinary geometry. For textured planes, see [`ImageGraphic.set_values`](#imagegraphicset_values).
+
+**Returns**
+
+- **`handle`** ([`Graphic`](#graphic))
+
+  The same handle, with updated colors.
+
+**Raises**
+
+- **`ValueError`**
+
+  If the scalar or RGB(A) data does not match the handle's associated geometry.
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -613,7 +1050,25 @@ after.set_title("Colors from Y")
 handle.set_array(values)
 ```
 
-Set the Matplotlib scalar array used for normalization and colorbars. Use set_values for RGB(A) data.
+Set the Matplotlib scalar array used for normalization and colorbars.
+
+**Parameters**
+
+- **`values`** (`array_like` or `None`)
+
+  One scalar per vertex or cell according to the handle's association. `None` clears the scalar data. Use [`set_values`](#set_values) for RGB(A).
+
+**Returns**
+
+`None`
+
+**Raises**
+
+- **`ValueError`**
+
+  If the number of scalars does not match the associated vertices or cells.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -632,7 +1087,19 @@ fig.colorbar(handle, ax=ax, shrink=.65, label="X coordinate")
 handle.set_cmap(cmap)
 ```
 
-Replace the colormap while keeping geometry and scalar values. Attached colorbars update with the mappable.
+Replace the colormap and update any attached colorbars.
+
+**Parameters**
+
+- **`cmap`** (Matplotlib colormap, str, or `None`)
+
+  Colormap object, registered colormap name, or `None` for the Matplotlib default.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -650,10 +1117,26 @@ after.set_title("Plasma")
 ### `set_clim`
 
 ```text
-handle.set_clim(vmin, vmax)
+handle.set_clim(vmin=None, vmax=None)
 ```
 
-Set the lower and upper limits of the scalar color mapping. Attached colorbars track the new range.
+Change the scalar mapping limits and update attached colorbars.
+
+**Parameters**
+
+- **`vmin`** (float or `None`, default `None`)
+
+  New lower limit. `None` preserves the current lower limit. A two-element pair can supply both limits as the first argument.
+
+- **`vmax`** (float or `None`, default `None`)
+
+  New upper limit. `None` preserves the current upper limit.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -678,7 +1161,21 @@ after.set_title("Range −0.2 to 0.2")
 handle.set(**properties)
 ```
 
-Update several supported artist properties in one call. Each keyword uses the matching `set_*` method on the handle.
+Update several properties in one call.
+
+**Parameters**
+
+- __`**properties`__ (keyword arguments)
+
+  One keyword per supported `set_*` method. See [handle property keywords](#handle-property-keywords).
+
+**Returns**
+
+- **`results`** (list)
+
+  The results from the selected setters.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -697,7 +1194,19 @@ ax.set_title("Face, edges, width, and opacity")
 handle.set_color(color)
 ```
 
-Use a uniform Matplotlib color for the object. This takes precedence over scalar coloring.
+Give the geometry a fixed color.
+
+**Parameters**
+
+- **`color`** (Matplotlib color or `None`)
+
+  Uniform fill or line color. `None` clears the fixed color and allows mapped colors to show again.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -718,7 +1227,19 @@ after.set_title("Fixed orange color")
 handle.set_facecolor(color)
 ```
 
-Set the face color. Pass None to restore the underlying color choice of the handle.
+Set the face fill color.
+
+**Parameters**
+
+- **`color`** (Matplotlib color, `"none"`, or `None`)
+
+  Fill color that takes priority over mapped and fixed colors. `"none"` switches to wireframe rendering. `None` restores the handle's underlying color choice.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -739,7 +1260,19 @@ after.set_title("Orange faces")
 handle.set_edgecolor(color)
 ```
 
-Set the polygon edge color. Pass "none" to hide the edges.
+Set the polygon boundary color.
+
+**Parameters**
+
+- **`color`** (Matplotlib color, `"none"`, or `None`)
+
+  A color shows the polygon edges. `"none"` or `None` hides them.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -760,7 +1293,19 @@ after.set_title("Edges visible")
 handle.set_alpha(alpha)
 ```
 
-Set overall opacity between 0 and 1. Pass None to restore default opacity.
+Set overall actor opacity.
+
+**Parameters**
+
+- **`alpha`** (float or `None`)
+
+  A value from 0 to 1. `None` restores full actor opacity. Local vertex or face alpha can still vary.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -782,7 +1327,19 @@ after.set_title("Opacity 0.35")
 handle.set_visible(visible)
 ```
 
-Show or hide a Graphic and its dependent artists. The handle remains available for later updates.
+Control the visibility of a `Graphic` and its companion artists.
+
+**Parameters**
+
+- **`visible`** (bool)
+
+  `True` shows the handle and its dependents. `False` hides them while retaining the handle.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -804,7 +1361,19 @@ after.set_title("Surface hidden")
 handle.set_linewidth(width)
 ```
 
-Change the thickness of rendered lines using output pixel units.
+Change line or edge thickness.
+
+**Parameters**
+
+- **`width`** (float)
+
+  Nominal line width in output pixels.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -825,7 +1394,29 @@ after.set_title("5 px")
 handle.set_linestyle(style)
 ```
 
-Request a line pattern from "-", "--", ":", "-.", or "none". VTK backends can display line stippling differently. This example uses a Matplotlib legend proxy to show the requested pattern.
+Set the line stipple pattern.
+
+**Parameters**
+
+- **`style`** (str)
+
+  One of `"-"`, `"--"`, `":"`, `"-."`, or `"none"`.
+
+**Returns**
+
+`None`
+
+**Raises**
+
+- **`ValueError`**
+
+  If the line pattern is unsupported.
+
+**Notes**
+
+VTK line stipple support depends on the rendering backend. This example shows the requested style in a Matplotlib legend proxy.
+
+**Examples**
 
 ```python
 from matplotlib.lines import Line2D
@@ -848,7 +1439,25 @@ ax.legend(handles=[proxy], loc="upper left")
 handle.set_lighting(lighting)
 ```
 
-Enable or disable lighting, or choose "flat", "gouraud", or "phong" interpolation.
+Select how the actor responds to scene lights.
+
+**Parameters**
+
+- **`lighting`** (bool or str)
+
+  `False` disables lighting and `True` uses Phong lighting. Strings `"flat"`, `"gouraud"`, and `"phong"` select the interpolation mode. Smooth lighting needs point normals.
+
+**Returns**
+
+`None`
+
+**Raises**
+
+- **`ValueError`**
+
+  If the lighting interpolation name is unsupported.
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -871,6 +1480,12 @@ handle.remove()
 
 Remove the Graphic and its dependent artists while keeping the axes and other plots.
 
+**Returns**
+
+`None`
+
+**Examples**
+
 ```python
 fig, (before, after) = new_scene(2)
 for ax in (before, after):
@@ -892,10 +1507,38 @@ after.set_title("Surface retained")
 ### `view_init`
 
 ```text
-ax.view_init(elev=None, azim=None, roll=None)
+ax.view_init(elev=None, azim=None, roll=None, vertical_axis="z", share=False)
 ```
 
-Choose the elevation, azimuth, and roll of the Matplotlib camera. Angles are in degrees.
+Set the Matplotlib camera angles.
+
+**Parameters**
+
+- **`elev`** (float or `None`, default `None`)
+
+  Elevation in degrees. `None` restores the construction value.
+
+- **`azim`** (float or `None`, default `None`)
+
+  Azimuth in degrees. `None` restores the construction value.
+
+- **`roll`** (float or `None`, default `None`)
+
+  Roll in degrees around the viewing direction. `None` restores the construction value.
+
+- **`vertical_axis`** (str, default `"z"`)
+
+  Direction used as the vertical axis, one of `"x"`, `"y"`, or `"z"`.
+
+- **`share`** (bool, default `False`)
+
+  Apply the new view to other axes sharing this view.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (front, side) = new_scene(2)
@@ -917,7 +1560,23 @@ side.set_title("Rotated view")
 ax.set_proj_type(proj_type, focal_length=None)
 ```
 
-Choose "ortho" for orthographic projection or "persp" for perspective. focal_length controls the perspective lens.
+Set the camera's projection model.
+
+**Parameters**
+
+- **`proj_type`** (str)
+
+  `"ortho"` is orthographic. `"persp"` is perspective.
+
+- **`focal_length`** (float or `None`, default `None`)
+
+  Positive focal length in perspective mode, defaulting to `1`. Orthographic mode uses `None` or `np.inf`.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (ortho, perspective) = new_scene(2)
@@ -936,10 +1595,40 @@ perspective.set_title("Perspective")
 ### `Figure.colorbar`
 
 ```text
-fig.colorbar(mappable, *, ax=..., **kwargs)
+fig.colorbar(mappable, cax=None, ax=None, use_gridspec=True, **kwargs)
 ```
 
-Display the scalar range of a mappable. Pass the handle returned by a vtk3d plot so the colorbar tracks its normalization and colormap.
+Show the scalar mapping associated with a plot handle.
+
+**Parameters**
+
+- **`mappable`** (Matplotlib color mappable)
+
+  Plot handle with scalar data, such as a surface, volume, or scalar image.
+
+- **`cax`** (Matplotlib axes or `None`, default `None`)
+
+  Existing axes in which to draw the colorbar. If omitted, Matplotlib creates axes.
+
+- **`ax`** (axes, sequence of axes, or `None`, default `None`)
+
+  Axes supplying space for a new colorbar. Defaults to the mappable's axes.
+
+- **`use_gridspec`** (bool, default `True`)
+
+  Use the parent subplot specification to position a newly created colorbar where available.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Matplotlib placement and style, including `location`, `orientation`, `shrink`, `pad`, `ticks`, `format`, `extend`, and `label`. See [`Figure.colorbar`](https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.colorbar.html).
+
+**Returns**
+
+- **`colorbar`** (`matplotlib.colorbar.Colorbar`)
+
+  The colorbar attached to the figure.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -954,10 +1643,26 @@ fig.colorbar(surface, ax=ax, shrink=.7, label="Height", ticks=[-.6, 0, .6])
 ### `grid`
 
 ```text
-ax.grid(visible=None, **kwargs)
+ax.grid(visible=True, **kwargs)
 ```
 
-Show or hide the Matplotlib axes grid around the VTK scene.
+Control the Matplotlib grid around the VTK scene.
+
+**Parameters**
+
+- **`visible`** (bool or `None`, default `True`)
+
+  Show grid lines with `True`. Pass `False` or `None` to hide them when no keywords are supplied.
+
+- __`**kwargs`__ (keyword arguments)
+
+  In Matplotlib 3.11, supplying additional keywords enables the 3D grid. The method uses the native 3D grid style.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (with_grid, without_grid) = new_scene(2)
@@ -976,10 +1681,48 @@ without_grid.set_title("Grid hidden")
 ### `text`
 
 ```text
-ax.text(x, y, z, s, **kwargs)
+ax.text(x, y, z, s, zdir=None, *, axlim_clip=False, **kwargs)
 ```
 
-Annotate an XYZ location with a Matplotlib text artist. Pass Matplotlib text style options as keywords.
+Place a Matplotlib text annotation in the 3D scene.
+
+**Parameters**
+
+- **`x`** (float)
+
+  X anchor coordinate.
+
+- **`y`** (float)
+
+  Y anchor coordinate.
+
+- **`z`** (float)
+
+  Z anchor coordinate.
+
+- **`s`** (str)
+
+  Text to display. Matplotlib math text is supported.
+
+- **`zdir`** (str, three floats, or `None`, default `None`)
+
+  Text orientation direction. Use `None` for camera-facing text, an axis name, or an explicit direction vector.
+
+- **`axlim_clip`** (bool, default `False`)
+
+  Hide text if its anchor falls outside the axes limits.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Matplotlib text properties such as `fontsize`, `color`, `ha`, and `va`. See [`Text`](https://matplotlib.org/stable/api/text_api.html).
+
+**Returns**
+
+- **`annotation`** (`Text3D`)
+
+  The annotation attached to the axes.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -997,7 +1740,23 @@ ax.text(.2, .65, .58, "Sample region", color="black")
 ax.tick_params(axis='both', **kwargs)
 ```
 
-Set tick and tick-label appearance. Choose x, y, or z to style one axis independently.
+Style native Matplotlib ticks and tick labels.
+
+**Parameters**
+
+- **`axis`** (str, default `"both"`)
+
+  Select `"x"`, `"y"`, `"z"`, or use `"both"` to apply settings to the axes together.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Matplotlib options such as `which`, `reset`, `direction`, `pad`, `colors`, and `labelsize`. See [`Axes.tick_params`](https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.tick_params.html).
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1017,7 +1776,19 @@ ax.set_title("Styled Z ticks")
 handle.set_norm(norm)
 ```
 
-Replace the Matplotlib normalization used to map values to color. The geometry and its original scalar values stay in place.
+Replace the mapping from scalar values to colormap positions.
+
+**Parameters**
+
+- **`norm`** (Matplotlib normalization, scale name, or `None`)
+
+  For example `Normalize` for linear mapping, `LogNorm` for a positive logarithmic range, or `None` for a new default linear normalization.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 from matplotlib.colors import LogNorm
@@ -1038,10 +1809,22 @@ logarithmic.set_title("Logarithmic colors")
 ### `set_label`
 
 ```text
-handle.set_label(label)
+handle.set_label(s)
 ```
 
-Change the label used for the handle in a legend. Create a legend after setting the label.
+Set the Matplotlib label used when building a legend.
+
+**Parameters**
+
+- **`s`** (object or `None`)
+
+  New label, converted with `str()`. `None` clears it. A label starting with an underscore is skipped by automatic legend selection.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1064,7 +1847,19 @@ ax.legend(loc="upper left")
 cloud.set_visible(visible)
 ```
 
-Show or hide the volume returned by plot_volume. The volume handle can be shown again after it is hidden.
+Show or hide a volume returned by [`plot_volume`](function_reference.md#plot_volume).
+
+**Parameters**
+
+- **`visible`** (bool)
+
+  `True` shows the volume. `False` hides it while retaining the VTK volume for later use.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -1093,6 +1888,12 @@ cloud.remove()
 
 Remove the volume from both the Matplotlib axes and the VTK renderer. Other artists stay on the subplot.
 
+**Returns**
+
+`None`
+
+**Examples**
+
 ```python
 fig, (before, after) = new_scene(2)
 coordinates = np.linspace(-1, 1, 25)
@@ -1118,7 +1919,19 @@ after.set_title("Line retained")
 cloud.draw(renderer)
 ```
 
-Matplotlib calls this artist hook during a figure draw. The VTK viewport composites the volume into the full scene.
+Matplotlib calls this artist hook on a figure draw. The viewport composites the native volume into the full scene.
+
+**Parameters**
+
+- **`renderer`** (Matplotlib renderer)
+
+  Backend renderer for the current figure draw, usually provided by Matplotlib itself.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1141,7 +1954,21 @@ cloud.draw(fig.canvas.get_renderer())
 cloud.set(**properties)
 ```
 
-Update supported artist properties on a volume handle, such as its label and visibility.
+Update properties of the volume's Matplotlib artist and scalar mappable.
+
+**Parameters**
+
+- __`**properties`__ (keyword arguments)
+
+  Includes `visible`, `label`, `array`, `cmap`, `clim`, and `norm`, plus compatible [artist properties](#handle-property-keywords). Set the VTK opacity transfer function via [`plot_volume`](function_reference.md#plot_volume).
+
+**Returns**
+
+- **`results`** (list)
+
+  The results from the selected setters.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1164,7 +1991,27 @@ ax.legend(loc="upper left")
 image.set_values(values)
 ```
 
-Update pixels on a textured plane returned by plot_image_plane. Use the same width and height and supply either scalar, RGB, or RGBA values.
+Update texture pixels while retaining the geometry, extent, and existing pixel-alpha multiplier.
+
+**Parameters**
+
+- **`values`** (`array_like`)
+
+  New scalar `(ny, nx)` or RGB(A) `(ny, nx, 3)` or `(ny, nx, 4)` pixels. Height and width must match the image at construction.
+
+**Returns**
+
+- **`image`** (`ImageGraphic`)
+
+  The same textured plane, with updated pixels.
+
+**Raises**
+
+- **`ValueError`**
+
+  If the pixel format or dimensions do not match the original image.
+
+**Examples**
 
 ```python
 fig, (before, after) = new_scene(2)
@@ -1187,7 +2034,25 @@ after.set_title("Horizontal bands")
 image.set_array(values)
 ```
 
-Replace the scalar pixel array of an image plane without changing the plane's dimensions.
+Set the pixel values through the Matplotlib mappable interface.
+
+**Parameters**
+
+- **`values`** (`array_like`)
+
+  Same dimensions and formats as [`ImageGraphic.set_values`](#imagegraphicset_values). Scalar images support normalization and colorbars.
+
+**Returns**
+
+`None`
+
+**Raises**
+
+- **`ValueError`**
+
+  If the pixel format or dimensions do not match the original image.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1207,7 +2072,21 @@ fig.colorbar(image, ax=ax, shrink=.7, label="Radial value")
 image.set(**properties)
 ```
 
-Update artist properties on an image plane. This example sets its opacity and legend label together.
+Set properties on the textured plane in one call.
+
+**Parameters**
+
+- __`**properties`__ (keyword arguments)
+
+  See [handle property keywords](#handle-property-keywords). Examples include `alpha`, `label`, `values`, and `visible`.
+
+**Returns**
+
+- **`results`** (list)
+
+  The results from the selected setters.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1228,7 +2107,21 @@ ax.legend(loc="upper left")
 line.set(**properties)
 ```
 
-Update supported artist properties on the handle returned by add_streaming_line.
+Change the streaming line's style and artist properties.
+
+**Parameters**
+
+- __`**properties`__ (keyword arguments)
+
+  See [handle property keywords](#handle-property-keywords). Examples include `color`, `linewidth`, `label`, and `visible`. Use `append()` to add geometry.
+
+**Returns**
+
+- **`results`** (list)
+
+  The results from the selected setters.
+
+**Examples**
 
 ```python
 fig, ax = new_scene()
@@ -1252,7 +2145,19 @@ ax.legend(loc="upper left")
 ax.draw(renderer)
 ```
 
-Matplotlib calls this integration hook with its backend renderer. It synchronizes the axes and composites the VTK viewport. Trigger it through fig.canvas.draw() when you need a synchronous frame.
+Draw the native axes and composite the VTK viewport. Use `fig.canvas.draw()` for a synchronous full figure draw.
+
+**Parameters**
+
+- **`renderer`** (Matplotlib renderer)
+
+  Backend renderer receiving the axes and VTK image.
+
+**Returns**
+
+`None`
+
+**Examples**
 
 ```python
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -1274,7 +2179,23 @@ ax.draw(fig.canvas.get_renderer())
 handle.draw(renderer)
 ```
 
-Matplotlib calls this artist hook during drawing. The VTK viewport renders all Graphic actors together so they share a depth buffer. A Figure draw displays the complete scene.
+Process this artist during a Matplotlib figure draw.
+
+**Parameters**
+
+- **`renderer`** (Matplotlib renderer)
+
+  Backend renderer passed by the figure draw to the artist hook.
+
+**Returns**
+
+`None`
+
+**Notes**
+
+The VTK viewport composites all Graphic actors into one shared depth buffer.
+
+**Examples**
 
 ```python
 from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -1294,10 +2215,32 @@ handle.draw(fig.canvas.get_renderer())
 ### `add_collection3d`
 
 ```text
-ax.add_collection3d(...)
+ax.add_collection3d(*args, **kwargs)
 ```
 
-On VtkAxes this Matplotlib entry point raises NotImplementedError. Use plot_mesh for polygons or plot for lines so the geometry participates in the VTK depth test.
+Reject insertion of Matplotlib 3D collections.
+
+**Parameters**
+
+- __`*args`__ (positional arguments)
+
+  Matplotlib collection inputs are unsupported here.
+
+- __`**kwargs`__ (keyword arguments)
+
+  Matplotlib collection options are unsupported here.
+
+**Raises**
+
+- **`NotImplementedError`**
+
+  Always raised for this Matplotlib collection entry point.
+
+**Notes**
+
+Add polygons with [`plot_mesh`](function_reference.md#plot_mesh) or lines with [`plot`](api.md#plot) to include them in the VTK depth buffer.
+
+**Examples**
 
 ```python
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
@@ -1314,3 +2257,329 @@ ax.set_title("Equivalent polygon with plot_mesh")
 <img src="gallery/reference/add_collection3d.png" width="460" alt="A VTK triangle as the equivalent to adding a Matplotlib 3D polygon collection">
 
 [Source code](../examples/reference/add_collection3d.py).
+
+## Axes property keywords
+
+Pass these properties to `VtkAxes.set()`. Omitted properties keep their current values. The method also accepts the [Matplotlib artist properties](#artist-properties).
+
+- **`adjustable`** (str)
+
+  The aspect adjustment method, either `"box"` or `"datalim"`.
+
+- **`aspect`** (str)
+
+  The data aspect mode. See [`set_aspect`](#set_aspect).
+
+- **`box_aspect`** (three floats or `None`)
+
+  Display-length ratios for the XYZ axes. See [`set_box_aspect`](#set_box_aspect).
+
+- **`anchor`** (str or pair of floats)
+
+  Where to place the axes inside its allocated rectangle.
+
+- **`antialiasing`** (int)
+
+  VTK supersampling factor per output dimension. See [`set_antialiasing`](#set_antialiasing).
+
+- **`proj_type`** (str)
+
+  Orthographic or perspective camera model. See [`set_proj_type`](#set_proj_type).
+
+- **`autoscale_on`** (bool)
+
+  Enable autoscaling for all three coordinates.
+
+- **`title`** (str)
+
+  Subplot title.
+
+- **`prop_cycle`** (`cycler.Cycler` or `None`)
+
+  Property cycle for newly added plots. `None` restores Matplotlib defaults.
+
+- **`axisbelow`** (bool or `"line"`)
+
+  Native ordering of axis ticks and grid relative to other Matplotlib artists.
+
+- **`facecolor`** (Matplotlib color)
+
+  Axes background fill.
+
+- **`rasterization_zorder`** (number or `None`)
+
+  Order below which Matplotlib rasterizes supported artists for vector output.
+
+- **`position`** (four floats or `Bbox`)
+
+  Rectangle of the axes in figure coordinates.
+
+- **`axes_locator`** (callable or `None`)
+
+  Layout function taking the axes and its renderer and returning a bounding box.
+
+- **`subplotspec`** (`SubplotSpec`)
+
+  GridSpec cell or span assigned to this subplot.
+
+- **`forward_navigation_events`** (bool or `"auto"`)
+
+  Whether navigation events pass through to axes underneath.
+
+- **`navigate`** (bool)
+
+  Whether the axes participates in toolbar navigation.
+
+- **`autoscalex_on`** (bool)
+
+  Enable autoscaling for the X coordinate.
+
+- **`xbound`** (pair of floats)
+
+  Lower and upper X bounds, keeping the current inversion state.
+
+- **`xlim`** (pair of floats)
+
+  X view limits in data units. A reversed pair inverts the axis.
+
+- **`xinverted`** (bool)
+
+  Set the inversion state of the X axis.
+
+- **`xlabel`** (str)
+
+  Label for the X axis.
+
+- **`xmargin`** (float)
+
+  Fraction of the X data range used as an autoscaling margin.
+
+- **`xscale`** (str or Matplotlib scale)
+
+  Scale for the X axis. Volume rendering requires linear scales.
+
+- **`xticks`** (array_like)
+
+  Major tick positions on the X axis.
+
+- **`xticklabels`** (sequence of str)
+
+  Text for X ticks. Set fixed tick positions first.
+
+- **`autoscaley_on`** (bool)
+
+  Enable autoscaling for the Y coordinate.
+
+- **`ybound`** (pair of floats)
+
+  Lower and upper Y bounds, keeping the current inversion state.
+
+- **`ylim`** (pair of floats)
+
+  Y view limits in data units. A reversed pair inverts the axis.
+
+- **`yinverted`** (bool)
+
+  Set the inversion state of the Y axis.
+
+- **`ylabel`** (str)
+
+  Label for the Y axis.
+
+- **`ymargin`** (float)
+
+  Fraction of the Y data range used as an autoscaling margin.
+
+- **`yscale`** (str or Matplotlib scale)
+
+  Scale for the Y axis. Volume rendering requires linear scales.
+
+- **`yticks`** (array_like)
+
+  Major tick positions on the Y axis.
+
+- **`yticklabels`** (sequence of str)
+
+  Text for Y ticks. Set fixed tick positions first.
+
+- **`autoscalez_on`** (bool)
+
+  Enable autoscaling for the Z coordinate.
+
+- **`zbound`** (pair of floats)
+
+  Lower and upper Z bounds, keeping the current inversion state.
+
+- **`zlim`** (pair of floats)
+
+  Z view limits in data units. A reversed pair inverts the axis.
+
+- **`zinverted`** (bool)
+
+  Set the inversion state of the Z axis.
+
+- **`zlabel`** (str)
+
+  Label for the Z axis.
+
+- **`zmargin`** (float)
+
+  Fraction of the Z data range used as an autoscaling margin.
+
+- **`zscale`** (str or Matplotlib scale)
+
+  Scale for the Z axis. Volume rendering requires linear scales.
+
+- **`zticks`** (array_like)
+
+  Major tick positions on the Z axis.
+
+- **`zticklabels`** (sequence of str)
+
+  Text for Z ticks. Set fixed tick positions first.
+
+## Handle property keywords
+
+Pass these properties to `Graphic.set()` or a specialized handle's `set()` method. Each name selects the corresponding setter. Availability depends on the handle. The methods also accept compatible [Matplotlib artist properties](#artist-properties).
+
+- **`array`** (array_like or `None`)
+
+  Replacement scalar mapping data. See [`set_array`](#set_array).
+
+- **`values`** (array_like or `None`)
+
+  Replacement scalar or RGB(A) colors, with the shape required by [`set_values`](#set_values).
+
+- **`heights`** (2D array)
+
+  Replacement surface heights. See [`set_heights`](#set_heights).
+
+- **`cmap`** (colormap, str, or `None`)
+
+  Colormap for scalar values. See [`set_cmap`](#set_cmap).
+
+- **`clim`** (pair of floats)
+
+  Lower and upper color bounds, following [`set_clim`](#set_clim).
+
+- **`norm`** (normalization, str, or `None`)
+
+  Scalar-to-colormap mapping. See [`set_norm`](#set_norm).
+
+- **`color`** (Matplotlib color or `None`)
+
+  Uniform object color. See [`set_color`](#set_color).
+
+- **`facecolor`** (Matplotlib color or `None`)
+
+  Fixed polygon fill. See [`set_facecolor`](#set_facecolor).
+
+- **`edgecolor`** (Matplotlib color or `None`)
+
+  Polygon edge color. See [`set_edgecolor`](#set_edgecolor).
+
+- **`lighting`** (bool or str)
+
+  Lighting state or interpolation mode. See [`set_lighting`](#set_lighting).
+
+- **`linestyle`** (str)
+
+  Line stipple pattern. See [`set_linestyle`](#set_linestyle).
+
+- **`linewidth`** (float)
+
+  Nominal line width in output pixels. See [`set_linewidth`](#set_linewidth).
+
+- **`alpha`** (float or `None`)
+
+  Overall actor opacity where the handle implements it. See [`set_alpha`](#set_alpha).
+
+- **`label`** (object or `None`)
+
+  Legend label. See [`set_label`](#set_label).
+
+- **`visible`** (bool)
+
+  Whether the individual handle is drawn.
+
+### Artist properties
+
+These properties apply to native Matplotlib rendering and metadata where supported. Use the VTK plot and handle options for the appearance of VTK geometry.
+
+- **`agg_filter`** (callable or `None`)
+
+  Optional Agg image filter for the artist.
+
+- **`alpha`** (float or `None`)
+
+  Opacity in `[0, 1]`. `None` uses the default opacity.
+
+- **`animated`** (bool)
+
+  Include the artist in explicit animation draws outside ordinary static drawing.
+
+- **`clip_box`** (`Bbox` or `None`)
+
+  Bounding rectangle for Matplotlib clipping.
+
+- **`clip_on`** (bool)
+
+  Enable Matplotlib clipping for the artist.
+
+- **`clip_path`** (path, patch, or `None`)
+
+  Path or patch providing a native clipping region.
+
+- **`gid`** (str or `None`)
+
+  Group identifier used by supporting backends.
+
+- **`in_layout`** (bool)
+
+  Include the artist in figure layout calculations.
+
+- **`label`** (object or `None`)
+
+  Label stored on the artist.
+
+- **`mouseover`** (bool)
+
+  Include the artist in cursor data handling.
+
+- **`path_effects`** (sequence)
+
+  Matplotlib path effects for supported drawing operations.
+
+- **`picker`** (bool, float, callable, or `None`)
+
+  Picking behavior. A number sets a tolerance where supported.
+
+- **`rasterized`** (bool)
+
+  Rasterize this supported artist on vector backends.
+
+- **`sketch_params`** (three floats or `None`)
+
+  Scale, wavelength, and randomness of a sketch effect.
+
+- **`snap`** (bool or `None`)
+
+  Align supported geometry to pixel boundaries. `None` permits automatic snapping.
+
+- **`transform`** (Matplotlib transform)
+
+  Coordinate transform used by the native artist.
+
+- **`url`** (str or `None`)
+
+  Link metadata used by supporting backends.
+
+- **`visible`** (bool)
+
+  Whether to draw the artist.
+
+- **`zorder`** (float)
+
+  Drawing order relative to other Matplotlib artists.
+
+See [Matplotlib's Artist reference](https://matplotlib.org/stable/api/_as_gen/matplotlib.artist.Artist.html) for backend details.

@@ -63,7 +63,7 @@ def save(output, data_dir):
 if __name__ == "__main__":
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("output", nargs="?", type=Path, default=Path("plot_mesh.png"))
-    parser.add_argument("--data-dir", type=Path, default=Path("../my-mpl-style/data"))
+    parser.add_argument("--data-dir", type=Path, default=Path(__file__).resolve().parents[2] / "data")
     args = parser.parse_args()
     if not (args.data_dir / "peanut.npz").is_file():
         parser.error(f"Use --data-dir to locate peanut.npz. File not found in {args.data_dir}.")

@@ -1,5 +1,6 @@
 include examples/*.py
 include examples/reference/*.py
+include data/*.npz data/README.md data/LICENSE-my-mpl-style.txt
 include tests/test_*.py
 include docs/*.md
 include README.zh-CN.md
