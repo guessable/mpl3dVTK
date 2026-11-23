@@ -2,6 +2,8 @@
 
 每一图均由下方代码和库中的 VTK 渲染路径生成。参数总表和兼容性范围见 [API 参考](api.md)。
 
+图集直接使用 `vtk3d` 的默认视角、轴框和刻度。每段代码列出该示例需要的视角或配色设置。
+
 先运行下面的初始化。每个例子都可以使用空的三维坐标轴独立运行。
 
 ```python
@@ -58,7 +60,7 @@ m.surface(ax, d.X, d.Y, np.full_like(d.Z, 1.2), FaceColor="#739abd", FaceAlpha=.
 light 可为方位角和仰角，或三维方向。四个反射系数依次为环境光、漫反射、镜面反射和高光指数。附加字符串 light 可使用场景光源。
 
 ```python
-m.surfl(ax, d.X, d.Y, d.Z, [-45, 35], cmap="bone")
+m.surfl(ax, d.X, d.Y, d.Z, [-45, 35])
 ```
 
 ![surfl 示例](figures/surfl.png)
@@ -82,7 +84,7 @@ m.surfnorm(ax, d.X[::6,::6], d.Y[::6,::6], d.Z[::6,::6], scale=.8, FaceAlpha=.65
 绘制随标量变化的网格线。EdgeColor 可指定固定颜色。返回网格句柄。
 
 ```python
-m.mesh(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], cmap="plasma", LineWidth=1.5)
+m.mesh(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], LineWidth=1.5)
 ```
 
 ![mesh 示例](figures/mesh.png)
@@ -106,7 +108,7 @@ m.surfc(ax, d.X, d.Y, d.Z, levels=[-5,-3,-1,1,3,5], FaceColor="interp", EdgeColo
 在网格下方画出等高线。返回网格和等高线。
 
 ```python
-m.meshc(ax, d.X[::2,::2], d.Y[::2,::2], d.Z[::2,::2], levels=9, cmap="turbo")
+m.meshc(ax, d.X[::2,::2], d.Y[::2,::2], d.Z[::2,::2], levels=9)
 ```
 
 ![meshc 示例](figures/meshc.png)
@@ -118,7 +120,7 @@ m.meshc(ax, d.X[::2,::2], d.Y[::2,::2], d.Z[::2,::2], levels=9, cmap="turbo")
 把边界垂直延伸到 base。默认底部略低于数据最小值。返回网格和边界帘幕。
 
 ```python
-m.meshz(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], base=-7, cmap="viridis")
+m.meshz(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], base=-7)
 ```
 
 ![meshz 示例](figures/meshz.png)
@@ -130,7 +132,7 @@ m.meshz(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], base=-7, cmap="viridis")
 逐行绘制曲线和向下延伸的帘幕。返回帘幕和曲线。
 
 ```python
-m.waterfall(ax, d.X[::4], d.Y[::4], d.Z[::4], cmap="plasma", LineWidth=2)
+m.waterfall(ax, d.X[::4], d.Y[::4], d.Z[::4], LineWidth=2)
 ```
 
 ![waterfall 示例](figures/waterfall.png)
@@ -143,7 +145,7 @@ Z 的每列是一条带，Y 给出纵向参数。width 默认 0.75。返回带�
 
 ```python
 R = np.sin(d.t[:,None]*[.9, 1.3, 1.7, 2.1]) + [0,.4,.8,1.2]
-m.ribbon(ax, d.t, R, .65, FaceColor="interp", EdgeColor="none", cmap="cividis")
+m.ribbon(ax, d.t, R, .65, FaceColor="interp", EdgeColor="none")
 ```
 
 ![ribbon 示例](figures/ribbon.png)
@@ -155,7 +157,7 @@ m.ribbon(ax, d.t, R, .65, FaceColor="interp", EdgeColor="none", cmap="cividis")
 每条等高线位于对应的高度。标量 levels 指级别数量，数组给出具体高度。用 return_matrix=True 同时取矩阵。
 
 ```python
-m.contour3(ax, d.X, d.Y, d.Z, np.linspace(-5,7,12), cmap="turbo", LineWidth=2)
+m.contour3(ax, d.X, d.Y, d.Z, np.linspace(-5,7,12), LineWidth=2)
 ```
 
 ![contour3 示例](figures/contour3.png)
@@ -216,7 +218,7 @@ m.fimplicit3(ax, lambda x,y,z: (x*x+y*y+z*z+.55**2-.18**2)**2 - 4*.55**2*(x*x+y*
 把矩阵映射到 XY 平面上的有色网格。颜色与网格顶点对应，默认展示顶视图。
 
 ```python
-m.pcolor(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none", cmap="turbo")
+m.pcolor(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none")
 ```
 
 ![pcolor 示例](figures/pcolor.png)
@@ -230,7 +232,7 @@ m.pcolor(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none", cmap="turbo")
 TRI 有三列，每行是一个三角形的顶点索引。也可传带 ConnectivityList、Points 或 simplices、points 的三维剖分对象。C 可为逐顶点或逐三角形颜色。
 
 ```python
-m.trisurf(ax, d.tri, d.px, d.py, d.pz, EdgeColor="#355068", cmap="viridis")
+m.trisurf(ax, d.tri, d.px, d.py, d.pz)
 ```
 
 ![trisurf 示例](figures/trisurf.png)
@@ -242,7 +244,7 @@ m.trisurf(ax, d.tri, d.px, d.py, d.pz, EdgeColor="#355068", cmap="viridis")
 接收相同的三角网格或剖分对象并绘制网格边。省略 Z 时，网格位于 XY 平面。
 
 ```python
-m.trimesh(ax, d.tri, d.px, d.py, d.pz, LineWidth=1.5, cmap="plasma")
+m.trimesh(ax, d.tri, d.px, d.py, d.pz, LineWidth=1.5)
 ```
 
 ![trimesh 示例](figures/trimesh.png)
@@ -395,7 +397,7 @@ m.surf(ax, *m.ellipsoid(0,0,0,1.2,.7,.45,40), FaceColor="#6ea4b1", EdgeColor="no
 绘制三维坐标序列。可追加多组 XYZ，或传矩阵系列、带列名的表。NaN 断开线段。
 
 ```python
-m.plot3(ax, np.cos(d.a), np.sin(d.a), d.a/np.pi, Color="#167c9c", LineWidth=2.5)
+m.plot3(ax, np.cos(d.a), np.sin(d.a), d.a/np.pi, LineWidth=2.5)
 ```
 
 ![plot3 示例](figures/plot3.png)
@@ -407,8 +409,8 @@ m.plot3(ax, np.cos(d.a), np.sin(d.a), d.a/np.pi, Color="#167c9c", LineWidth=2.5)
 低级线图元，保留当前场景。线宽、颜色、标记属性与 plot3 共用。
 
 ```python
-m.line(ax, [0,1,1,0,0], [0,0,1,1,0], [0,0,0,0,0], Color="#2a789c", LineWidth=3)
-m.line(ax, XData=[0,.5,1], YData=[0,.5,1], ZData=[0,1,0], Color="#be5253", LineWidth=3)
+m.line(ax, [0,1,1,0,0], [0,0,1,1,0], [0,0,0,0,0], LineWidth=3)
+m.line(ax, XData=[0,.5,1], YData=[0,.5,1], ZData=[0,1,0], LineWidth=3)
 ```
 
 ![line 示例](figures/line.png)
@@ -433,7 +435,7 @@ S 为标记面积或逐点面积，C 可为颜色名、标量或 RGB(A) 数组�
 
 ```python
 p = d.cloud[:150]
-m.scatter3(ax, *p.T, 45, p[:,2], "filled", cmap="plasma")
+m.scatter3(ax, *p.T, 45, p[:,2], "filled")
 ```
 
 ![scatter3 示例](figures/scatter3.png)
@@ -446,7 +448,7 @@ sizes 映射到气泡大小，C 映射到颜色。示例取独立数值和垂直
 
 ```python
 p = d.cloud[:55]
-m.bubblechart3(ax, *p.T, 1+np.abs(p[:,0]), p[:,2], cmap="viridis")
+m.bubblechart3(ax, *p.T, 1+np.abs(p[:,0]), p[:,2])
 ```
 
 ![bubblechart3 示例](figures/bubblechart3.png)
@@ -484,7 +486,7 @@ m.stem3(ax,x,y,np.exp(-.4*(x*x+y*y)),"b-o",LineWidth=1.8)
 按矩阵行列放置竖柱。style 可选 detached、grouped、stacked。正负值分别向两个方向堆叠。
 
 ```python
-m.bar3(ax, d.b, .68, "detached", cmap="Blues", EdgeColor="#526d8e")
+m.bar3(ax, d.b, .68, "detached")
 ```
 
 ![bar3 示例](figures/bar3.png)
@@ -496,7 +498,7 @@ m.bar3(ax, d.b, .68, "detached", cmap="Blues", EdgeColor="#526d8e")
 把柱高度映射到水平方向。支持独立、分组、堆叠。
 
 ```python
-m.bar3h(ax, d.b, .7, "grouped", cmap="YlGnBu", EdgeColor="#5c7f8e")
+m.bar3h(ax, d.b, .7, "grouped")
 ```
 
 ![bar3h 示例](figures/bar3h.png)
@@ -508,7 +510,7 @@ m.bar3h(ax, d.b, .7, "grouped", cmap="YlGnBu", EdgeColor="#5c7f8e")
 双变量直方图。NumBins 或 XBinEdges、YBinEdges 可控制分箱。图元 values 包含归一化结果。
 
 ```python
-m.histogram2(ax, *d.cloud[:,:2].T, NumBins=(9,9), Normalization="probability", cmap="viridis", EdgeColor="#445a6b")
+m.histogram2(ax, *d.cloud[:,:2].T, NumBins=(9,9), Normalization="probability")
 ```
 
 ![histogram2 示例](figures/histogram2.png)
@@ -563,7 +565,7 @@ x,y,z = m.getpoints(a)
 提取指定等值，可用 colors 设置独立颜色体。noshare 展开面顶点。规则均匀体采用 Flying Edges。
 
 ```python
-m.isosurface(ax,d.s,d.s,d.s,d.V,1.12,colors=d.C,cmap="viridis",EdgeColor="none")
+m.isosurface(ax,d.s,d.s,d.s,d.V,1.12,colors=d.C)
 ```
 
 ![isosurface 示例](figures/isosurface.png)
@@ -588,7 +590,7 @@ m.patch(ax,g,FaceColor="#1f93a2",EdgeColor="none",FaceLighting="gouraud")
 xs、ys、zs 指各轴的切片位置，可用空列表跳过，或传三个曲面坐标矩阵。插值可用 linear、nearest、cubic。
 
 ```python
-m.slice(ax,d.s,d.s,d.s,d.V,[0],[.4],[-.5],"linear",cmap="magma",FaceAlpha=.92)
+m.slice(ax,d.s,d.s,d.s,d.V,[0],[.4],[-.5],"linear",FaceAlpha=.92)
 ```
 
 ![slice 示例](figures/slice.png)
@@ -653,7 +655,7 @@ m.isonormals(d.s,d.s,d.s,d.V,h)
 
 ```python
 X,Y,Z,V = m.flow(26,grid=True)
-m.isosurface(ax,X,Y,Z,V,4,colors=X,cmap="viridis")
+m.isosurface(ax,X,Y,Z,V,4,colors=X)
 ```
 
 ![flow 示例](figures/flow.png)
@@ -719,7 +721,7 @@ m.axis(m.volumebounds(d.s,d.s,d.s,d.V),ax=ax)
 ```python
 t = np.linspace(-1,1,7)
 x,y,z = np.meshgrid(t,t,[-.45,.45])
-m.quiver3(ax,x,y,z,-y,x,np.full_like(x,.4),.9,cmap="viridis")
+m.quiver3(ax,x,y,z,-y,x,np.full_like(x,.4),.9)
 ```
 
 ![quiver3 示例](figures/quiver3.png)
@@ -732,7 +734,7 @@ m.quiver3(ax,x,y,z,-y,x,np.full_like(x,.4),.9,cmap="viridis")
 
 ```python
 x,y,z = np.meshgrid(np.linspace(-1,1,5),np.linspace(-1,1,5),[-.6,.6])
-m.coneplot(ax,d.s,d.s,d.s,d.U,d.W,d.K,x,y,z,cmap="plasma")
+m.coneplot(ax,d.s,d.s,d.s,d.U,d.W,d.K,x,y,z)
 ```
 
 ![coneplot 示例](figures/coneplot.png)
@@ -850,7 +852,7 @@ m.quiver3(ax,d.A[idx],d.B[idx],d.C[idx],cu[idx],cv[idx],cw[idx],.55)
 
 ```python
 q = m.divergence(d.s,d.s,d.s,d.A**3,d.B**3,d.C**3)
-m.slice(ax,d.s,d.s,d.s,q,[0],[],[-.4],cmap="magma")
+m.slice(ax,d.s,d.s,d.s,q,[0],[],[-.4])
 ```
 
 ![divergence 示例](figures/divergence.png)
@@ -1275,7 +1277,7 @@ m.colorbar(h, shrink=.7)
 ```python
 active = m.figure(fig.number)
 active.suptitle("Figure with a VTK scene")
-m.surf(ax, d.X, d.Y, d.Z, cmap="viridis", EdgeColor="none")
+m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")
 ```
 
 ![figure 示例](figures/figure.png)
@@ -1290,7 +1292,7 @@ m.surf(ax, d.X, d.Y, d.Z, cmap="viridis", EdgeColor="none")
 ax.remove()
 left = m.subplot(121)
 right = m.subplot(122)
-m.surf(left, d.X, d.Y, d.Z, cmap="viridis", EdgeColor="none")
+m.surf(left, d.X, d.Y, d.Z, EdgeColor="none")
 m.mesh(right, d.X[::4, ::4], d.Y[::4, ::4], d.Z[::4, ::4], Color="#306b84")
 ```
 
@@ -1330,7 +1332,7 @@ m.drawnow(ax=ax)
 通过 Matplotlib 的交互后端显示打开的图窗。可传 block 控制阻塞。下图为窗口中的三维场景。
 
 ```python
-m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="cividis")
+m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")
 if plt.get_backend().lower() != "agg":
     m.show()
 ```
@@ -1346,7 +1348,7 @@ if plt.get_backend().lower() != "agg":
 ```python
 from io import BytesIO
 
-m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="plasma")
+m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")
 image = BytesIO()
 m.savefig(image, format="png", dpi=150)
 ```
@@ -1364,7 +1366,7 @@ preview = m.figure()
 m.plot3(m.subplot(111), [0, 1], [0, 1], [0, 1])
 m.close(preview)
 m.figure(fig.number)
-m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="viridis")
+m.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")
 ```
 
 ![close 示例](figures/close.png)
@@ -1452,7 +1454,7 @@ ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
 显示点云。可传末维为 3 的坐标数组或 PLY/VTP 路径，颜色可按点指定，默认使用高度。
 
 ```python
-m.pcshow(ax, d.cloud, markersize=4, cmap="viridis")
+m.pcshow(ax, d.cloud, markersize=4)
 ```
 
 ![pcshow 示例](figures/pcshow.png)

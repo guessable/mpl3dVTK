@@ -8,7 +8,6 @@ import matplotlib
 if __name__ == "__main__":
     matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 from matplotlib.tri import Triangulation
 import numpy as np
 
@@ -54,33 +53,33 @@ GROUPS = {
                 'FaceAlpha=.27, EdgeColor="none")'),
         Example("surfl","surfl(Z) / surfl(X, Y, Z[, light[, coefficients]])",
                 "light 可为方位角和仰角，或三维方向。四个反射系数依次为环境光、漫反射、镜面反射和高光指数。附加字符串 light 可使用场景光源。",
-                'm.surfl(ax, d.X, d.Y, d.Z, [-45, 35], cmap="bone")'),
+                'm.surfl(ax, d.X, d.Y, d.Z, [-45, 35])'),
         Example("surfnorm","surfnorm(Z) / surfnorm(X, Y, Z, scale=1)",
                 "用箭头标出规则网格上的曲面法向。返回曲面和箭头两个句柄。稀疏网格更易观察方向。",
                 'm.surfnorm(ax, d.X[::6,::6], d.Y[::6,::6], d.Z[::6,::6], scale=.8, '
                 'FaceAlpha=.65, EdgeColor="none")'),
         Example("mesh","mesh(Z[, C]) / mesh(X, Y, Z[, C])",
                 "绘制随标量变化的网格线。EdgeColor 可指定固定颜色。返回网格句柄。",
-                'm.mesh(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], cmap="plasma", LineWidth=1.5)'),
+                'm.mesh(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], LineWidth=1.5)'),
         Example("surfc","surfc(X, Y, Z[, C], levels=10)",
                 "在曲面下方画出高度等值线。levels 可为数量或具体高度数组。返回曲面和等高线。",
                 'm.surfc(ax, d.X, d.Y, d.Z, levels=[-5,-3,-1,1,3,5], FaceColor="interp", EdgeColor="none")'),
         Example("meshc","meshc(X, Y, Z[, C], levels=10)",
                 "在网格下方画出等高线。返回网格和等高线。",
-                'm.meshc(ax, d.X[::2,::2], d.Y[::2,::2], d.Z[::2,::2], levels=9, cmap="turbo")'),
+                'm.meshc(ax, d.X[::2,::2], d.Y[::2,::2], d.Z[::2,::2], levels=9)'),
         Example("meshz","meshz(X, Y, Z[, C], base=None)",
                 "把边界垂直延伸到 base。默认底部略低于数据最小值。返回网格和边界帘幕。",
-                'm.meshz(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], base=-7, cmap="viridis")'),
+                'm.meshz(ax, d.X[::3,::3], d.Y[::3,::3], d.Z[::3,::3], base=-7)'),
         Example("waterfall","waterfall(Z[, C]) / waterfall(X, Y, Z[, C], base=None)",
                 "逐行绘制曲线和向下延伸的帘幕。返回帘幕和曲线。",
-                'm.waterfall(ax, d.X[::4], d.Y[::4], d.Z[::4], cmap="plasma", LineWidth=2)'),
+                'm.waterfall(ax, d.X[::4], d.Y[::4], d.Z[::4], LineWidth=2)'),
         Example("ribbon","ribbon(Z) / ribbon(Y, Z[, width])",
                 "Z 的每列是一条带，Y 给出纵向参数。width 默认 0.75。返回带状曲面列表。",
                 'R = np.sin(d.t[:,None]*[.9, 1.3, 1.7, 2.1]) + [0,.4,.8,1.2]\n'
-                'm.ribbon(ax, d.t, R, .65, FaceColor="interp", EdgeColor="none", cmap="cividis")'),
+                'm.ribbon(ax, d.t, R, .65, FaceColor="interp", EdgeColor="none")'),
         Example("contour3","contour3(Z[, levels][, LineSpec]) / contour3(X, Y, Z, ...)",
                 "每条等高线位于对应的高度。标量 levels 指级别数量，数组给出具体高度。用 return_matrix=True 同时取矩阵。",
-                'm.contour3(ax, d.X, d.Y, d.Z, np.linspace(-5,7,12), cmap="turbo", LineWidth=2)'),
+                'm.contour3(ax, d.X, d.Y, d.Z, np.linspace(-5,7,12), LineWidth=2)'),
         Example("clabel","clabel(handle, levels=None) / clabel(matrix, handle, ...)",
                 "在等高线连通段上添加值标签。levels 可只标特定高度。返回 Matplotlib 3D 文字列表。",
                 'h = m.contour3(ax, d.X, d.Y, d.Z, [-4, -2, 2, 4, 6], LineWidth=2)\n'
@@ -98,15 +97,15 @@ GROUPS = {
                 'm.fimplicit3(ax, lambda x,y,z: (x*x+y*y+z*z+.55**2-.18**2)**2 - 4*.55**2*(x*x+y*y), [-1,1])'),
         Example("pcolor","pcolor(C) / pcolor(X, Y, C)",
                 "把矩阵映射到 XY 平面上的有色网格。颜色与网格顶点对应，默认展示顶视图。",
-                'm.pcolor(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none", cmap="turbo")'),
+                'm.pcolor(ax, d.X, d.Y, d.Z, FaceColor="interp", EdgeColor="none")'),
     ),
     "三角网格、多边形和几何": (
         Example("trisurf","trisurf(TRI, X, Y, Z[, C], index_base=0)",
                 "TRI 有三列，每行是一个三角形的顶点索引。也可传带 ConnectivityList、Points 或 simplices、points 的三维剖分对象。C 可为逐顶点或逐三角形颜色。",
-                'm.trisurf(ax, d.tri, d.px, d.py, d.pz, EdgeColor="#355068", cmap="viridis")'),
+                'm.trisurf(ax, d.tri, d.px, d.py, d.pz)'),
         Example("trimesh","trimesh(TRI, X, Y, Z[, C], index_base=0)",
                 "接收相同的三角网格或剖分对象并绘制网格边。省略 Z 时，网格位于 XY 平面。",
-                'm.trimesh(ax, d.tri, d.px, d.py, d.pz, LineWidth=1.5, cmap="plasma")'),
+                'm.trimesh(ax, d.tri, d.px, d.py, d.pz, LineWidth=1.5)'),
         Example("tetramesh","tetramesh(T, XYZ[, C], index_base=0)",
                 "T 的每行包含四个顶点索引。XYZ 每行是三维位置。也可传入带四面体连接关系的剖分对象。C 为逐四面体标量，透明面可查看内部结构。",
                 'xyz = np.array([[0,0,0],[1,0,0],[.4,1,0],[.4,.3,1],[.45,.3,-1]])\n'
@@ -151,20 +150,20 @@ GROUPS = {
     "三维曲线、散点、统计与动画": (
         Example("plot3","plot3(X, Y, Z[, LineSpec], ...)",
                 "绘制三维坐标序列。可追加多组 XYZ，或传矩阵系列、带列名的表。NaN 断开线段。",
-                'm.plot3(ax, np.cos(d.a), np.sin(d.a), d.a/np.pi, Color="#167c9c", LineWidth=2.5)'),
+                'm.plot3(ax, np.cos(d.a), np.sin(d.a), d.a/np.pi, LineWidth=2.5)'),
         Example("line","line(X, Y[, Z]) / line(XData=..., YData=..., ZData=...)",
                 "低级线图元，保留当前场景。线宽、颜色、标记属性与 plot3 共用。",
-                'm.line(ax, [0,1,1,0,0], [0,0,1,1,0], [0,0,0,0,0], Color="#2a789c", LineWidth=3)\n'
-                'm.line(ax, XData=[0,.5,1], YData=[0,.5,1], ZData=[0,1,0], Color="#be5253", LineWidth=3)'),
+                'm.line(ax, [0,1,1,0,0], [0,0,1,1,0], [0,0,0,0,0], LineWidth=3)\n'
+                'm.line(ax, XData=[0,.5,1], YData=[0,.5,1], ZData=[0,1,0], LineWidth=3)'),
         Example("fplot3","fplot3(fx, fy, fz[, interval], samples=201)",
                 "对三个参数函数共用一个参数区间。返回按采样点组成的曲线。",
                 'm.fplot3(ax, np.cos, lambda t: np.sin(2*t), lambda t: t/np.pi, [0,4*np.pi], LineWidth=2.4)'),
         Example("scatter3","scatter3(X, Y, Z[, S[, C]][, marker][, filled])",
                 "S 为标记面积或逐点面积，C 可为颜色名、标量或 RGB(A) 数组。返回散点句柄。",
-                'p = d.cloud[:150]\nm.scatter3(ax, *p.T, 45, p[:,2], "filled", cmap="plasma")'),
+                'p = d.cloud[:150]\nm.scatter3(ax, *p.T, 45, p[:,2], "filled")'),
         Example("bubblechart3","bubblechart3(X, Y, Z, sizes[, C])",
                 "sizes 映射到气泡大小，C 映射到颜色。示例取独立数值和垂直坐标分别控制大小和颜色。",
-                'p = d.cloud[:55]\nm.bubblechart3(ax, *p.T, 1+np.abs(p[:,0]), p[:,2], cmap="viridis")'),
+                'p = d.cloud[:55]\nm.bubblechart3(ax, *p.T, 1+np.abs(p[:,0]), p[:,2])'),
         Example("swarmchart3","swarmchart3(X, Y, Z[, S[, C]], width=.45)",
                 "同一 X 分组内，在 YZ 平面邻近的点沿 X 偏移。width 控制偏移宽度。",
                 'p = d.cloud[:150]\nm.swarmchart3(ax, np.repeat([1,2,3],50), p[:,1], p[:,2], 30, p[:,2])'),
@@ -174,14 +173,13 @@ GROUPS = {
                 'm.stem3(ax,x,y,np.exp(-.4*(x*x+y*y)),"b-o",LineWidth=1.8)'),
         Example("bar3","bar3(Z) / bar3(Y, Z[, width][, style])",
                 "按矩阵行列放置竖柱。style 可选 detached、grouped、stacked。正负值分别向两个方向堆叠。",
-                'm.bar3(ax, d.b, .68, "detached", cmap="Blues", EdgeColor="#526d8e")'),
+                'm.bar3(ax, d.b, .68, "detached")'),
         Example("bar3h","bar3h(Z) / bar3h(Y, Z[, width][, style])",
                 "把柱高度映射到水平方向。支持独立、分组、堆叠。",
-                'm.bar3h(ax, d.b, .7, "grouped", cmap="YlGnBu", EdgeColor="#5c7f8e")'),
+                'm.bar3h(ax, d.b, .7, "grouped")'),
         Example("histogram2","histogram2(X, Y[, bins], Normalization=..., DisplayStyle=...)",
                 "双变量直方图。NumBins 或 XBinEdges、YBinEdges 可控制分箱。图元 values 包含归一化结果。",
-                'm.histogram2(ax, *d.cloud[:,:2].T, NumBins=(9,9), Normalization="probability", '
-                'cmap="viridis", EdgeColor="#445a6b")'),
+                'm.histogram2(ax, *d.cloud[:,:2].T, NumBins=(9,9), Normalization="probability")'),
         Example("pie3","pie3(values[, explode][, labels])",
                 "绘制有厚度的扇区，explode 指定需要偏移的项。labels 可由第二个或第三个参数给出。",
                 'm.pie3(ax,[.45,.3,.25],[0,1,0],["A","B","C"])\nax.set_axis_off()'),
@@ -197,14 +195,14 @@ GROUPS = {
     "标量体与向量场": (
         Example("isosurface","isosurface(V[, level[, colors]]) / isosurface(X, Y, Z, V, ...)",
                 "提取指定等值，可用 colors 设置独立颜色体。noshare 展开面顶点。规则均匀体采用 Flying Edges。",
-                'm.isosurface(ax,d.s,d.s,d.s,d.V,1.12,colors=d.C,cmap="viridis",EdgeColor="none")'),
+                'm.isosurface(ax,d.s,d.s,d.s,d.V,1.12,colors=d.C)'),
         Example("isosurface_geometry","isosurface_geometry(V[, level[, colors]])",
                 "计算面索引、顶点和可选颜色。返回字典，可直接交给 patch。",
                 'g = m.isosurface_geometry(d.s,d.s,d.s,d.V,1.03)\n'
                 'm.patch(ax,g,FaceColor="#1f93a2",EdgeColor="none",FaceLighting="gouraud")'),
         Example("slice","slice([X, Y, Z,] V, xs, ys, zs[, method])",
                 "xs、ys、zs 指各轴的切片位置，可用空列表跳过，或传三个曲面坐标矩阵。插值可用 linear、nearest、cubic。",
-                'm.slice(ax,d.s,d.s,d.s,d.V,[0],[.4],[-.5],"linear",cmap="magma",FaceAlpha=.92)'),
+                'm.slice(ax,d.s,d.s,d.s,d.V,[0],[.4],[-.5],"linear",FaceAlpha=.92)'),
         Example("contourslice","contourslice([X, Y, Z,] V, xs, ys, zs[, levels])",
                 "在各切片上绘制等值线。levels 可为自动级别数量或具体数组。返回各切片的曲线。",
                 'm.contourslice(ax,d.s,d.s,d.s,d.V,[],[],[-.6,0,.6],[.4,.8,1.4,2.1],LineWidth=2)'),
@@ -220,7 +218,7 @@ GROUPS = {
                 'h = m.isosurface(ax,d.s,d.s,d.s,d.V,1.1,FaceColor="#3d93af")\nm.isonormals(d.s,d.s,d.s,d.V,h)'),
         Example("flow","flow(n=25, grid=False) / flow(X, Y, Z)",
                 "生成管状标量场示例。grid=True 同时给出坐标和标量体，默认尺寸为 N×2N×N。",
-                'X,Y,Z,V = m.flow(26,grid=True)\nm.isosurface(ax,X,Y,Z,V,4,colors=X,cmap="viridis")'),
+                'X,Y,Z,V = m.flow(26,grid=True)\nm.isosurface(ax,X,Y,Z,V,4,colors=X)'),
         Example("smooth3","smooth3(V[, method[, size[, sigma]]])",
                 "对体数据做盒式或高斯平滑。size 为奇数窗口，sigma 为高斯标准差。此图显示平滑后零等值面。",
                 'v = np.random.default_rng(42).uniform(-1,1,(24,24,24))\n'
@@ -239,11 +237,11 @@ GROUPS = {
         Example("quiver3","quiver3([X, Y,] Z, U, V, W[, scale][, LineSpec])",
                 "每个箭头由位置和分量决定。scale=0 保留实际长度。ShowArrowHead、MaxHeadSize 控制箭头。",
                 't = np.linspace(-1,1,7)\nx,y,z = np.meshgrid(t,t,[-.45,.45])\n'
-                'm.quiver3(ax,x,y,z,-y,x,np.full_like(x,.4),.9,cmap="viridis")'),
+                'm.quiver3(ax,x,y,z,-y,x,np.full_like(x,.4),.9)'),
         Example("coneplot","coneplot([X, Y, Z,] U, V, W, Cx, Cy, Cz[, scale])",
                 "在给定采样位置绘制插值得到的向量。可用颜色体、nearest 或 cubic、quiver 和 nointerp 等选项。",
                 'x,y,z = np.meshgrid(np.linspace(-1,1,5),np.linspace(-1,1,5),[-.6,.6])\n'
-                'm.coneplot(ax,d.s,d.s,d.s,d.U,d.W,d.K,x,y,z,cmap="plasma")'),
+                'm.coneplot(ax,d.s,d.s,d.s,d.U,d.W,d.K,x,y,z)'),
         Example("stream2","stream2([X, Y,] U, V, sx, sy[, options])",
                 "计算二维流线顶点，options 为步长和最大步数。数组列表可交给 streamline 绘图。",
                 'lines = m.stream2(d.s,d.s,d.U[:,:,0],d.W[:,:,0],[.4,.7,1.],[0,0,0])\n'
@@ -276,7 +274,7 @@ GROUPS = {
         Example("divergence","divergence([X, Y, Z,] U, V, W)",
                 "返回向量场的散度矩阵。图中取径向变化的场并显示一个散度切片。",
                 'q = m.divergence(d.s,d.s,d.s,d.A**3,d.B**3,d.C**3)\n'
-                'm.slice(ax,d.s,d.s,d.s,q,[0],[],[-.4],cmap="magma")'),
+                'm.slice(ax,d.s,d.s,d.s,q,[0],[],[-.4])'),
         Example("interpstreamspeed","interpstreamspeed([X, Y, Z,] U, V, W, paths[, scale])",
                 "按沿轨迹积分得到的流动时间重采样。图中用标记显示新采样点。",
                 'p, = m.interpstreamspeed(d.s,d.s,d.s,d.U,d.W,d.K,d.path,5)\n'
@@ -412,11 +410,11 @@ GROUPS["图窗、动画更新和导出"] = (
             "创建或激活 Matplotlib Figure。num 可为编号或名称，figsize、dpi 和 layout 沿用 Matplotlib。",
             'active = m.figure(fig.number)\n'
             'active.suptitle("Figure with a VTK scene")\n'
-            'm.surf(ax, d.X, d.Y, d.Z, cmap="viridis", EdgeColor="none")'),
+            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")'),
     Example("subplot", "subplot(*args, **kwargs)",
             "按 Matplotlib 的位置参数创建 vtk3d 子图。示例在同一 Figure 中并排绘制曲面和网格。",
             'ax.remove()\nleft = m.subplot(121)\nright = m.subplot(122)\n'
-            'm.surf(left, d.X, d.Y, d.Z, cmap="viridis", EdgeColor="none")\n'
+            'm.surf(left, d.X, d.Y, d.Z, EdgeColor="none")\n'
             'm.mesh(right, d.X[::4, ::4], d.Y[::4, ::4], d.Z[::4, ::4], Color="#306b84")'),
     Example("gca", "gca()",
             "返回当前 vtk3d 坐标轴。当前 Figure 没有活动的 vtk3d 轴时，创建一个三维子图。",
@@ -429,19 +427,19 @@ GROUPS["图窗、动画更新和导出"] = (
             'm.drawnow(ax=ax)'),
     Example("show", "show(*args, **kwargs)",
             "通过 Matplotlib 的交互后端显示打开的图窗。可传 block 控制阻塞。下图为窗口中的三维场景。",
-            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="cividis")\n'
+            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")\n'
             'if plt.get_backend().lower() != "agg":\n    m.show()'),
     Example("savefig", "savefig(path_or_buffer, **kwargs)",
             "保存当前 Figure，支持 Matplotlib 的格式、dpi 和透明背景参数。示例把 PNG 写入内存，文件名也可用作目标。",
             'from io import BytesIO\n\n'
-            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="plasma")\n'
+            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")\n'
             'image = BytesIO()\nm.savefig(image, format="png", dpi=150)'),
     Example("close", "close(fig=None)",
             "关闭图窗并释放其 VTK 窗口。可传 Figure、图窗编号或 all。示例关闭临时图窗后继续在原图窗中出图。",
             'preview = m.figure()\n'
             'm.plot3(m.subplot(111), [0, 1], [0, 1], [0, 1])\n'
             'm.close(preview)\nm.figure(fig.number)\n'
-            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none", cmap="viridis")'),
+            'm.surf(ax, d.X, d.Y, d.Z, EdgeColor="none")'),
     Example("addpoints", "addpoints(handle, x, y, z=0)",
             "向 animatedline 追加一批样本，允许标量或数组。多次追加的数据会在绘制时合并。",
             'h = m.animatedline(ax, LineWidth=2)\n'
@@ -473,7 +471,7 @@ GROUPS["图窗、动画更新和导出"] = (
 GROUPS["附加的点云、位姿与体绘制接口"] = (
     Example("pcshow", "pcshow(points, colors=None, markersize=5)",
             "显示点云。可传末维为 3 的坐标数组或 PLY/VTP 路径，颜色可按点指定，默认使用高度。",
-            'm.pcshow(ax, d.cloud, markersize=4, cmap="viridis")'),
+            'm.pcshow(ax, d.cloud, markersize=4)'),
     Example("pcshowpair", "pcshowpair(first, second, markersize=5)",
             "以两种固定颜色在同一坐标轴显示两个点云，返回两个绘图句柄。",
             'm.pcshowpair(ax, d.cloud, d.cloud + [1.6, 0, .35], markersize=3)'),
@@ -523,6 +521,7 @@ def main():
     entries = [
         "# 带图函数参考",
         "每一图均由下方代码和库中的 VTK 渲染路径生成。参数总表和兼容性范围见 [API 参考](api.md)。",
+        "图集直接使用 `vtk3d` 的默认视角、轴框和刻度。每段代码列出该示例需要的视角或配色设置。",
         "先运行下面的初始化。每个例子都可以使用空的三维坐标轴独立运行。",
         '```python\nimport numpy as np\nimport matplotlib.pyplot as plt\nimport mpl3d_vtk as m\n'
         'from examples.function_reference import samples\nd = samples()\n'
@@ -534,19 +533,14 @@ def main():
     for section, examples in GROUPS.items():
         entries.append(f"## {section}")
         for example in examples:
-            fig, ax = plt.subplots(figsize=(5.1, 3.7), dpi=135, subplot_kw={"projection": "vtk3d"})
+            fig, ax = plt.subplots(figsize=(5.1, 4.3), dpi=135, subplot_kw={"projection": "vtk3d"})
             try:
-                fig.subplots_adjust(left=.04, right=.90, bottom=.10, top=.89)
-                ax.view_init(elev=29,azim=-58)
-                ax.set_box_aspect((1,1,.8),zoom=.89)
-                ax.tick_params(labelsize=8)
-                for axis in (ax.xaxis,ax.yaxis,ax.zaxis):
-                    axis.set_major_locator(MaxNLocator(5,prune="both"))
-                ax.set_title(example.name,fontfamily="monospace",fontsize=13)
+                fig.subplots_adjust(left=.07, right=.92, bottom=.13, top=.84)
+                fig.suptitle(example.name, fontfamily="monospace", fontsize=13)
                 exec(compile(example.code, example.name, "exec"),
                      {"np": np, "plt": plt, "m": m, "fig": fig, "ax": ax, "d": d})
                 image = f"{example.name}.png"
-                fig.savefig(images / image, facecolor="white")
+                fig.savefig(images / image)
                 frames = (panel._viewport_frame for panel in fig.axes if isinstance(panel, m.VtkAxes))
                 if not any(frame is not None and np.any(frame[..., 3]) for frame in frames):
                     raise RuntimeError("no VTK geometry was visible")

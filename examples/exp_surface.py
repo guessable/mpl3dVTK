@@ -5,7 +5,6 @@ import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FixedLocator
 import numpy as np
 import mpl3d_vtk  # Registers the vtk3d projection.
 
@@ -21,27 +20,18 @@ def main(destination):
     profile = fig.add_subplot(panels[1])
     h = ax.plot_surface(x, y, u, cmap=plt.get_cmap(), vmin=np.exp(-2), vmax=np.exp(2))
     ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
-    ax.xaxis.set_major_locator(FixedLocator([-2, -1, 0, 1, 2]))
-    ax.yaxis.set_major_locator(FixedLocator([-1, 0, 1, 2]))
-    ax.zaxis.set_major_locator(FixedLocator([0, 2, 4, 6, 8]))
-    accent = "#176a75"
-    ax.tick_params(axis="z", colors=accent)
-    ax.zaxis.label.set_color(accent)
-    ax.set(xlim=(-2, 2), ylim=(-2, 2), zlim=(0, 8))
     ax.set_title(r"$u=\exp(x\,\sin y)$", fontsize=19, pad=26)
     fig.colorbar(h, ax=ax, fraction=.043, shrink=.68, pad=.09, ticks=[1, 3, 5, 7])
 
-    profile.plot(t, np.exp(t), color=accent, linewidth=2, label=r"$y=\pi/2$")
-    profile.plot(t, np.exp(-t), color="#8558a4", linewidth=2, label=r"$y=-\pi/2$")
+    profile.plot(t, np.exp(t), linewidth=2, label=r"$y=\pi/2$")
+    profile.plot(t, np.exp(-t), linewidth=2, label=r"$y=-\pi/2$")
     profile.set(xlabel=r"$x$", ylabel=r"$u$", xlim=(-2, 2), ylim=(0, 8), title="Cross sections")
     profile.set_xticks([-2, -1, 0, 1, 2])
     profile.set_yticks([0, 2, 4, 6, 8])
-    profile.tick_params(axis="y", colors=accent)
-    profile.yaxis.label.set_color(accent)
     profile.spines[["top", "right"]].set_visible(False)
     profile.grid(alpha=.25)
     profile.legend(frameon=False, loc="upper center")
-    fig.savefig(destination, facecolor="white")
+    fig.savefig(destination)
     mpl3d_vtk.close(fig)
 
 

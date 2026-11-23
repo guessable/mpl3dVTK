@@ -86,7 +86,7 @@ m.close(fig)
 
 ### 逐函数说明与配图
 
-展开类别可查看每个公开接口的用途和缩略图。点击名称可查看调用签名、参数、可运行代码和完整原图。
+展开类别可查看每个公开接口的用途和缩略图。图集使用默认三维视角、轴框和刻度。示例的视角或配色设置会写在代码里。点击名称可查看调用签名、参数、可运行代码和完整原图。
 
 <!-- BEGIN ILLUSTRATED API -->
 
@@ -275,7 +275,6 @@ python -m venv .venv
 # macOS / Linux: source .venv/bin/activate
 python -m pip install -e ".[test]"
 python -m pytest -q
-python examples/function_reference.py
 python examples/plot_catalog.py --render
 ```
 
@@ -304,7 +303,7 @@ $u=\exp(x\sin y)$ 在 $[-2,2]^2$ 上的三维曲面，与两条二维截线共�
 
 `trisurf` 在闭合环面上绘制 $f(\theta,\phi)=\cos(3\theta)\cos\phi$。网格在周期接缝处共享顶点，表面按标量插值着色。 [示例源码](examples/closed_surface.py)
 
-![闭合环面上的标量函数，使用红蓝色图与平滑光照](docs/gallery/closed_surface.png)
+![闭合环面上的标量函数，使用默认色图与平滑光照](docs/gallery/closed_surface.png)
 
 ### 随机标量场的零等值面
 

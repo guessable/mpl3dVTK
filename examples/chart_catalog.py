@@ -5,7 +5,6 @@ import sys
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import MaxNLocator
 import numpy as np
 
 import mpl3d_vtk as m
@@ -32,30 +31,24 @@ def main(destination):
     rng = np.random.default_rng(7)
     p = rng.normal(size=(140,3))
     plots = [
-        ("surf",lambda a:m.surf(a,x,y,z,FaceColor="interp",EdgeColor="none",cmap="viridis")),
-        ("surfl",lambda a:m.surfl(a,x,y,z,cmap="bone")),
-        ("mesh",lambda a:m.mesh(a,x[::2,::2],y[::2,::2],z[::2,::2],cmap="viridis")),
-        ("surfc",lambda a:m.surfc(a,x,y,z,FaceColor="interp",EdgeColor="none",cmap="coolwarm")),
-        ("waterfall",lambda a:m.waterfall(a,x[::3],y[::3],z[::3],cmap="plasma",LineWidth=1.7)),
+        ("surf",lambda a:m.surf(a,x,y,z,FaceColor="interp",EdgeColor="none")),
+        ("surfl",lambda a:m.surfl(a,x,y,z)),
+        ("mesh",lambda a:m.mesh(a,x[::2,::2],y[::2,::2],z[::2,::2])),
+        ("surfc",lambda a:m.surfc(a,x,y,z,FaceColor="interp",EdgeColor="none")),
+        ("waterfall",lambda a:m.waterfall(a,x[::3],y[::3],z[::3],LineWidth=1.7)),
         ("ribbon",lambda a:m.ribbon(a,t,np.sin(t[:,None]*[.9,1.3,1.7,2.1])+[0,.4,.8,1.2],
-                                     FaceColor="interp",EdgeColor="none",cmap="cividis")),
-        ("trisurf",lambda a:m.trisurf(a,tri,tx,ty,tz,EdgeColor="#334653",cmap="viridis")),
-        ("contour3",lambda a:m.contour3(a,x,y,z,np.linspace(-5,7,11),cmap="turbo",LineWidth=1.8)),
-        ("bar3",lambda a:m.bar3(a,[[2,4,3],[4,1,3],[3,5,2],[2,3,4]],cmap="Blues",EdgeColor="#5e7290")),
-        ("scatter3",lambda a:m.scatter3(a,*p.T,26,p[:,2],"filled",cmap="plasma")),
-        ("quiver3",lambda a:m.quiver3(a,qx,qy,qz,-qy,qx,.35*np.ones_like(qx),.95,cmap="viridis")),
-        ("slice",lambda a:m.slice(a,s,s,s,vol,[0],[.5],[-.6],cmap="magma",FaceAlpha=.92)),
+                                     FaceColor="interp",EdgeColor="none")),
+        ("trisurf",lambda a:m.trisurf(a,tri,tx,ty,tz)),
+        ("contour3",lambda a:m.contour3(a,x,y,z,np.linspace(-5,7,11),LineWidth=1.8)),
+        ("bar3",lambda a:m.bar3(a,[[2,4,3],[4,1,3],[3,5,2],[2,3,4]])),
+        ("scatter3",lambda a:m.scatter3(a,*p.T,26,p[:,2],"filled")),
+        ("quiver3",lambda a:m.quiver3(a,qx,qy,qz,-qy,qx,.35*np.ones_like(qx),.95)),
+        ("slice",lambda a:m.slice(a,s,s,s,vol,[0],[.5],[-.6],FaceAlpha=.92)),
     ]
     for ax,(name,draw) in zip(axes.flat,plots):
         draw(ax)
-        ax.view_init(elev=31,azim=-57)
-        ax.set_box_aspect((1,1,.74),zoom=.94)
-        ax.set_title(name,loc="left",fontfamily="monospace",fontweight="bold",fontsize=15,pad=2)
-        for axis in (ax.xaxis,ax.yaxis,ax.zaxis):
-            axis.set_major_locator(MaxNLocator(4,prune="both"))
-            axis.pane.set_facecolor("#f2f5f8")
-        ax.tick_params(labelsize=7,pad=-1)
-    fig.savefig(destination,facecolor="white")
+        ax.set_title(name,loc="left",fontfamily="monospace",fontweight="bold",fontsize=15,pad=9)
+    fig.savefig(destination)
     m.close(fig)
 
 

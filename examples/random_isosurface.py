@@ -18,15 +18,12 @@ def main(destination, n=19, seed=42):
     fig.get_layout_engine().set(h_pad=.15,w_pad=.16)
     _,_,z = np.meshgrid(coords,coords,coords,sparse=True)
     h = m.isosurface(ax,coords,coords,coords,values,0,
-                     colors=np.broadcast_to(z,values.shape),cmap="viridis",clim=(-1,1),
+                     colors=np.broadcast_to(z,values.shape),clim=(-1,1),
                      AmbientStrength=.48,DiffuseStrength=.6,SpecularStrength=.07)
-    ax.set(xlim=(-1,1),ylim=(-1,1),zlim=(-1,1),xlabel="$x$",ylabel="$y$",zlabel="$z$")
-    ax.set(xticks=[-1,-.5,0,.5,1],yticks=[-.5,0,.5,1],zticks=[-1,-.5,0,.5,1])
-    ax.set_box_aspect((1,1,1),zoom=.95)
-    ax.view_init(elev=29,azim=-60)
-    ax.set_title(r"Zero isosurface  $V(x,y,z)=0$",fontsize=19,pad=10)
+    ax.set(xlabel="$x$",ylabel="$y$",zlabel="$z$")
+    fig.suptitle(r"Zero isosurface  $V(x,y,z)=0$",fontsize=19)
     fig.colorbar(h,ax=ax,label="$z$",ticks=[-1,-.5,0,.5,1],shrink=.64,pad=.07,fraction=.041)
-    fig.savefig(destination,facecolor="white")
+    fig.savefig(destination)
     print(f"{n}^3 samples, seed {seed}, {h.data.GetNumberOfPolys()} triangles")
     m.close(fig)
 

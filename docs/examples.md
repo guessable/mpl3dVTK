@@ -2,6 +2,8 @@
 
 安装 Python 包后，在项目根目录运行以下命令。示例使用 Matplotlib Agg 和 VTK 离屏窗口。
 
+图集使用 `vtk3d` 的默认视角、轴框和刻度。标量着色采用当前 Matplotlib 色图，配色示例会在代码中写明所用颜色。
+
 ```sh
 python examples/exp_surface.py exp_surface.png
 python examples/gallery.py vtk_gallery.png

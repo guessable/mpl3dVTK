@@ -39,22 +39,15 @@ def main(destination, antialiasing=2):
     handle = m.trisurf(ax, triangles, x, y, z, field.ravel(),
                        FaceColor="interp", EdgeColor="none", FaceLighting="gouraud",
                        AmbientStrength=.62, DiffuseStrength=.41, SpecularStrength=.09,
-                       cmap="RdBu_r", clim=(-1, 1))
+                       clim=(-1, 1))
     handle.data.GetPointData().SetNormals(numpy_to_vtk(normals.reshape(-1, 3), deep=True))
     ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-1, 1),
            xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
-    ax.set(xticks=[-2, 0, 2], yticks=[-2, 0, 2], zticks=[-.8, 0, .8])
-    ax.set_box_aspect((6, 6, 2), zoom=.96)
-    ax.set_proj_type("ortho")
-    ax.view_init(elev=42, azim=-58)
-    ax.set_title(r"$f(\theta,\phi)=\cos(3\theta)\cos\phi$", fontsize=21, pad=5)
-    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-        axis.pane.set_facecolor("#f1f4f8")
-        axis.pane.set_edgecolor("#d7dfe9")
+    fig.suptitle(r"$f(\theta,\phi)=\cos(3\theta)\cos\phi$", fontsize=21)
     fig.colorbar(handle, ax=ax, label=r"$f(\theta,\phi)$",
                  ticks=[-1, -.5, 0, .5, 1], shrink=.64, fraction=.043, pad=.125)
     try:
-        fig.savefig(destination, facecolor="white")
+        fig.savefig(destination)
     finally:
         m.close(fig)
 
