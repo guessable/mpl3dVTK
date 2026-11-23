@@ -63,7 +63,7 @@ surface.set_heights(z + .2)
 
 <img src="gallery/reference/plot_surface.png" width="460" alt="Exponential surface colored by its height, with a scalar colorbar">
 
-[Source code](../examples/reference_sources.py#L51).
+[Source code](../examples/reference/plot_surface.py).
 
 ### `plot_wireframe`
 
@@ -79,7 +79,7 @@ wireframe = ax.plot_wireframe(x, y, z, rstride=4, cstride=4, color="0.25", linew
 
 <img src="gallery/reference/plot_wireframe.png" width="460" alt="A sampled line mesh over the exponential height field">
 
-[Source code](../examples/reference_sources.py#L59).
+[Source code](../examples/reference/plot_wireframe.py).
 
 ### `plot_trisurf`
 
@@ -112,7 +112,7 @@ fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$"
 
 <img src="gallery/reference/plot_trisurf.png" width="650" alt="The original cheese mesh colored by a scalar function with a colorbar">
 
-[Source code](../examples/reference_sources.py#L65).
+[Source code](../examples/reference/plot_trisurf.py).
 
 ### `contour`
 
@@ -131,7 +131,7 @@ lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
 
 <img src="gallery/reference/contour.png" width="460" alt="A transparent surface with three contour levels projected below it">
 
-[Source code](../examples/reference_sources.py#L83).
+[Source code](../examples/reference/contour.py).
 
 ## Lines, points, and charts
 
@@ -154,7 +154,7 @@ ax.legend()
 
 <img src="gallery/reference/plot.png" width="460" alt="A blue three-dimensional helix with a legend">
 
-[Source code](../examples/reference_sources.py#L90).
+[Source code](../examples/reference/plot.py).
 
 ### `scatter`
 
@@ -175,7 +175,7 @@ fig.colorbar(points, ax=ax)
 
 <img src="gallery/reference/scatter.png" width="460" alt="Points on a helix colored by their individual heights">
 
-[Source code](../examples/reference_sources.py#L99).
+[Source code](../examples/reference/scatter.py).
 
 ### `quiver`
 
@@ -197,7 +197,7 @@ ax.set_box_aspect((1, 1, .55))
 
 <img src="gallery/reference/quiver.png" width="460" alt="An array of arrows showing the directions of a swirling vector field">
 
-[Source code](../examples/reference_sources.py#L108).
+[Source code](../examples/reference/quiver.py).
 
 ### `bar3d`
 
@@ -214,7 +214,7 @@ ax.set_box_aspect((2.6, 1.65, 3))
 
 <img src="gallery/reference/bar3d.png" width="460" alt="Three cuboid bars colored according to their heights">
 
-[Source code](../examples/reference_sources.py#L117).
+[Source code](../examples/reference/bar3d.py).
 
 ### `stem`
 
@@ -231,7 +231,7 @@ stems, markers = ax.stem(t[::8], np.sin(t[::8]), np.cos(t[::8]),
 
 <img src="gallery/reference/stem.png" width="460" alt="Markers at the ends of vertical lines from a common baseline">
 
-[Source code](../examples/reference_sources.py#L124).
+[Source code](../examples/reference/stem.py).
 
 ## Matplotlib aliases
 
@@ -246,7 +246,7 @@ ax.plot3D(np.cos(theta), np.sin(theta), theta/np.pi, color="tab:purple", linewid
 
 <img src="gallery/reference/plot3d.png" width="460" alt="A helix drawn with the plot3D alias">
 
-[Source code](../examples/reference_sources.py#L131).
+[Source code](../examples/reference/plot3d.py).
 
 ### `scatter3D`
 
@@ -259,7 +259,7 @@ ax.scatter3D(*points.T, s=24, c=points[:, 2], cmap="plasma")
 
 <img src="gallery/reference/scatter3d.png" width="460" alt="A sampled three-dimensional point cloud drawn with scatter3D">
 
-[Source code](../examples/reference_sources.py#L138).
+[Source code](../examples/reference/scatter3d.py).
 
 ### `quiver3D`
 
@@ -273,7 +273,7 @@ ax.set(zlim=(-.2, .5))
 
 <img src="gallery/reference/quiver3d.png" width="460" alt="Arrows on a plane drawn with quiver3D">
 
-[Source code](../examples/reference_sources.py#L145).
+[Source code](../examples/reference/quiver3d.py).
 
 ### `contour3D`
 
@@ -285,7 +285,7 @@ ax.contour3D(x, y, z, levels=[.5, 1, 2, 4], cmap="viridis", linewidth=2)
 
 <img src="gallery/reference/contour3d.png" width="460" alt="Four levels of a height field drawn with contour3D">
 
-[Source code](../examples/reference_sources.py#L153).
+[Source code](../examples/reference/contour3d.py).
 
 ## VtkAxes
 

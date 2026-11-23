@@ -75,22 +75,23 @@ Closing an interactive figure releases its VTK windows. With Agg, call `ax.remov
 
 ## Regenerate the reference figures
 
-The [gallery](plot_catalog.md) links each image to its API entry and to the exact function that creates it in [reference_sources.py](../examples/reference_sources.py). The Python file, its line links, and the PNGs are generated from the API examples. After changing an example, rebuild them together.
+Each [gallery](plot_catalog.md) image links to its API entry and its own runnable Python script. The scripts in [`examples/reference/`](../examples/reference/) and their PNGs in `docs/gallery/reference/` are generated from the API snippets. The random isosurface has its own script.
 
 ```sh
 python examples/render_reference.py --data-dir ../my-mpl-style/data
+python examples/random_isosurface.py docs/gallery/random_isosurface.png
 ```
 
-The figures are written to `docs/gallery/reference/`. To render one figure, pass its filename stem to the generated example script.
+To render a single figure, run the script linked below its thumbnail and pass the output filename.
 
 ```sh
-python examples/reference_sources.py plot_surface surface.png
-python examples/reference_sources.py plot_isosurface isosurfaces.png --data-dir ../my-mpl-style/data
+python examples/reference/plot_surface.py surface.png
+python examples/reference/plot_trisurf.py cheese.png --data-dir ../my-mpl-style/data
 ```
 
 ### Upstream data
 
-The isosurface and triangle mesh figures use `cheese.npz`, `peanut.npz`, and the three `pfc_3d_*_T3000.npz` files from the upstream `data/` directory. Obtain the same input revision with the following commands.
+The gallery's triangle mesh figures use `cheese.npz` and `peanut.npz` from the upstream `data/` directory. Obtain the same input revision with the following commands.
 
 ```sh
 git clone https://github.com/guessable/my-mpl-style.git ../my-mpl-style
