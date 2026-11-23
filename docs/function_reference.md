@@ -28,6 +28,8 @@ vectors = np.stack((-y, x, np.full_like(z, .2)), axis=-1)
 seeds = [[.3, 0, -.8], [.6, 0, -.8]]
 ```
 
+For `plot_mesh` and the isosurface examples, set `data_dir = Path("../my-mpl-style/data")` using `pathlib.Path` and adjust it to your [upstream data checkout](examples.md#upstream-data).
+
 ## Meshes and scalar fields
 
 ### `plot_mesh`
@@ -41,12 +43,17 @@ Draw an arbitrary polygon mesh. `vertices` is an `(n, 3)` array of XYZ points. E
 `values` can contain scalars or RGB(A) colors. Use one entry per vertex by default or one entry per face with `association="cell"`. Returns a `Graphic` with `vertices` and `faces` properties. Scalar values can drive a colorbar.
 
 ```python
-mesh = ax.plot_mesh([[0, 0, 0], [1, 0, 0], [0, 1, 1]], [[0, 1, 2]],
-                    values=[0., .2, 1.], cmap="viridis")
-fig.colorbar(mesh, ax=ax)
+with np.load(data_dir / "peanut.npz", allow_pickle=False) as data:
+    mesh = ax.plot_mesh(data["vertices"], data["elements"], color="#e8eef5",
+                        edgecolor="#2b5f8a", linewidth=.75)
+ax.set_title("peanut · indexed triangle mesh")
+ax.fit()
+ax.set_aspect("equal")
 ```
 
-<img src="gallery/reference/plot_mesh.png" width="460" alt="An arbitrary triangular polygon with interpolated vertex colors">
+<img src="gallery/reference/plot_mesh.png" width="460" alt="The original peanut mesh drawn from its stored XYZ vertices and triangle indices">
+
+[Source code](../examples/reference_sources.py#L137).
 
 ### `extract_isosurface`
 
@@ -60,11 +67,21 @@ Extract a triangle mesh at `level` from a scalar volume. The default level is ha
 Returns a dictionary with `vertices`, zero-based triangular `faces`, and optional interpolated `values`. An absent intersection returns empty geometry. Pass the dictionary to `ax.plot_mesh(**mesh)` to draw it.
 
 ```python
-mesh = vtkplot.extract_isosurface(volume, level=.6, coordinates=coordinates, color_values=z)
-ax.plot_mesh(**mesh, cmap="coolwarm", vmin=-1, vmax=1)
+with np.load(data_dir / "pfc_3d_1_T3000.npz", allow_pickle=False) as data:
+    coordinates = tuple(data[key] for key in "xyz")
+    volume = data["u_t3000"].transpose(1, 0, 2)
+height = np.broadcast_to(coordinates[2], volume.shape)
+mesh = vtkplot.extract_isosurface(volume, level=0, coordinates=coordinates, color_values=height)
+surface = ax.plot_mesh(**mesh, cmap="viridis")
+fig.colorbar(surface, ax=ax, shrink=.64, label="Z coordinate")
+ax.set_title(f"Zero isosurface · {len(mesh['faces']):,} triangles")
+ax.set(xlim=(0, 50), ylim=(0, 50), zlim=(0, 50))
+ax.set_aspect("equal")
 ```
 
-<img src="gallery/reference/extract_isosurface.png" width="460" alt="A triangle mesh extracted from a scalar field and colored by its sampled Z values">
+<img src="gallery/reference/extract_isosurface.png" width="460" alt="The first original zero isosurface extracted as triangles and colored by its Z coordinate">
+
+[Source code](../examples/reference_sources.py#L148).
 
 ### `plot_isosurface`
 
@@ -75,12 +92,29 @@ ax.plot_isosurface(values, *, level=None, coordinates=None,
 
 Extract and draw an isosurface. Inputs follow [`extract_isosurface`](#extract_isosurface). Use `color` for a uniform color or `color_values` to map an independent scalar field. Use `alpha` to set opacity. Gouraud lighting is enabled by default. Returns a `Graphic` that exposes the extracted geometry.
 
+The example draws the zero isosurface of all three upstream `u_t3000` fields. The stored volumes are in XYZ order. Transposing their first two axes gives the YXZ order this API expects.
+
 ```python
-shell = ax.plot_isosurface(volume, level=.6, coordinates=coordinates,
-                           color="tab:blue", alpha=.5)
+from matplotlib.colors import LightSource
+
+ax.remove()
+fig.set_size_inches(9.9, 3.9)
+panels = fig.subplots(1, 3, subplot_kw={"projection": "vtk3d"})
+for index, (ax, mean) in enumerate(zip(panels, (-.20, -.35, -.43)), start=1):
+    with np.load(data_dir / f"pfc_3d_{index}_T3000.npz", allow_pickle=False) as data:
+        coordinates = tuple(data[key] for key in "xyz")
+        volume = data["u_t3000"].transpose(1, 0, 2)
+    ax.plot_isosurface(volume, coordinates=coordinates, level=0, facecolor="#18b83e",
+                       ambient=.33, diffuse=.67, specular=.06)
+    ax.add_light(LightSource(azdeg=300, altdeg=38).direction)
+    ax.set(xlim=(0, 50), ylim=(0, 50), zlim=(0, 50))
+    ax.set_aspect("equal")
+    ax.set_title(f"Mean φ = {mean:.2f}")
 ```
 
-<img src="gallery/reference/plot_isosurface.png" width="460" alt="A translucent blue spherical level surface">
+<img src="gallery/reference/plot_isosurface.png" width="900" alt="All three original PFC volumes rendered as green zero isosurfaces">
+
+[Source code](../examples/reference_sources.py#L163).
 
 ### `plot_volume_slices`
 
@@ -103,6 +137,8 @@ fig.colorbar(slices[0], ax=ax)
 
 <img src="gallery/reference/plot_volume_slices.png" width="460" alt="Three perpendicular scalar slices with a shared colorbar">
 
+[Source code](../examples/reference_sources.py#L183).
+
 ### `plot_slice_contours`
 
 ```text
@@ -117,6 +153,8 @@ lines = ax.plot_slice_contours(volume, coordinates=coordinates, z=[-.3, .3],
 ```
 
 <img src="gallery/reference/plot_slice_contours.png" width="460" alt="Two sets of scalar contour rings in parallel planes">
+
+[Source code](../examples/reference_sources.py#L191).
 
 ### `plot_volume`
 
@@ -137,6 +175,8 @@ fig.colorbar(cloud, ax=ax)
 ```
 
 <img src="gallery/reference/plot_volume.png" width="460" alt="Maximum intensity projection of a Gaussian scalar volume">
+
+[Source code](../examples/reference_sources.py#L198).
 
 ## Vector fields and streamlines
 
@@ -160,6 +200,8 @@ ax.legend()
 
 <img src="gallery/reference/trace_streamlines.png" width="460" alt="Two seed points and the integrated paths winding upward around the Z axis">
 
+[Source code](../examples/reference_sources.py#L206).
+
 ### `plot_vector_samples`
 
 ```text
@@ -180,6 +222,8 @@ glyphs = ax.plot_vector_samples(vectors, sample_points, coordinates=coordinates,
 
 <img src="gallery/reference/plot_vector_samples.png" width="460" alt="Arrows sampled from a continuous vector field">
 
+[Source code](../examples/reference_sources.py#L215).
+
 ### `plot_streamlines`
 
 ```text
@@ -194,6 +238,8 @@ lines = ax.plot_streamlines(paths, color="tab:blue", linewidth=2.5)
 ```
 
 <img src="gallery/reference/plot_streamlines.png" width="460" alt="Two curved trajectories drawn as blue lines">
+
+[Source code](../examples/reference_sources.py#L224).
 
 ### `plot_streamtubes`
 
@@ -210,6 +256,8 @@ tube = ax.plot_streamtubes(paths, radius=.035, sides=14, color="tab:orange")
 
 <img src="gallery/reference/plot_streamtubes.png" width="460" alt="Two smooth orange tubes following seeded paths">
 
+[Source code](../examples/reference_sources.py#L231).
+
 ### `plot_streamribbons`
 
 ```text
@@ -225,6 +273,8 @@ ribbons = ax.plot_streamribbons(paths, width=.11, twists=twists, color="tab:purp
 ```
 
 <img src="gallery/reference/plot_streamribbons.png" width="460" alt="Purple strips twisting as they follow two streamlines">
+
+[Source code](../examples/reference_sources.py#L238).
 
 ## Point clouds and other geometry
 
@@ -243,6 +293,8 @@ cloud = ax.plot_point_cloud(points, c=points[:, 2], s=28, cmap="viridis")
 
 <img src="gallery/reference/plot_point_cloud.png" width="460" alt="A cloud of sampled Gaussian points colored by height">
 
+[Source code](../examples/reference_sources.py#L246).
+
 ### `plot_alpha_shape`
 
 ```text
@@ -257,6 +309,8 @@ boundary = ax.plot_alpha_shape(points, radius=1.1, color="tab:blue", alpha=.6)
 ```
 
 <img src="gallery/reference/plot_alpha_shape.png" width="460" alt="A partly transparent triangular boundary of a three-dimensional point cloud">
+
+[Source code](../examples/reference_sources.py#L253).
 
 ### `plot_coordinate_frames`
 
@@ -275,6 +329,8 @@ frames = ax.plot_coordinate_frames([[0, 0, 0], [.5, .5, .5]],
 ```
 
 <img src="gallery/reference/plot_coordinate_frames.png" width="460" alt="Two sets of colored XYZ basis arrows">
+
+[Source code](../examples/reference_sources.py#L260).
 
 ### `plot_graph`
 
@@ -295,6 +351,8 @@ graph = ax.plot_graph([[0, 1], [1, 2], [2, 0]],
 ```
 
 <img src="gallery/reference/plot_graph.png" width="460" alt="Three labeled nodes joined by directed graph edges">
+
+[Source code](../examples/reference_sources.py#L267).
 
 ### `plot_image_plane`
 
@@ -317,6 +375,8 @@ fig.colorbar(image, ax=ax)
 ```
 
 <img src="gallery/reference/plot_image_plane.png" width="460" alt="A scalar image embedded as a textured plane in 3D">
+
+[Source code](../examples/reference_sources.py#L275).
 
 ## add_streaming_line
 

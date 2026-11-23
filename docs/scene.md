@@ -57,6 +57,8 @@ ax.view_init(elev=24, azim=-60)
 
 <img src="gallery/reference/vtkaxes.png" width="460" alt="A vtk3d subplot showing a surface with a changed camera angle">
 
+[Source code](../examples/reference_sources.py#L286).
+
 ### `VtkAxes.set`
 
 ```text
@@ -74,6 +76,8 @@ ax.set(xlabel="Longitude", ylabel="Latitude", zlabel="Elevation", title="Labeled
 
 <img src="gallery/reference/axes_set.png" width="460" alt="A surface with axis labels, title, and limits set in one call">
 
+[Source code](../examples/reference_sources.py#L294).
+
 ### `get_antialiasing`
 
 ```text
@@ -89,6 +93,8 @@ ax.set_title(f"{ax.get_antialiasing()}× supersampling")
 ```
 
 <img src="gallery/reference/get_antialiasing.png" width="460" alt="A surface with its current supersampling scale in the subplot title">
+
+[Source code](../examples/reference_sources.py#L303).
 
 ### `set_antialiasing`
 
@@ -113,6 +119,8 @@ for panel, factor in zip(panels, (1, 4)):
 
 <img src="gallery/reference/set_antialiasing.png" width="700" alt="The same enlarged surface edges with 1× and 4× supersampling">
 
+[Source code](../examples/reference_sources.py#L311).
+
 ### `set_aspect`
 
 ```text
@@ -133,6 +141,8 @@ equal.set_title("Equal length per data unit")
 
 <img src="gallery/reference/set_aspect.png" width="700" alt="A shallow surface shown with automatic proportions and equal data units">
 
+[Source code](../examples/reference_sources.py#L326).
+
 ### `set_box_aspect`
 
 ```text
@@ -151,6 +161,8 @@ fixed.set_title("Taller Z axis")
 ```
 
 <img src="gallery/reference/set_box_aspect.png" width="700" alt="Two copies of a surface with the default and a taller Z box aspect">
+
+[Source code](../examples/reference_sources.py#L338).
 
 ### `fit`
 
@@ -173,6 +185,8 @@ fitted.set_title(f"Fitted X limits: {fitted.get_xlim()[0]:.1f} to {fitted.get_xl
 
 <img src="gallery/reference/fit.png" width="700" alt="A surface with manual limits and with limits fitted to the plotted data">
 
+[Source code](../examples/reference_sources.py#L349).
+
 ### `clear_scene`
 
 ```text
@@ -194,6 +208,8 @@ after.set_title("Annotation retained")
 
 <img src="gallery/reference/clear_scene.png" width="700" alt="Removing VTK geometry leaves the Matplotlib annotation and axes in place">
 
+[Source code](../examples/reference_sources.py#L362).
+
 ### `clear`
 
 ```text
@@ -213,6 +229,8 @@ after.set_title("Reset subplot")
 
 <img src="gallery/reference/clear.png" width="700" alt="The populated subplot before clearing and the reset axes after clearing">
 
+[Source code](../examples/reference_sources.py#L375).
+
 ### `VtkAxes.remove`
 
 ```text
@@ -230,6 +248,8 @@ keep.set_title("Remaining subplot")
 ```
 
 <img src="gallery/reference/axes_remove.png" width="700" alt="One of the two original subplots remains after removing the other">
+
+[Source code](../examples/reference_sources.py#L386).
 
 ### `get_legend_handles_labels`
 
@@ -249,6 +269,8 @@ ax.legend(handles[::-1], labels[::-1], loc="upper left")
 
 <img src="gallery/reference/get_legend_handles_labels.png" width="460" alt="The samples legend entry placed ahead of the path entry">
 
+[Source code](../examples/reference_sources.py#L396).
+
 ### `legend`
 
 ```text
@@ -265,6 +287,8 @@ ax.legend(loc="upper left")
 ```
 
 <img src="gallery/reference/legend.png" width="460" alt="A legend identifying two curves in the same three-dimensional scene">
+
+[Source code](../examples/reference_sources.py#L406).
 
 ### `pixels`
 
@@ -289,6 +313,8 @@ preview.set(title=f"RGBA snapshot: {rgba.shape[1]} × {rgba.shape[0]} pixels",
 
 <img src="gallery/reference/pixels.png" width="460" alt="A standalone image of the surface read back from the VTK viewport">
 
+[Source code](../examples/reference_sources.py#L415).
+
 ## Streaming lines and lights
 
 [`add_streaming_line`](#add_streaming_line) · [`append`](#append) · [`get_points`](#get_points) · [`clear_points`](#clear_points) · [`add_light`](#add_light)
@@ -310,6 +336,8 @@ ax.set_title("Latest 31 points")
 
 <img src="gallery/reference/add_streaming_line.png" width="460" alt="A streaming line retaining only the most recent portion of its input">
 
+[Source code](../examples/reference_sources.py#L430).
+
 ### `append`
 
 ```text
@@ -330,6 +358,8 @@ ax.legend(loc="upper left")
 
 <img src="gallery/reference/append.png" width="460" alt="Two batches forming one line, with the beginning of the second batch highlighted">
 
+[Source code](../examples/reference_sources.py#L439).
+
 ### `get_points`
 
 ```text
@@ -348,6 +378,8 @@ ax.legend(loc="upper left")
 ```
 
 <img src="gallery/reference/get_points.png" width="460" alt="Sample points read back from a streaming line and overlaid as orange markers">
+
+[Source code](../examples/reference_sources.py#L451).
 
 ### `clear_points`
 
@@ -371,6 +403,8 @@ after.set_title("Replacement points")
 
 <img src="gallery/reference/clear_points.png" width="700" alt="A streaming line before clearing and after adding a new path with the same style">
 
+[Source code](../examples/reference_sources.py#L462).
+
 ### `add_light`
 
 ```text
@@ -390,6 +424,8 @@ right.set_title("Directional light")
 ```
 
 <img src="gallery/reference/add_light.png" width="700" alt="A surface with the default view light and a custom warm directional light">
+
+[Source code](../examples/reference_sources.py#L476).
 
 ## Graphic handles
 
@@ -416,6 +452,8 @@ handle = mpl3d_vtk.Graphic(ax, sphere.GetOutput(), color="tab:blue", lighting=Tr
 
 <img src="gallery/reference/graphic.png" width="460" alt="A VTK sphere displayed with a directly constructed Graphic">
 
+[Source code](../examples/reference_sources.py#L488).
+
 ### `vertices`
 
 ```text
@@ -432,6 +470,8 @@ ax.legend(loc="upper left")
 ```
 
 <img src="gallery/reference/vertices.png" width="460" alt="The returned vertices marked with orange points on their source triangle">
+
+[Source code](../examples/reference_sources.py#L501).
 
 ### `faces`
 
@@ -450,6 +490,8 @@ for number, face in enumerate(handle.faces):
 ```
 
 <img src="gallery/reference/faces.png" width="460" alt="Two triangle faces labeled with their indices">
+
+[Source code](../examples/reference_sources.py#L510).
 
 ### `get_array`
 
@@ -473,6 +515,8 @@ histogram.set(xlabel="Scalar value", ylabel="Count", title="Returned array")
 
 <img src="gallery/reference/get_array.png" width="700" alt="The plotted surface beside a histogram of its returned scalar array">
 
+[Source code](../examples/reference_sources.py#L520).
+
 ### `get_cmap`
 
 ```text
@@ -489,6 +533,8 @@ ax.set_title(f"Shared {first.get_cmap().name} colormap")
 ```
 
 <img src="gallery/reference/get_cmap.png" width="460" alt="A fitted surface and raised markers sharing the retrieved Magma colormap">
+
+[Source code](../examples/reference_sources.py#L534).
 
 ### `get_clim`
 
@@ -507,6 +553,8 @@ ax.set_title(f"Color limits: {limits[0]:.1f} to {limits[1]:.1f}")
 ```
 
 <img src="gallery/reference/get_clim.png" width="460" alt="A scalar surface with the queried lower and upper color limits">
+
+[Source code](../examples/reference_sources.py#L543).
 
 ## Update data and colors
 
@@ -532,6 +580,8 @@ after.set_title("Inverted height")
 
 <img src="gallery/reference/set_heights.png" width="700" alt="The original surface and the same grid with its heights inverted">
 
+[Source code](../examples/reference_sources.py#L553).
+
 ### `set_values`
 
 ```text
@@ -551,6 +601,8 @@ after.set_title("Colors from Y")
 
 <img src="gallery/reference/set_values.png" width="700" alt="The same surface colored first by height and then by its Y coordinate">
 
+[Source code](../examples/reference_sources.py#L565).
+
 ### `set_array`
 
 ```text
@@ -567,6 +619,8 @@ fig.colorbar(handle, ax=ax, shrink=.65, label="X coordinate")
 ```
 
 <img src="gallery/reference/set_array.png" width="460" alt="A surface colored by an attached scalar array of X coordinates">
+
+[Source code](../examples/reference_sources.py#L576).
 
 ### `set_cmap`
 
@@ -587,6 +641,8 @@ after.set_title("Plasma")
 
 <img src="gallery/reference/set_cmap.png" width="700" alt="The same surface rendered with Viridis and Plasma colormaps">
 
+[Source code](../examples/reference_sources.py#L585).
+
 ### `set_clim`
 
 ```text
@@ -605,6 +661,8 @@ after.set_title("Range −0.2 to 0.2")
 ```
 
 <img src="gallery/reference/set_clim.png" width="700" alt="The same scalar field with a wide and a narrow color range">
+
+[Source code](../examples/reference_sources.py#L596).
 
 ## Style and visibility
 
@@ -627,6 +685,8 @@ ax.set_title("Face, edges, width, and opacity")
 
 <img src="gallery/reference/graphic_set.png" width="460" alt="A surface with face color, edge color, line width, and opacity updated together">
 
+[Source code](../examples/reference_sources.py#L607).
+
 ### `set_color`
 
 ```text
@@ -645,6 +705,8 @@ after.set_title("Fixed orange color")
 ```
 
 <img src="gallery/reference/set_color.png" width="700" alt="Scalar-colored geometry beside the same geometry with a uniform orange color">
+
+[Source code](../examples/reference_sources.py#L616).
 
 ### `set_facecolor`
 
@@ -665,6 +727,8 @@ after.set_title("Orange faces")
 
 <img src="gallery/reference/set_facecolor.png" width="700" alt="A polygon grid changing face color while keeping its dark blue edges">
 
+[Source code](../examples/reference_sources.py#L627).
+
 ### `set_edgecolor`
 
 ```text
@@ -683,6 +747,8 @@ after.set_title("Edges visible")
 ```
 
 <img src="gallery/reference/set_edgecolor.png" width="700" alt="The same coarse grid without edges and with dark polygon edges">
+
+[Source code](../examples/reference_sources.py#L638).
 
 ### `set_alpha`
 
@@ -704,6 +770,8 @@ after.set_title("Opacity 0.35")
 
 <img src="gallery/reference/set_alpha.png" width="700" alt="Markers behind a surface become visible when its opacity is reduced">
 
+[Source code](../examples/reference_sources.py#L649).
+
 ### `set_visible`
 
 ```text
@@ -724,6 +792,8 @@ after.set_title("Surface hidden")
 
 <img src="gallery/reference/set_visible.png" width="700" alt="A surface can be hidden while independently plotted points remain visible">
 
+[Source code](../examples/reference_sources.py#L661).
+
 ### `set_linewidth`
 
 ```text
@@ -742,6 +812,8 @@ after.set_title("5 px")
 ```
 
 <img src="gallery/reference/set_linewidth.png" width="700" alt="A thin curve and a widened version of the same curve">
+
+[Source code](../examples/reference_sources.py#L673).
 
 ### `set_linestyle`
 
@@ -764,6 +836,8 @@ ax.legend(handles=[proxy], loc="upper left")
 
 <img src="gallery/reference/set_linestyle.png" width="460" alt="A three-dimensional curve with a legend proxy showing its requested dashed style">
 
+[Source code](../examples/reference_sources.py#L684).
+
 ### `set_lighting`
 
 ```text
@@ -782,6 +856,8 @@ after.set_title("Phong lighting")
 ```
 
 <img src="gallery/reference/set_lighting.png" width="700" alt="A uniform-color surface compared with the same surface under Phong lighting">
+
+[Source code](../examples/reference_sources.py#L697).
 
 ### `Graphic.remove`
 
@@ -802,6 +878,8 @@ after.set_title("Surface retained")
 ```
 
 <img src="gallery/reference/graphic_remove.png" width="700" alt="An independent surface remains after the orange line handle is removed">
+
+[Source code](../examples/reference_sources.py#L708).
 
 ## Renderer integration
 
@@ -827,6 +905,8 @@ ax.draw(fig.canvas.get_renderer())
 
 <img src="gallery/reference/axes_draw.png" width="460" alt="A surface composited into a Matplotlib canvas by the axes draw method">
 
+[Source code](../examples/reference_sources.py#L720).
+
 ### `Graphic.draw`
 
 ```text
@@ -847,6 +927,8 @@ handle.draw(fig.canvas.get_renderer())
 ```
 
 <img src="gallery/reference/graphic_draw.png" width="460" alt="Two Graphic actors rendered together in one VTK viewport">
+
+[Source code](../examples/reference_sources.py#L732).
 
 ### `add_collection3d`
 
@@ -869,3 +951,5 @@ ax.set_title("Equivalent polygon with plot_mesh")
 ```
 
 <img src="gallery/reference/add_collection3d.png" width="460" alt="A VTK triangle as the equivalent to adding a Matplotlib 3D polygon collection">
+
+[Source code](../examples/reference_sources.py#L745).

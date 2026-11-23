@@ -8,6 +8,8 @@ Both renderers receive the complete meshes and the same orthographic view. The `
 
 ![Cheese and peanut meshes. Upper row mplot3d, lower row vtk3d with 2× supersampling](trisurf_comparison.png)
 
+[Source code for the comparison](../../my_mpl_style.py#L105).
+
 ### Rendering time
 
 All times are in milliseconds. Columns show medians except for rotation P95. Bold rows pair each original Matplotlib antialiasing setting with the default `vtk3d` 2× supersampling.
@@ -37,12 +39,13 @@ The paired meshes have identical triangle counts and axis-aligned bounds in this
 
 ![Three zero isosurfaces. Upper row mplot3d with face shading, lower row vtk3d with interpolated lighting](isosurface_comparison.png)
 
+[Source code for the comparison](../../my_mpl_style.py#L128).
+
 ## Benchmark setup
 
 - Windows 11 with an NVIDIA GeForce RTX 2080 Ti. Python 3.13.5, NumPy 2.3.0, Matplotlib 3.11.0, VTK 9.6.1, scikit-image 0.26.0, and `mpl3d-vtk` 0.5.0.
 - One subplot with an 800×600 Agg canvas, the upstream axes style, matched ranges, and identical view angles. PNG export renders at 1600×1200 and encodes to memory.
 - Each variant uses five fresh figures, 20 rotation redraws, and five PNG exports. First image time combines plot construction and its first canvas draw. Rotation measures redraw time. Loading data, importing libraries, writing files, and processing GUI events are outside those intervals.
-- The historic 0.3.1 and 0.4.0 viewport measurements use a different host and are available in the [viewport optimization report](../viewport_optimization/README.md).
 
 ## Reproduce the comparison
 

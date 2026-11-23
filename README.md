@@ -45,7 +45,7 @@ Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.
 
 ## Documentation
 
-- [Gallery](docs/plot_catalog.md) · Select a labeled figure to open its function reference.
+- [Gallery](docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
 - [Examples and export](docs/examples.md) · Run a complete script or save a figure.
-- API reference · [Plotting](docs/api.md), [VTK geometry](docs/function_reference.md), [Scene and handles](docs/scene.md), and [Migration](docs/api.md#migrating-from-older-versions).
+- API reference · [Plotting](docs/api.md), [VTK geometry](docs/function_reference.md), and [Scene and handles](docs/scene.md).
 - [Benchmarks](benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.

@@ -24,6 +24,8 @@ x, y = np.meshgrid(t, t)
 z = np.exp(x * np.sin(y))
 ```
 
+For the triangle mesh example, set `data_dir = Path("../my-mpl-style/data")` using `pathlib.Path` and adjust it to your [upstream data checkout](examples.md#upstream-data).
+
 ## Common style options
 
 Methods with `**style` accept the following keyword arguments. Each method also documents its own options.
@@ -60,6 +62,8 @@ surface.set_heights(z + .2)
 
 <img src="gallery/reference/plot_surface.png" width="460" alt="Exponential surface colored by its height, with a scalar colorbar">
 
+[Source code](../examples/reference_sources.py#L51).
+
 ### `plot_wireframe`
 
 ```text
@@ -74,6 +78,8 @@ wireframe = ax.plot_wireframe(x, y, z, rstride=4, cstride=4, color="0.25", linew
 
 <img src="gallery/reference/plot_wireframe.png" width="460" alt="A sampled line mesh over the exponential height field">
 
+[Source code](../examples/reference_sources.py#L59).
+
 ### `plot_trisurf`
 
 ```text
@@ -85,13 +91,33 @@ Plot triangles from one-dimensional X and Y coordinates and Z heights. Provide z
 
 Color `values` correspond to vertices by default or to retained faces with `association="cell"`. When a colormap is supplied without values, the handle colors by vertex height or mean face height. Returns a `Graphic`. Use [`plot_mesh`](function_reference.md#plot_mesh) for meshes with vertices at arbitrary XYZ positions.
 
+The example uses both upstream triangle meshes. The larger `cheese` mesh is colored by one scalar per face. The `peanut` mesh shows its triangle edges.
+
 ```python
-triangles = [[0, 1, 2], [1, 3, 2]]
-surface = ax.plot_trisurf([0, 1, 0, 1], [0, 0, 1, 1], [0, 0, 1, 2],
-                          triangles=triangles, cmap="plasma", edgecolor="0.25")
+ax.remove()
+fig.set_size_inches(8.2, 4.1)
+panels = fig.subplots(1, 2, subplot_kw={"projection": "vtk3d"})
+for ax, name in zip(panels, ("cheese", "peanut")):
+    with np.load(data_dir / f"{name}.npz", allow_pickle=False) as data:
+        x, y, z = data["vertices"].T
+        faces = data["elements"]
+    if name == "cheese":
+        u = x * np.sin(z) + y * np.sin(x**2)
+        handle = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1),
+                                 association="cell", cmap="viridis", vmin=u.min(), vmax=u.max(),
+                                 shade=False)
+        fig.colorbar(handle, ax=ax, shrink=.64, label="u")
+    else:
+        ax.plot_trisurf(x, y, z, triangles=faces, color="#e8eef5",
+                        edgecolor="#2b5f8a", linewidth=.75, shade=False)
+    ax.set_title(f"{name} · {len(faces):,} triangles")
+    ax.fit()
+    ax.set_aspect("equal")
 ```
 
-<img src="gallery/reference/plot_trisurf.png" width="460" alt="An explicit two-face triangulation colored by height">
+<img src="gallery/reference/plot_trisurf.png" width="700" alt="The original cheese mesh with per-face scalar colors and the peanut mesh with blue triangle edges">
+
+[Source code](../examples/reference_sources.py#L65).
 
 ### `contour`
 
@@ -109,6 +135,8 @@ lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
 ```
 
 <img src="gallery/reference/contour.png" width="460" alt="A transparent surface with three contour levels projected below it">
+
+[Source code](../examples/reference_sources.py#L89).
 
 ## Lines, points, and charts
 
@@ -131,6 +159,8 @@ ax.legend()
 
 <img src="gallery/reference/plot.png" width="460" alt="A blue three-dimensional helix with a legend">
 
+[Source code](../examples/reference_sources.py#L96).
+
 ### `scatter`
 
 ```text
@@ -149,6 +179,8 @@ fig.colorbar(points, ax=ax)
 ```
 
 <img src="gallery/reference/scatter.png" width="460" alt="Points on a helix colored by their individual heights">
+
+[Source code](../examples/reference_sources.py#L105).
 
 ### `quiver`
 
@@ -170,6 +202,8 @@ ax.set_box_aspect((1, 1, .55))
 
 <img src="gallery/reference/quiver.png" width="460" alt="An array of arrows showing the directions of a swirling vector field">
 
+[Source code](../examples/reference_sources.py#L114).
+
 ### `bar3d`
 
 ```text
@@ -184,6 +218,8 @@ ax.set_box_aspect((2.6, 1.65, 3))
 ```
 
 <img src="gallery/reference/bar3d.png" width="460" alt="Three cuboid bars colored according to their heights">
+
+[Source code](../examples/reference_sources.py#L123).
 
 ### `stem`
 
@@ -200,6 +236,8 @@ stems, markers = ax.stem(t[::8], np.sin(t[::8]), np.cos(t[::8]),
 
 <img src="gallery/reference/stem.png" width="460" alt="Markers at the ends of vertical lines from a common baseline">
 
+[Source code](../examples/reference_sources.py#L130).
+
 ## VtkAxes
 
 Create a [`VtkAxes`](scene.md#vtkaxes) and look up its scene controls.
@@ -211,19 +249,3 @@ See [Axes controls](scene.md#axes-controls) for projection settings, antialiasin
 ## Graphic
 
 See [Graphic handles](scene.md#graphic) for geometry properties and updates to existing plots.
-
-## Migrating from older versions
-
-Use Matplotlib for figure operations and call plotting methods on a `vtk3d` axes. Ordinary Python keyword arguments control style and slicing.
-
-| Older call | Current call |
-| --- | --- |
-| `m.figure()`, `m.subplot()`, `m.savefig()` | `plt.figure()`, `fig.add_subplot(..., projection="vtk3d")`, `fig.savefig(...)` |
-| `m.surf(ax, x, y, z, FaceAlpha=.5)` | `ax.plot_surface(x, y, z, alpha=.5)` |
-| `m.trisurf(ax, triangles, x, y, z)` | `ax.plot_mesh(np.column_stack((x, y, z)), triangles)` |
-| `m.isosurface(ax, x, y, z, volume, level)` | `ax.plot_isosurface(volume, coordinates=(x, y, z), level=level)` |
-| `m.slice(ax, x, y, z, volume, [], [], [0])` | `ax.plot_volume_slices(volume, coordinates=(x, y, z), z=0)` |
-| `m.hold("on")` | Add more plots to the same axes. |
-| `handle.set_zdata(z)`, `handle.set_cdata(c)` | `handle.set_heights(z)`, `handle.set_values(c)` |
-| MATLAB-style options or positional flags | Set keyword arguments such as `color="red"`, `alpha=.5`, and `lighting="gouraud"`. |
-| `m.close(fig)` in an Agg batch job | Call `ax.remove()` for each VTK subplot, then `plt.close(fig)`. |

@@ -47,7 +47,7 @@ plt.show()
 
 详细文档采用英文。
 
-- [图集](docs/plot_catalog.md) · 每张图标有函数名，点击图片查看对应文档。
+- [图集](docs/plot_catalog.md) · 每张图都附有 API 文档和可运行的 Python 源代码链接。
 - [示例与导出](docs/examples.md) · 运行完整脚本或保存图形。
-- API 参考 · [绘图](docs/api.md)、[VTK 几何](docs/function_reference.md)、[场景和图元句柄](docs/scene.md)、[迁移指南](docs/api.md#migrating-from-older-versions)。
+- API 参考 · [绘图](docs/api.md)、[VTK 几何](docs/function_reference.md)、[场景和图元句柄](docs/scene.md)。
 - [基准](benchmarks/results/my_mpl_style/README.md) · 查看与 mplot3d 的三角网格和等值面对比。
