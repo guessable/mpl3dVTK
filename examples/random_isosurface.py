@@ -21,7 +21,8 @@ def main(destination, n=19, seed=42):
                            color_values=np.broadcast_to(z, values.shape), vmin=-1, vmax=1,
                            ambient=.48, diffuse=.6, specular=.07)
     ax.set(xlabel="$x$",ylabel="$y$",zlabel="$z$")
-    fig.suptitle(r"Zero isosurface  $V(x,y,z)=0$",fontsize=19)
+    fig.suptitle("plot_isosurface", fontsize=19, fontfamily="monospace")
+    ax.set_title(f"Random zero isosurface · {n}³ samples · seed {seed}", fontsize=12)
     fig.colorbar(h,ax=ax,label="$z$",ticks=[-1,-.5,0,.5,1],shrink=.64,pad=.07,fraction=.041)
     fig.savefig(destination)
     print(f"{n}^3 samples, seed {seed}, {h.data.GetNumberOfPolys()} triangles")

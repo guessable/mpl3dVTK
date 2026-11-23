@@ -64,25 +64,19 @@ def plot_wireframe():
 
 def plot_trisurf(data_dir):
     fig, ax, t, x, y, z = _setup_api()
-    ax.remove()
-    fig.set_size_inches(8.2, 4.1)
-    panels = fig.subplots(1, 2, subplot_kw={"projection": "vtk3d"})
-    for ax, name in zip(panels, ("cheese", "peanut")):
-        with np.load(data_dir / f"{name}.npz", allow_pickle=False) as data:
-            x, y, z = data["vertices"].T
-            faces = data["elements"]
-        if name == "cheese":
-            u = x * np.sin(z) + y * np.sin(x**2)
-            handle = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1),
-                                     association="cell", cmap="viridis", vmin=u.min(), vmax=u.max(),
-                                     shade=False)
-            fig.colorbar(handle, ax=ax, shrink=.64, label="u")
-        else:
-            ax.plot_trisurf(x, y, z, triangles=faces, color="#e8eef5",
-                            edgecolor="#2b5f8a", linewidth=.75, shade=False)
-        ax.set_title(f"{name} · {len(faces):,} triangles")
-        ax.fit()
-        ax.set_aspect("equal")
+    fig.set_size_inches(6.2, 5.0)
+    with np.load(data_dir / "cheese.npz", allow_pickle=False) as data:
+        x, y, z = data["vertices"].T
+        faces = data["elements"]
+    u = x * np.sin(z) + y * np.sin(x**2)
+    surface = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1),
+                              association="cell", cmap="viridis", vmin=u.min(), vmax=u.max(),
+                              shade=False)
+    ax.set_title(f"cheese · {len(faces):,} triangles")
+    ax.set(xlabel="x", ylabel="y", zlabel="z")
+    ax.fit()
+    ax.set_aspect("equal")
+    fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
     return fig
 
 
@@ -131,6 +125,34 @@ def stem():
     fig, ax, t, x, y, z = _setup_api()
     stems, markers = ax.stem(t[::8], np.sin(t[::8]), np.cos(t[::8]),
                             bottom=-1, color="tab:green")
+    return fig
+
+
+def plot3d():
+    fig, ax, t, x, y, z = _setup_api()
+    theta = np.linspace(0, 3*np.pi, 120)
+    ax.plot3D(np.cos(theta), np.sin(theta), theta/np.pi, color="tab:purple", linewidth=2)
+    return fig
+
+
+def scatter3d():
+    fig, ax, t, x, y, z = _setup_api()
+    points = np.random.default_rng(6).normal(size=(90, 3))
+    ax.scatter3D(*points.T, s=24, c=points[:, 2], cmap="plasma")
+    return fig
+
+
+def quiver3d():
+    fig, ax, t, x, y, z = _setup_api()
+    a, b = np.meshgrid(np.linspace(-1, 1, 4), np.linspace(-1, 1, 4))
+    ax.quiver3D(a, b, 0, -b, a, .35, length=.42, color="tab:green")
+    ax.set(zlim=(-.2, .5))
+    return fig
+
+
+def contour3d():
+    fig, ax, t, x, y, z = _setup_api()
+    ax.contour3D(x, y, z, levels=[.5, 1, 2, 4], cmap="viridis", linewidth=2)
     return fig
 
 
@@ -717,6 +739,195 @@ def graphic_remove():
     return fig
 
 
+def view_init():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (front, side) = new_scene(2)
+    for ax in (front, side):
+        sample(ax, cmap="viridis")
+    front.view_init(elev=30, azim=-127.5)
+    front.set_title("Default view")
+    side.view_init(elev=54, azim=25, roll=8)
+    side.set_title("Rotated view")
+    return fig
+
+
+def set_proj_type():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (ortho, perspective) = new_scene(2)
+    for ax in (ortho, perspective):
+        sample(ax, color="tab:blue", edgecolor="#264e6c", rstride=8, cstride=8)
+    ortho.set_proj_type("ortho")
+    ortho.set_title("Orthographic")
+    perspective.set_proj_type("persp", focal_length=.25)
+    perspective.set_title("Perspective")
+    return fig
+
+
+def figure_colorbar():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    surface = sample(ax, cmap="plasma", vmin=-.6, vmax=.6)
+    fig.colorbar(surface, ax=ax, shrink=.7, label="Height", ticks=[-.6, 0, .6])
+    return fig
+
+
+def grid():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (with_grid, without_grid) = new_scene(2)
+    for ax in (with_grid, without_grid):
+        sample(ax, color="tab:blue")
+    with_grid.grid(True)
+    with_grid.set_title("Grid visible")
+    without_grid.grid(False)
+    without_grid.set_title("Grid hidden")
+    return fig
+
+
+def text():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    sample(ax, cmap="viridis")
+    ax.text(.2, .65, .58, "Sample region", color="black")
+    return fig
+
+
+def tick_params():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    sample(ax, color="#8ac6dc")
+    ax.tick_params(axis="z", colors="darkred", labelsize=13)
+    ax.set_zticks([-.4, 0, .4])
+    ax.set_title("Styled Z ticks")
+    return fig
+
+
+def set_norm():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    from matplotlib.colors import LogNorm
+
+    fig, (linear, logarithmic) = new_scene(2)
+    values = np.exp(3*x)
+    sample(linear, values=values, cmap="plasma")
+    linear.set_title("Linear colors")
+    handle = sample(logarithmic, values=values, cmap="plasma")
+    handle.set_norm(LogNorm(vmin=values.min(), vmax=values.max()))
+    logarithmic.set_title("Logarithmic colors")
+    return fig
+
+
+def set_label():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    line, = ax.plot(t, np.sin(4*t), np.cos(4*t), color="tab:purple", linewidth=2)
+    line.set_label("Measured path")
+    ax.legend(loc="upper left")
+    return fig
+
+
+def volume_set_visible():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (before, after) = new_scene(2)
+    coordinates = np.linspace(-1, 1, 25)
+    a, b, c = np.meshgrid(coordinates, coordinates, coordinates, sparse=True)
+    values = np.exp(-5*(a*a+b*b+c*c))
+    for ax in (before, after):
+        cloud = ax.plot_volume(values, coordinates=(coordinates,)*3,
+                               cmap="magma", blend_mode="maximum")
+        ax.scatter([.65], [.65], [.65], c="tab:blue", s=35)
+        ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+    before.set_title("Volume shown")
+    cloud.set_visible(False)
+    after.set_title("Volume hidden")
+    return fig
+
+
+def volume_remove():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (before, after) = new_scene(2)
+    coordinates = np.linspace(-1, 1, 25)
+    a, b, c = np.meshgrid(coordinates, coordinates, coordinates, sparse=True)
+    values = np.exp(-5*(a*a+b*b+c*c))
+    for ax in (before, after):
+        cloud = ax.plot_volume(values, coordinates=(coordinates,)*3,
+                               cmap="viridis", blend_mode="maximum")
+        ax.plot(t, np.zeros_like(t), -.65, color="tab:orange", linewidth=2)
+        ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+    before.set_title("Volume and line")
+    cloud.remove()
+    after.set_title("Line retained")
+    return fig
+
+
+def volume_draw():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    coordinates = np.linspace(-1, 1, 29)
+    a, b, c = np.meshgrid(coordinates, coordinates, coordinates, sparse=True)
+    values = np.exp(-8*((a-.3)**2+b*b+c*c))
+    cloud = ax.plot_volume(values, coordinates=(coordinates,)*3, cmap="magma",
+                           blend_mode="maximum")
+    fig.canvas.draw()
+    cloud.draw(fig.canvas.get_renderer())
+    return fig
+
+
+def volume_set():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    coordinates = np.linspace(-1, 1, 25)
+    a, b, c = np.meshgrid(coordinates, coordinates, coordinates, sparse=True)
+    values = np.exp(-6*(a*a+b*b+c*c))
+    cloud = ax.plot_volume(values, coordinates=(coordinates,)*3, cmap="plasma",
+                           blend_mode="maximum")
+    cloud.set(label="Scalar volume", visible=True)
+    ax.legend(loc="upper left")
+    return fig
+
+
+def image_set_values():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, (before, after) = new_scene(2)
+    for ax in (before, after):
+        image = ax.plot_image_plane(np.sin(5*x), extent=(-1, 1, -1, 1),
+                                    cmap="coolwarm", vmin=-1, vmax=1)
+        ax.set(zlim=(-.4, .4))
+    before.set_title("Vertical bands")
+    image.set_values(np.cos(5*y))
+    after.set_title("Horizontal bands")
+    return fig
+
+
+def image_set_array():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    image = ax.plot_image_plane(z, extent=(-1, 1, -1, 1), cmap="viridis", vmin=0, vmax=2)
+    image.set_array(x*x+y*y)
+    ax.set(zlim=(-.4, .4))
+    fig.colorbar(image, ax=ax, shrink=.7, label="Radial value")
+    return fig
+
+
+def image_set():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    image = ax.plot_image_plane(z, extent=(-1, 1, -1, 1), z=.1, cmap="plasma")
+    ax.plot(t, t, -.05, color="tab:blue", linewidth=3)
+    image.set(alpha=.45, label="Texture")
+    ax.set(zlim=(-.4, .4))
+    ax.legend(loc="upper left")
+    return fig
+
+
+def streaming_line_set():
+    t, x, y, z, new_scene, sample = _setup_scene()
+    fig, ax = new_scene()
+    line = ax.add_streaming_line()
+    line.append(t, np.sin(4*t), np.cos(4*t))
+    line.set(color="tab:purple", linewidth=4, label="Streaming path")
+    ax.legend(loc="upper left")
+    return fig
+
+
 def axes_draw():
     t, x, y, z, new_scene, sample = _setup_scene()
     from matplotlib.backends.backend_agg import FigureCanvasAgg
@@ -766,6 +977,10 @@ FIGURES = {
     "quiver": ('quiver', quiver, False),
     "bar3d": ('bar3d', bar3d, False),
     "stem": ('stem', stem, False),
+    "plot3d": ('plot3D', plot3d, False),
+    "scatter3d": ('scatter3D', scatter3d, False),
+    "quiver3d": ('quiver3D', quiver3d, False),
+    "contour3d": ('contour3D', contour3d, False),
     "plot_mesh": ('plot_mesh', plot_mesh, True),
     "extract_isosurface": ('extract_isosurface', extract_isosurface, True),
     "plot_isosurface": ('plot_isosurface', plot_isosurface, True),
@@ -821,6 +1036,22 @@ FIGURES = {
     "set_linestyle": ('set_linestyle', set_linestyle, False),
     "set_lighting": ('set_lighting', set_lighting, False),
     "graphic_remove": ('Graphic.remove', graphic_remove, False),
+    "view_init": ('view_init', view_init, False),
+    "set_proj_type": ('set_proj_type', set_proj_type, False),
+    "figure_colorbar": ('Figure.colorbar', figure_colorbar, False),
+    "grid": ('grid', grid, False),
+    "text": ('text', text, False),
+    "tick_params": ('tick_params', tick_params, False),
+    "set_norm": ('set_norm', set_norm, False),
+    "set_label": ('set_label', set_label, False),
+    "volume_set_visible": ('VolumeGraphic.set_visible', volume_set_visible, False),
+    "volume_remove": ('VolumeGraphic.remove', volume_remove, False),
+    "volume_draw": ('VolumeGraphic.draw', volume_draw, False),
+    "volume_set": ('VolumeGraphic.set', volume_set, False),
+    "image_set_values": ('ImageGraphic.set_values', image_set_values, False),
+    "image_set_array": ('ImageGraphic.set_array', image_set_array, False),
+    "image_set": ('ImageGraphic.set', image_set, False),
+    "streaming_line_set": ('StreamingLine.set', streaming_line_set, False),
     "axes_draw": ('VtkAxes.draw', axes_draw, False),
     "graphic_draw": ('Graphic.draw', graphic_draw, False),
     "add_collection3d": ('add_collection3d', add_collection3d, False),

@@ -6,6 +6,7 @@ Choose a method by the data you want to draw.
 | --- | --- |
 | Surfaces and contours | [`plot_surface`](#plot_surface), [`plot_wireframe`](#plot_wireframe), [`plot_trisurf`](#plot_trisurf), [`contour`](#contour) |
 | Lines, points, and charts | [`plot`](#plot), [`scatter`](#scatter), [`quiver`](#quiver), [`bar3d`](#bar3d), [`stem`](#stem) |
+| Matplotlib aliases | [`plot3D`](#plot3d), [`scatter3D`](#scatter3d), [`quiver3D`](#quiver3d), [`contour3D`](#contour3d) |
 
 For volume and vector fields, use the [VTK reference](function_reference.md). For styling, cameras, and updates to existing plots, use [Scene and handles](scene.md).
 
@@ -91,31 +92,25 @@ Plot triangles from one-dimensional X and Y coordinates and Z heights. Provide z
 
 Color `values` correspond to vertices by default or to retained faces with `association="cell"`. When a colormap is supplied without values, the handle colors by vertex height or mean face height. Returns a `Graphic`. Use [`plot_mesh`](function_reference.md#plot_mesh) for meshes with vertices at arbitrary XYZ positions.
 
-The example uses both upstream triangle meshes. The larger `cheese` mesh is colored by one scalar per face. The `peanut` mesh shows its triangle edges.
+The example evaluates `u = x sin(z) + y sin(x²)` on the original `cheese` mesh and colors each triangle by the mean of its three vertex values. The colorbar shows the function's scalar range.
 
 ```python
-ax.remove()
-fig.set_size_inches(8.2, 4.1)
-panels = fig.subplots(1, 2, subplot_kw={"projection": "vtk3d"})
-for ax, name in zip(panels, ("cheese", "peanut")):
-    with np.load(data_dir / f"{name}.npz", allow_pickle=False) as data:
-        x, y, z = data["vertices"].T
-        faces = data["elements"]
-    if name == "cheese":
-        u = x * np.sin(z) + y * np.sin(x**2)
-        handle = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1),
-                                 association="cell", cmap="viridis", vmin=u.min(), vmax=u.max(),
-                                 shade=False)
-        fig.colorbar(handle, ax=ax, shrink=.64, label="u")
-    else:
-        ax.plot_trisurf(x, y, z, triangles=faces, color="#e8eef5",
-                        edgecolor="#2b5f8a", linewidth=.75, shade=False)
-    ax.set_title(f"{name} · {len(faces):,} triangles")
-    ax.fit()
-    ax.set_aspect("equal")
+fig.set_size_inches(6.2, 5.0)
+with np.load(data_dir / "cheese.npz", allow_pickle=False) as data:
+    x, y, z = data["vertices"].T
+    faces = data["elements"]
+u = x * np.sin(z) + y * np.sin(x**2)
+surface = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1),
+                          association="cell", cmap="viridis", vmin=u.min(), vmax=u.max(),
+                          shade=False)
+ax.set_title(f"cheese · {len(faces):,} triangles")
+ax.set(xlabel="x", ylabel="y", zlabel="z")
+ax.fit()
+ax.set_aspect("equal")
+fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
 ```
 
-<img src="gallery/reference/plot_trisurf.png" width="700" alt="The original cheese mesh with per-face scalar colors and the peanut mesh with blue triangle edges">
+<img src="gallery/reference/plot_trisurf.png" width="650" alt="The original cheese mesh colored by a scalar function with a colorbar">
 
 [Source code](../examples/reference_sources.py#L65).
 
@@ -136,7 +131,7 @@ lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
 
 <img src="gallery/reference/contour.png" width="460" alt="A transparent surface with three contour levels projected below it">
 
-[Source code](../examples/reference_sources.py#L89).
+[Source code](../examples/reference_sources.py#L83).
 
 ## Lines, points, and charts
 
@@ -159,7 +154,7 @@ ax.legend()
 
 <img src="gallery/reference/plot.png" width="460" alt="A blue three-dimensional helix with a legend">
 
-[Source code](../examples/reference_sources.py#L96).
+[Source code](../examples/reference_sources.py#L90).
 
 ### `scatter`
 
@@ -180,7 +175,7 @@ fig.colorbar(points, ax=ax)
 
 <img src="gallery/reference/scatter.png" width="460" alt="Points on a helix colored by their individual heights">
 
-[Source code](../examples/reference_sources.py#L105).
+[Source code](../examples/reference_sources.py#L99).
 
 ### `quiver`
 
@@ -202,7 +197,7 @@ ax.set_box_aspect((1, 1, .55))
 
 <img src="gallery/reference/quiver.png" width="460" alt="An array of arrows showing the directions of a swirling vector field">
 
-[Source code](../examples/reference_sources.py#L114).
+[Source code](../examples/reference_sources.py#L108).
 
 ### `bar3d`
 
@@ -219,7 +214,7 @@ ax.set_box_aspect((2.6, 1.65, 3))
 
 <img src="gallery/reference/bar3d.png" width="460" alt="Three cuboid bars colored according to their heights">
 
-[Source code](../examples/reference_sources.py#L123).
+[Source code](../examples/reference_sources.py#L117).
 
 ### `stem`
 
@@ -236,7 +231,61 @@ stems, markers = ax.stem(t[::8], np.sin(t[::8]), np.cos(t[::8]),
 
 <img src="gallery/reference/stem.png" width="460" alt="Markers at the ends of vertical lines from a common baseline">
 
-[Source code](../examples/reference_sources.py#L130).
+[Source code](../examples/reference_sources.py#L124).
+
+## Matplotlib aliases
+
+### `plot3D`
+
+Alias for [`plot`](#plot) with the same arguments and return value.
+
+```python
+theta = np.linspace(0, 3*np.pi, 120)
+ax.plot3D(np.cos(theta), np.sin(theta), theta/np.pi, color="tab:purple", linewidth=2)
+```
+
+<img src="gallery/reference/plot3d.png" width="460" alt="A helix drawn with the plot3D alias">
+
+[Source code](../examples/reference_sources.py#L131).
+
+### `scatter3D`
+
+Alias for [`scatter`](#scatter) with the same arguments and return value.
+
+```python
+points = np.random.default_rng(6).normal(size=(90, 3))
+ax.scatter3D(*points.T, s=24, c=points[:, 2], cmap="plasma")
+```
+
+<img src="gallery/reference/scatter3d.png" width="460" alt="A sampled three-dimensional point cloud drawn with scatter3D">
+
+[Source code](../examples/reference_sources.py#L138).
+
+### `quiver3D`
+
+Alias for [`quiver`](#quiver) with the same arguments and return value.
+
+```python
+a, b = np.meshgrid(np.linspace(-1, 1, 4), np.linspace(-1, 1, 4))
+ax.quiver3D(a, b, 0, -b, a, .35, length=.42, color="tab:green")
+ax.set(zlim=(-.2, .5))
+```
+
+<img src="gallery/reference/quiver3d.png" width="460" alt="Arrows on a plane drawn with quiver3D">
+
+[Source code](../examples/reference_sources.py#L145).
+
+### `contour3D`
+
+Alias for [`contour`](#contour) with the same arguments and return value.
+
+```python
+ax.contour3D(x, y, z, levels=[.5, 1, 2, 4], cmap="viridis", linewidth=2)
+```
+
+<img src="gallery/reference/contour3d.png" width="460" alt="Four levels of a height field drawn with contour3D">
+
+[Source code](../examples/reference_sources.py#L153).
 
 ## VtkAxes
 
@@ -244,7 +293,7 @@ Create a [`VtkAxes`](scene.md#vtkaxes) and look up its scene controls.
 
 ## Axes controls
 
-See [Axes controls](scene.md#axes-controls) for projection settings, antialiasing, and export to an RGBA array. The aliases `plot3D`, `scatter3D`, `quiver3D`, and `contour3D` use the same methods and figures as their lowercase names above.
+See [Axes controls](scene.md#axes-controls) for projection settings, antialiasing, and export to an RGBA array.
 
 ## Graphic
 
