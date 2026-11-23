@@ -1,30 +1,18 @@
 """Native Matplotlib 3D axes with a transparent VTK geometry layer."""
 from itertools import product
 from operator import index
-import re
 
 import numpy as np
 from PIL import Image
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
+import matplotlib as mpl
 from matplotlib.artist import Artist, allow_rasterization
-from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.projections import register_projection
 from matplotlib.transforms import Bbox
 from mpl_toolkits.mplot3d import Axes3D
 
 from ._projected_ticks import apply_axes_style
-
-
-_SERIES_COLORS = (
-    (0.066, 0.443, 0.745), (0.866, 0.329, 0.000), (0.929, 0.694, 0.125),
-    (0.521, 0.086, 0.819), (0.231, 0.666, 0.196), (0.184, 0.745, 0.937),
-    (0.819, 0.015, 0.545),
-)
-_SCALAR_COLORMAP = LinearSegmentedColormap.from_list("blue_green_yellow", (
-    "#35296f", "#403d97", "#2855b5", "#0872ba", "#108bb8", "#17a0ac",
-    "#34af96", "#61ba76", "#a2bf50", "#d4c241", "#eed345", "#f6ec56",
-), N=256)
 
 
 def _sampling_factor(value):
@@ -104,7 +92,6 @@ class VtkAxes(Axes3D):
         focal_length = kwargs.get("focal_length")
         kwargs.setdefault("proj_type", "persp" if focal_length is not None
                           and np.isfinite(focal_length) else "ortho")
-        kwargs.setdefault("facecolor", "white")
         self._antialiasing = _sampling_factor(antialiasing)
         super().__init__(*args, **kwargs)
         self._apply_visual_defaults()
@@ -172,14 +159,7 @@ class VtkAxes(Axes3D):
 
     def _apply_visual_defaults(self):
         apply_axes_style(self)
-        self.set_prop_cycle(color=_SERIES_COLORS)
-        self.default_cmap = _SCALAR_COLORMAP.copy()
-
-    @staticmethod
-    def _series_color(color):
-        if isinstance(color, str) and re.fullmatch(r"C[0-9]+", color):
-            return _SERIES_COLORS[int(color[1:]) % len(_SERIES_COLORS)]
-        return color
+        self.default_cmap = mpl.rcParams["image.cmap"]
 
     def clear_scene(self):
         for handle in self.handles.copy():
@@ -418,8 +398,12 @@ class VtkAxes(Axes3D):
         args = [a[index] for a in xyz]
         if facecolors is not None:
             args.append(np.asarray(facecolors)[index])
-        solid_color = kwargs.get("color") is not None
-        kwargs.setdefault("lighting", shade if shade is not None else solid_color and "cmap" not in kwargs)
+        cmap = kwargs.pop("cmap", None)
+        if cmap is not None:
+            kwargs["cmap"] = cmap
+        elif facecolors is None and "facecolor" not in kwargs and kwargs.get("color") is None:
+            kwargs["color"] = self._get_lines.get_next_color()
+        kwargs.setdefault("lighting", shade if shade is not None else cmap is None)
         return self._add_plot(surf,*args,**{"facecolor":"interp","edgecolor":"none",**kwargs})
 
     def plot_wireframe(self,X,Y,Z,*,rcount=None,ccount=None,rstride=None,cstride=None,**kwargs):

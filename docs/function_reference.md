@@ -1437,7 +1437,7 @@ fig.colorbar(h, ax=ax, shrink=.7)
 
 ```python
 assert isinstance(ax, m.VtkAxes)
-ax.plot_surface(d.X, d.Y, d.Z)
+ax.plot_surface(d.X, d.Y, d.Z, cmap=plt.get_cmap())
 ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
 ```
 

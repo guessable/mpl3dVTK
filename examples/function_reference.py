@@ -466,7 +466,7 @@ GROUPS["图窗、动画更新和导出"] = (
     Example("VtkAxes", "VtkAxes",
             "注册为 vtk3d 的 Matplotlib Axes3D 子类，自动应用三维默认外观。用 Figure 或 pyplot 的子图方法创建。",
             'assert isinstance(ax, m.VtkAxes)\n'
-            'ax.plot_surface(d.X, d.Y, d.Z)\n'
+            'ax.plot_surface(d.X, d.Y, d.Z, cmap=plt.get_cmap())\n'
             'ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")'),
 )
 

@@ -33,10 +33,8 @@ u = np.exp(x * np.sin(y))
 
 fig = plt.figure(figsize=(10, 4.5), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
-surface = ax.plot_surface(x, y, u)
+surface = ax.plot_surface(x, y, u, cmap=plt.get_cmap())
 ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
-ax.set_box_aspect((1, 1, 0.8))
-ax.view_init(elev=30, azim=-60)
 fig.colorbar(surface, ax=ax, label=r"$u$", shrink=0.75)
 
 profile = fig.add_subplot(122)
@@ -61,9 +59,7 @@ v = np.random.default_rng(42).uniform(-1, 1, (t.size, t.size, t.size))
 
 fig = m.figure(layout="constrained")
 ax = m.subplot(111)
-iso = m.isosurface(ax, t, t, t, v, 0, FaceColor="#36a6a3", EdgeColor="none")
-m.view(-35, 28, ax=ax)
-m.lighting("gouraud", ax=ax)
+iso = m.isosurface(ax, t, t, t, v, 0)
 m.savefig("zero_isosurface.png", dpi=180)
 print(f"{len(iso.faces)} triangles")
 m.close(fig)
@@ -83,7 +79,7 @@ m.close(fig)
 | 颜色与光照 | `cmap` 和 `clim` 控制映射。用 `FaceColor="interp"`、`EdgeColor="none"`、`FaceAlpha`、`FaceLighting` 等属性设置图元。 |
 | 返回值 | 大多数绘图函数返回 `Graphic`。可传给 `fig.colorbar()`，通过 `vertices`、`faces`、`data`、`mapper` 和 `actor` 访问网格或 VTK 对象。组合图和动画的返回值见逐函数页面。 |
 | 复用图元 | 调用 `handle.set_clim()` 或 `handle.set_cmap()` 更新色映射。规则曲面可用 `set_zdata()` 和 `set_cdata()` 更新数据。 |
-| 默认外观 | 正交视角、等数据单位比例、白底、细网格与向外刻度。标量默认使用蓝绿黄渐变，多个线系列按固定顺序配色。 |
+| 默认外观 | 正交视角、等数据单位比例、灰色无填充轴框、细网格与向外刻度。背景、标量色图和颜色循环沿用 Matplotlib 当前样式。 |
 | 抗锯齿 | `antialiasing` 支持整数 1–4。1 为原始像素尺寸，2 为默认，4 可用于高质量静态导出。可用 `ax.set_antialiasing(4)` 按子图调整。 |
 
 按 [三维绘图图集](docs/plot_catalog.md) 查找图形。参数重载、图形属性和返回值见 [API 参考](docs/api.md)。
@@ -294,7 +290,7 @@ python -m twine check dist/*
 
 ## 版本与性能
 
-0.5.0 统一了三维子图的默认坐标轴和配色。此前 0.4.0 减少了视口合成的转换和重采样。在当时的测试中，307,708 面网格的旋转重绘中位耗时由 46.21 ms 降至 21.23 ms，PNG 导出由 267.00 ms 降至 128.37 ms。 [复测条件与原始数据](benchmarks/results/viewport_optimization/README.md)
+0.5.0 统一了三维子图的默认坐标轴。此前 0.4.0 减少了视口合成的转换和重采样。在当时的测试中，307,708 面网格的旋转重绘中位耗时由 46.21 ms 降至 21.23 ms，PNG 导出由 267.00 ms 降至 128.37 ms。 [复测条件与原始数据](benchmarks/results/viewport_optimization/README.md)
 
 ## 示例
 

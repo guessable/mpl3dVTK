@@ -51,7 +51,8 @@ def test_axes_defaults_and_explicit_controls():
     assert m.camproj(ax=ax) == "orthographic"
     assert all(not axis.pane.get_fill() for axis in (ax.xaxis,ax.yaxis,ax.zaxis))
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -5
-    np.testing.assert_allclose(ax.xaxis._axinfo["grid"]["color"], (.13, .13, .13, .15))
+    assert ax.xaxis._axinfo["grid"]["linewidth"] == .2
+    assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
     m.plot3(ax,[0,4],[0,2],[0,1])
     ax.set(xlim=(0,4), ylim=(0,2), zlim=(0,1))
     fig.canvas.draw()
@@ -68,26 +69,29 @@ def test_axes_defaults_and_explicit_controls():
     np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
 
 
-def test_default_colors_are_local_and_reset_on_clear():
-    with matplotlib.rc_context({"image.cmap": "inferno", "axes.prop_cycle": matplotlib.cycler(color=["red"])}):
+def test_matplotlib_defaults_supply_colormap_and_color_cycle():
+    style = {"image.cmap": "inferno", "axes.facecolor": "gray",
+             "axes.prop_cycle": matplotlib.cycler(color=["red", "green"])}
+    with matplotlib.rc_context(style):
         _, ax = _figure()
         xyz = np.array([[0., 1.], [0., 1.]])
-        h = ax.plot_surface(xyz, xyz.T, xyz + xyz.T)
-        assert h.get_cmap().name == "blue_green_yellow"
-        np.testing.assert_array_equal(h.get_array(), (xyz + xyz.T).ravel())
-        assert h.get_cmap().N == 256
+        h = m.surf(ax, xyz)
+        assert h.get_cmap().name == "inferno"
+        assert ax.get_facecolor() == matplotlib.colors.to_rgba("gray")
         assert m.surf(ax, xyz, cmap="magma").get_cmap().name == "magma"
+        surface = ax.plot_surface(xyz, xyz.T, xyz + xyz.T, cmap=None)
+        assert surface.actor.GetProperty().GetColor() == (1., 0., 0.)
         lines = [ax.plot([0, 1], [0, 1], [i, i])[0] for i in (0, 1)]
         np.testing.assert_allclose([line.actor.GetProperty().GetColor() for line in lines],
-                                   [[.066, .443, .745], [.866, .329, .0]])
+                                   [matplotlib.colors.to_rgb("green"), (1., 0., 0.)])
         points = m.scatter3(ax, [0], [0], [0])
-        np.testing.assert_allclose(points.actor.GetProperty().GetColor(), [.066, .443, .745])
+        assert points.actor.GetProperty().GetColor() == (1., 0., 0.)
         _, native = plt.subplots()
         assert native.plot([0, 1])[0].get_color() == "red"
         assert matplotlib.rcParams["image.cmap"] == "inferno"
         m.colormap("gray", ax=ax)
         ax.clear()
-        assert ax.plot_surface(xyz, xyz.T, xyz + xyz.T).get_cmap().name == "blue_green_yellow"
+        assert m.surf(ax, xyz).get_cmap().name == "inferno"
 
 
 @pytest.mark.parametrize("projection", ["persp", "ortho"])

@@ -13,21 +13,16 @@ def apply_axes_style(ax):
     if not isinstance(geometry, _ProjectedGeometry):
         geometry = ax._style3d_geometry = _ProjectedGeometry(ax)
     geometry.matrix = None
-    ax.grid(True)
-    foreground = "#212121"
     for name, pad, alignment in (("x", -5, "left"), ("y", -5, "right"), ("z", 0, None)):
         axis = getattr(ax, f"{name}axis")
-        ax.tick_params(axis=name, pad=pad, colors=foreground)
-        axis.label.set_color(foreground)
-        axis.line.set_color(foreground)
-        axis.line.set_linewidth(.5)
-        axis._axinfo["grid"].update(color=(.13, .13, .13, .15), linewidth=.5)
+        ax.tick_params(axis=name, pad=pad)
+        axis._axinfo["grid"]["linewidth"] = .2
         axis._axinfo["tick"].update(inward_factor=.2, outward_factor=0.)
         axis.pane.set_fill(False)
         axis.pane.set_closed(True)
         axis.pane.set_alpha(None)
         axis.pane.set_linewidth(axis.line.get_linewidth())
-        axis.pane.set_edgecolor((.13, .13, .13, .28))
+        axis.pane.set_edgecolor("gray")
         for tick in axis.get_major_ticks():
             if alignment is None:
                 tick.label1.set_va("center_baseline")
