@@ -1968,6 +1968,8 @@ Update properties of the volume's Matplotlib artist and scalar mappable.
 
   Includes `visible`, `label`, `array`, `cmap`, `clim`, and `norm`, plus compatible [artist properties](#handle-property-keywords). Set the VTK opacity transfer function via [`plot_volume`](function_reference.md#plot_volume).
 
+  Use `array` or `cloud.set_array(values)` to replace the voxel values with a finite array of the original shape.
+
 **Returns**
 
 - **`results`** (list)

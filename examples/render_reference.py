@@ -29,6 +29,13 @@ FIGURE = re.compile(
 )
 HEADINGS = re.compile(r"^##(#?) (.+)\n", re.MULTILINE)
 SOURCE_LINK = re.compile(r"\n\n\[Source code\]\(\.\./examples/[^)\n]+\)\.")
+NATIVE_METHODS = {
+    mpl3d_vtk.VtkAxes: {
+        "autoscale", "autoscale_view", "get_box_aspect", "get_proj",
+        "get_xlim", "get_xlim3d", "get_ylim", "get_ylim3d", "get_zlim", "get_zlim3d",
+    },
+    VolumeGraphic: {"set_array"},
+}
 STYLE = {
     "figure.figsize": (4.25, 3.15),
     "figure.constrained_layout.use": True,
@@ -102,7 +109,8 @@ def check_api_coverage(examples):
     for cls in classes:
         owner = cls.__name__.lstrip("_")
         for name, value in vars(cls).items():
-            if name.startswith("_") or not (callable(value) or isinstance(value, property)):
+            if (name.startswith("_") or name in NATIVE_METHODS.get(cls, ())
+                    or not (callable(value) or isinstance(value, property))):
                 continue
             qualified = f"{owner}.{name}"
             use_owner = name in ("set", "draw", "remove") or cls in (VolumeGraphic, _ImageGraphic)

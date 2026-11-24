@@ -56,7 +56,7 @@ class _ImageGraphic(Graphic):
         pixels.SetDimensions(nx, ny, 1)
         pixels.GetPointData().SetScalars(array(rgba.reshape(-1, 4), "pixels"))
         self.texture.SetInputData(pixels)
-        self.axes.stale = True
+        self.stale = True
 
 
 def plot_image_plane(self, image, *, extent=None, z=0., origin="lower",

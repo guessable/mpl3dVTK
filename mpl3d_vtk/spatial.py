@@ -7,7 +7,7 @@ from matplotlib.artist import Artist
 from matplotlib.cm import ScalarMappable
 from vtk.util.numpy_support import vtk_to_numpy
 
-from ._geometry import numeric, output, poly, volume_arrays, volume_grid
+from ._geometry import numeric, output, poly, volume_arrays, volume_flat, volume_grid
 from .scene import Graphic, _cmap
 
 
@@ -123,7 +123,8 @@ class VolumeGraphic(Artist, ScalarMappable):
         if self._opacity.size < 2 or not np.all((self._opacity >= 0) & (self._opacity <= 1)):
             raise ValueError("opacity must have at least two values in [0, 1]")
         self.set_label(label)
-        self.set_array(values)
+        self._volume_shape = values.shape
+        ScalarMappable.set_array(self, values)
         self.set_clim(vmin, vmax)
         self.callbacks.connect("changed", self._refresh)
         self._refresh()
@@ -135,6 +136,12 @@ class VolumeGraphic(Artist, ScalarMappable):
     def _refresh(self, *_):
         colors = vtk.vtkColorTransferFunction()
         opacity = vtk.vtkPiecewiseFunction()
+        if not self.norm.scaled():
+            values = self.get_array()
+            if values is None:
+                values = self.data.GetPointData().GetScalars().GetRange()
+            with self.norm.callbacks.blocked(signal="changed"):
+                self.norm.autoscale_None(values)
         lo, hi = self.get_clim()
         if lo == hi:
             hi = lo + 1
@@ -145,7 +152,19 @@ class VolumeGraphic(Artist, ScalarMappable):
             opacity.AddPoint(level, alpha)
         self.actor.GetProperty().SetColor(colors)
         self.actor.GetProperty().SetScalarOpacity(opacity)
-        self.axes.stale = True
+        self.stale = True
+
+    def set_array(self, values):
+        """Replace the voxel values while retaining the volume's coordinate grid."""
+        if values is not None:
+            values = numeric(values)
+            if values.shape != self._volume_shape or not np.isfinite(values).all():
+                raise ValueError("volume values must be finite and match the original volume shape")
+            scalars = self.data.GetPointData().GetScalars()
+            vtk_to_numpy(scalars)[:] = volume_flat(values)
+            scalars.Modified()
+        ScalarMappable.set_array(self, values)
+        self.stale = True
 
     def set_visible(self, visible):
         if self.axes is not None and bool(visible) != self.get_visible():
@@ -163,7 +182,7 @@ class VolumeGraphic(Artist, ScalarMappable):
             raise ValueError("volume rendering requires linear axes")
 
     def remove(self):
-        if self in self.axes.handles:
+        if self.axes is not None and self in self.axes.handles:
             self.axes.renderer.RemoveVolume(self.actor)
             self.axes.handles.remove(self)
             self.axes._limits_dirty = True

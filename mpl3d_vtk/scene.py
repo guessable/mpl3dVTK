@@ -108,7 +108,11 @@ class Graphic(Artist, ScalarMappable):
 
     def set_alpha(self, alpha):
         super().set_alpha(alpha)
-        self.actor.GetProperty().SetOpacity(1 if alpha is None else alpha)
+        self._apply_opacity()
+
+    def _apply_opacity(self):
+        alpha = self.get_alpha()
+        self.actor.GetProperty().SetOpacity(self._color_alpha if alpha is None else alpha)
 
     def set_visible(self, visible):
         if self.axes is not None and bool(visible) != self.get_visible():
@@ -133,10 +137,10 @@ class Graphic(Artist, ScalarMappable):
         self.constant_color = self._color if self._facecolor is None or unfilled else self._facecolor
         if wireframe and has_edge:
             self.constant_color = self._edgecolor
-        if self.constant_color is None:
-            prop.SetColor(1, 1, 1)
-        else:
-            prop.SetColor(to_rgb(self.constant_color))
+        rgba = to_rgba("white" if self.constant_color is None else self.constant_color)
+        prop.SetColor(rgba[:3])
+        self._color_alpha = rgba[3]
+        self._apply_opacity()
 
     def set_color(self, color):
         self._color = color
@@ -225,7 +229,7 @@ class Graphic(Artist, ScalarMappable):
         values = self._values
         if (self.constant_color is not None or values is None) and self._vertex_alpha is None:
             self.mapper.ScalarVisibilityOff()
-            self.axes.stale = True
+            self.stale = True
             return
 
         if self.constant_color is not None or values is None:
@@ -259,7 +263,7 @@ class Graphic(Artist, ScalarMappable):
             self.mapper.SelectColorArray("display_rgba")
             self.mapper.SetColorModeToDirectScalars()
         self.mapper.ScalarVisibilityOn()
-        self.axes.stale = True
+        self.stale = True
 
     @property
     def vertices(self):
@@ -299,8 +303,9 @@ class Graphic(Artist, ScalarMappable):
         self._update_surface_normals()
         if self._color_tracks_height:
             self.set_values(z)
-        self.axes._limits_dirty = True
-        self.axes.stale = True
+        if self.axes is not None:
+            self.axes._limits_dirty = True
+        self.stale = True
         return self
 
     def remove(self):
