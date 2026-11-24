@@ -129,9 +129,3 @@ The zero level of a 19 × 19 × 19 field of uniform random samples in [−1, 1],
 
 - [Three intersecting planes](examples.md#three-intersecting-planes)
 - [Run the examples or regenerate these figures](examples.md#regenerate-the-reference-figures)
-
-### Turing patterns
-
-[![plot_mesh. Turing patterns with face averages and interpolated vertex colors](gallery/turing-pattern-comparison.png)](function_reference.md#mesh-color-interpolation)
-
-[Documentation](function_reference.md#mesh-color-interpolation) · [Source code](../examples/plot_turing_pattern.py)

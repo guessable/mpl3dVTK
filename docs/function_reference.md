@@ -39,18 +39,18 @@ For `plot_mesh`, use `from pathlib import Path` and set `data_dir = Path("data")
 | `"point"` (default) | One scalar or RGB(A) row per vertex, in vertex order. | The colormap maps each scalar to a vertex color. VTK interpolates the vertex colors across each face. Shared vertices give neighboring faces matching colors along their common edge. |
 | `"cell"` | One scalar or RGB(A) row per rendered face, in face order. | Each face uses a single color. Averaging vertex values into face values produces visible steps where neighboring averages differ. |
 
-Use `"point"` for fields sampled at vertices, such as `u_fvm` in the Turing data. Use `"cell"` when the data assigns one value to each face. The `shade` and `lighting` options control the lighting of the geometry. `edgecolor` controls visible mesh edges.
+Use `"point"` for fields sampled at vertices and `"cell"` for one value per face. The `shade` and `lighting` options control the lighting of the geometry. `edgecolor` controls visible mesh edges.
 
 ```python
-with np.load(data_dir / "bunny.npz", allow_pickle=False) as mesh:
+with np.load(data_dir / "cheese.npz", allow_pickle=False) as mesh:
     vertices, faces = mesh["vertices"], mesh["elements"]
-with np.load(data_dir / "T_end_6000_stripes_bunny.npz", allow_pickle=False) as field:
-    u = field["u_fvm"].ravel()
+x, y, z = vertices.T
+u = x * np.sin(z) + y * np.sin(x**2)
 
 ax.plot_mesh(vertices, faces, values=u, association="point", cmap="viridis")
 ```
 
-See the [Gallery comparison](plot_catalog.md#turing-patterns) and its [standalone script](../examples/plot_turing_pattern.py). The left panels use `u[faces].mean(axis=1)` as face values. The right panels use the original vertex values. Each pair shares the same geometry, view, and color limits.
+For constant colors within each triangle, pass `values=u[faces].mean(axis=1)` and `association="cell"`. The [`plot_trisurf` example](api.md#plot_trisurf) uses this approach with the same mesh and scalar field.
 
 ## Meshes and scalar fields
 

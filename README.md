@@ -45,10 +45,17 @@ Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.
 
 By default, all three axes use equal data-unit lengths and their limits span the visible plots on the axes.
 
+## Examples
+
+| Intersecting scalar slices | Random-field zero isosurface |
+| --- | --- |
+| ![Three intersecting scalar slices with a shared colorbar](docs/gallery/intersecting_scalar_slices.png) | ![Green zero isosurface of a seeded random field](docs/gallery/random_field_isosurface.png) |
+| [Source code](examples/intersecting_scalar_slices.py) | [Source code](examples/random_field_isosurface.py) |
+
 ## Documentation
 
 - [Gallery](https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
 - [Examples and export](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md) · Run a complete script or save a figure.
-- [Example datasets](https://github.com/guessable/mpl3dVTK/blob/main/data/README.md) · Load triangle meshes and Turing fields from NumPy archives.
+- [Example datasets](https://github.com/guessable/mpl3dVTK/blob/main/data/README.md) · Load triangle meshes from NumPy archives.
 - API reference · [Plotting](https://github.com/guessable/mpl3dVTK/blob/main/docs/api.md), [VTK geometry](https://github.com/guessable/mpl3dVTK/blob/main/docs/function_reference.md), and [Scene and handles](https://github.com/guessable/mpl3dVTK/blob/main/docs/scene.md).
 - [Benchmarks](https://github.com/guessable/mpl3dVTK/blob/main/benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.

@@ -8,7 +8,8 @@ Run these commands from the root of an installed checkout. The export examples r
 | [Random scalar field](../examples/random_isosurface.py) | A zero isosurface colored by vertex height | `python examples/random_isosurface.py isosurface.png` |
 | [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
 | [Intersecting planes](../examples/intersecting_planes.py) | Three perpendicular slices and their occlusion | `python examples/intersecting_planes.py slices.png` |
-| [Turing patterns](../examples/plot_turing_pattern.py) | Vertex colors on the Armadillo and Bunny meshes | `python examples/plot_turing_pattern.py turing.png` |
+| [Intersecting scalar slices](../examples/intersecting_scalar_slices.py) | Three slices of a scalar field with a shared colorbar | `python examples/intersecting_scalar_slices.py slices.png` |
+| [Random-field zero isosurface](../examples/random_field_isosurface.py) | A uniformly colored isosurface of a seeded random field | `python examples/random_field_isosurface.py zero.png` |
 
 See the [API gallery](plot_catalog.md) to browse individual methods. Each figure has a **Documentation** link to the matching reference and a **Source code** link to its runnable script.
 
@@ -76,7 +77,6 @@ Each [gallery](plot_catalog.md) image links to its API entry and its own runnabl
 ```sh
 python examples/render_reference.py
 python examples/random_isosurface.py docs/gallery/random_isosurface.png
-python examples/plot_turing_pattern.py docs/gallery/turing-pattern-comparison.png --compare
 ```
 
 To render a single figure, run the script linked below its thumbnail and pass the output filename.
@@ -88,7 +88,7 @@ python examples/reference/plot_trisurf.py cheese.png
 
 ## Example datasets
 
-The Cheese, Peanut, Armadillo, and Bunny meshes and the Turing fields are in [`data/`](../data/README.md). The scripts read this directory by default. Pass `--data-dir` to use another copy of the files. See [mesh color interpolation](function_reference.md#mesh-color-interpolation) to choose between per-vertex and per-face values.
+The Cheese and Peanut meshes are in [`data/`](../data/README.md). The mesh scripts read this directory by default. Pass `--data-dir` to use another copy of the files. See [mesh color interpolation](function_reference.md#mesh-color-interpolation) to choose between per-vertex and per-face values.
 
 The [benchmark comparisons](../benchmarks/results/my_mpl_style/README.md) include their own instructions for obtaining the upstream PFC volumes.
 

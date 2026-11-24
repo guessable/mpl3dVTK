@@ -45,12 +45,19 @@ plt.show()
 
 默认三个轴采用等数据单位比例，自动范围覆盖同一坐标系中可见图元的数据最小值和最大值。
 
+## 绘图示例
+
+| 三张相交的标量切片 | 随机场的零等值面 |
+| --- | --- |
+| ![三张共用色条的相交标量切片](docs/gallery/intersecting_scalar_slices.png) | ![固定种子生成的绿色零等值面](docs/gallery/random_field_isosurface.png) |
+| [源代码](examples/intersecting_scalar_slices.py) | [源代码](examples/random_field_isosurface.py) |
+
 ## 文档
 
 详细文档采用英文。
 
 - [图集](docs/plot_catalog.md) · 每张图都附有 API 文档和可运行的 Python 源代码链接。
 - [示例与导出](docs/examples.md) · 运行完整脚本或保存图形。
-- [示例数据](data/README.md) · 查看三角网格、Turing 场及 NumPy 文件格式。
+- [示例数据](data/README.md) · 查看三角网格和 NumPy 文件格式。
 - API 参考 · [绘图](docs/api.md)、[VTK 几何](docs/function_reference.md)、[场景和图元句柄](docs/scene.md)。
 - [基准](benchmarks/results/my_mpl_style/README.md) · 查看与 mplot3d 的三角网格和等值面对比。

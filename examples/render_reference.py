@@ -185,7 +185,6 @@ def write_gallery(examples):
     by_name = {example.name: example for example in examples}
     random = by_name["random_isosurface"]
     random_reference = f"{random.page}#{slug(random.title)}"
-    turing_reference = "function_reference.md#mesh-color-interpolation"
     groups = {"Isosurfaces and triangle meshes": [by_name[name] for name in MESH_EXAMPLES]}
     for example in examples:
         if example.name not in MESH_EXAMPLES and example is not random:
@@ -230,11 +229,6 @@ def write_gallery(examples):
         "", "## More examples", "",
         "- [Three intersecting planes](examples.md#three-intersecting-planes)",
         "- [Run the examples or regenerate these figures](examples.md#regenerate-the-reference-figures)",
-        "",
-        "### Turing patterns", "",
-        f"[![plot_mesh. Turing patterns with face averages and interpolated vertex colors](gallery/turing-pattern-comparison.png)]({turing_reference})",
-        "",
-        figure_links(turing_reference, "../examples/plot_turing_pattern.py"),
     ])
     (DOCS / "plot_catalog.md").write_text("\n".join(page) + "\n", encoding="utf-8")
 
