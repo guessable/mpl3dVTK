@@ -52,6 +52,8 @@ fig.add_subplot(..., projection="vtk3d", antialiasing=2)
 
 Create a Matplotlib 3D subplot that renders geometry with VTK. Use `fig.add_subplot(..., projection="vtk3d")` or `plt.subplots(subplot_kw={"projection": "vtk3d"})`.
 
+X, Y, and Z labels use compact default padding. The native `set_xlabel()`, `set_ylabel()`, and `set_zlabel()` methods accept `labelpad` for individual labels.
+
 **Parameters**
 
 - **`fig`** (Matplotlib `Figure`, required for direct construction)
@@ -94,13 +96,13 @@ Create a Matplotlib 3D subplot that renders geometry with VTK. Use `fig.add_subp
 
   Camera focal length, as described under [`set_proj_type`](#set_proj_type).
 
-- **`aspect`** (str, default `"auto"`)
+- **`aspect`** (str, default `"equal"` when `box_aspect` is omitted)
 
   Data aspect mode, as described under [`set_aspect`](#set_aspect).
 
 - **`box_aspect`** (three floats or `None`, default `None`)
 
-  Display lengths ratio of the three box axes. `None` uses Matplotlib's default `4:4:3`.
+  Display lengths ratio of the three box axes. With `None`, the data aspect determines the box proportions.
 
 - **`computed_zorder`** (bool, default `True`)
 
@@ -270,6 +272,8 @@ Equal modes are reapplied when VTK fits new or updated geometry. An explicit cal
 
 ```python
 fig, (auto, equal) = new_scene(2)
+auto.set_aspect("auto")
+auto.set_box_aspect(None)
 for ax in (auto, equal):
     ax.plot_surface(x, y, .25*z, cmap="viridis")
     ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.2, .2))
@@ -325,7 +329,9 @@ fixed.set_title("Taller Z axis")
 ax.fit()
 ```
 
-Update data bounds from the VTK geometry and apply enabled autoscaling.
+Update data bounds from the visible VTK geometry and apply enabled autoscaling. By default, limits use the combined minimum and maximum across the plots on each axis. Adding, updating, hiding, or removing plots updates these limits. A constant coordinate uses a small nonzero span so the axis can still be drawn.
+
+Explicit limits set with `set_xlim()`, `set_ylim()`, or `set_zlim()` remain in effect on that axis. Use `ax.autoscale(axis="x")` to return X to automatic scaling, or `ax.margins(0.05)` to add a 5% margin around automatic limits.
 
 **Returns**
 

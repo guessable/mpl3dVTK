@@ -8,14 +8,17 @@ from mpl_toolkits.mplot3d import proj3d
 
 
 def apply_axes_style(ax):
-    """Apply local pane, grid and tick defaults to an existing axes."""
+    """Apply local pane, grid, tick and label defaults to an existing axes."""
     geometry = getattr(ax, "_style3d_geometry", None)
     if not isinstance(geometry, _ProjectedGeometry):
         geometry = ax._style3d_geometry = _ProjectedGeometry(ax)
     geometry.matrix = None
-    for name, pad, alignment in (("x", -5, "left"), ("y", -5, "right"), ("z", 0, None)):
+    for name, tick_pad, alignment, label_pad in (
+        ("x", -5, "left", -2), ("y", -5, "right", -2), ("z", 0, None, -4),
+    ):
         axis = getattr(ax, f"{name}axis")
-        ax.tick_params(axis=name, pad=pad)
+        ax.tick_params(axis=name, pad=tick_pad)
+        axis.labelpad = label_pad
         axis._axinfo["grid"]["linewidth"] = .2
         axis._axinfo["tick"].update(inward_factor=.2, outward_factor=0.)
         axis.pane.set_fill(False)

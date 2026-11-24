@@ -148,6 +148,8 @@ class VolumeGraphic(Artist, ScalarMappable):
         self.axes.stale = True
 
     def set_visible(self, visible):
+        if self.axes is not None and bool(visible) != self.get_visible():
+            self.axes._limits_dirty = True
         super().set_visible(visible)
         self.actor.SetVisibility(bool(visible))
 

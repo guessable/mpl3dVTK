@@ -111,6 +111,8 @@ class Graphic(Artist, ScalarMappable):
         self.actor.GetProperty().SetOpacity(1 if alpha is None else alpha)
 
     def set_visible(self, visible):
+        if self.axes is not None and bool(visible) != self.get_visible():
+            self.axes._limits_dirty = True
         super().set_visible(visible)
         self.actor.SetVisibility(bool(visible))
         for companion in getattr(self, "_companions", ()):

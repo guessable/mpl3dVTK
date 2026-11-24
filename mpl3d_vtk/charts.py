@@ -149,6 +149,7 @@ class _StreamingLine(Graphic):
     def append(self, x, y, z=0):
         """Queue coordinates for the next draw."""
         self._pending.append(_xyz((x, y, z)))
+        self.axes._limits_dirty = True
         self.axes.stale = True
 
     def _flush(self):

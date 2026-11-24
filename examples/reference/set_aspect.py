@@ -40,6 +40,8 @@ def draw():
         return ax.plot_surface(x, y, z, **style)
 
     fig, (auto, equal) = new_scene(2)
+    auto.set_aspect("auto")
+    auto.set_box_aspect(None)
     for ax in (auto, equal):
         ax.plot_surface(x, y, .25*z, cmap="viridis")
         ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.2, .2))

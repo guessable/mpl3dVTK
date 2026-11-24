@@ -43,6 +43,8 @@ plt.show()
 
 Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.set_values()` to update data. Multiple plots on the same axes share the VTK depth buffer.
 
+By default, all three axes use equal data-unit lengths and their limits span the visible plots on the axes.
+
 ## Documentation
 
 - [Gallery](https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.

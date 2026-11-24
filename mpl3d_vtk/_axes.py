@@ -14,7 +14,7 @@ from matplotlib.transforms import Bbox
 from mpl_toolkits.mplot3d import Axes3D
 
 from . import charts, graphs, planes, spatial, surfaces, vectors, volumes
-from ._geometry import surface_arrays
+from ._geometry import surface_arrays, vertices
 from ._projected_ticks import apply_axes_style
 
 
@@ -26,6 +26,14 @@ def _sampling_factor(value):
     if not 1 <= factor <= 4:
         raise ValueError("antialiasing must be an integer from 1 to 4")
     return factor
+
+
+def _valid_bounds(bounds):
+    return np.isfinite(bounds).all(axis=(1, 2)) & (bounds[..., 0] <= bounds[..., 1]).all(axis=1)
+
+
+def _bounds_union(bounds):
+    return np.column_stack((bounds[..., 0].min(axis=0), bounds[..., 1].max(axis=0)))
 
 
 class _Viewport(Artist):
@@ -102,6 +110,8 @@ class VtkAxes(Axes3D):
         # reset an explicitly supplied box_aspect.
         if kwargs.get("aspect") == "auto":
             kwargs.pop("aspect")
+        elif kwargs.get("box_aspect") is None:
+            kwargs.setdefault("aspect", "equal")
         kwargs.setdefault("elev", 30)
         kwargs.setdefault("azim", -127.5)
         focal_length = kwargs.get("focal_length")
@@ -109,7 +119,11 @@ class VtkAxes(Axes3D):
                           and np.isfinite(focal_length) else "ortho")
         self._antialiasing = _sampling_factor(antialiasing)
         self._fit_aspect = False
+        self._box_aspect_dirty = False
+        self._limits_dirty = False
         super().__init__(*args, **kwargs)
+        # Axes3D resets its extra view margin after the initial clear().
+        self._view_margin = 0
         apply_axes_style(self)
         self.renderer = vtk.vtkRenderer()
         self.window = vtk.vtkRenderWindow()
@@ -131,7 +145,6 @@ class VtkAxes(Axes3D):
         self._pixel_buffer = vtk.vtkUnsignedCharArray()
         self.camera = self.renderer.GetActiveCamera()
         self.handles = []
-        self._limits_dirty = False
         self._viewport = _Viewport(self)
         self.add_artist(self._viewport)
         self._close_id = self.figure.canvas.mpl_connect("close_event", self._close)
@@ -152,11 +165,23 @@ class VtkAxes(Axes3D):
         """Set the data aspect and preserve equal scaling when fitting the scene."""
         super().set_aspect(aspect, adjustable, *args, **kwargs)
         self._fit_aspect = aspect != "auto"
+        self._box_aspect_dirty = False
 
     def set_box_aspect(self, aspect, *, zoom=1):
         """Set the display-box proportions and zoom explicitly."""
         super().set_box_aspect(aspect, zoom=zoom)
         self._fit_aspect = False
+
+    def get_box_aspect(self):
+        self._fit_if_needed()
+        if self._box_aspect_dirty and self._fit_aspect and self.get_adjustable() == "box":
+            self.set_aspect(self.get_aspect(), "box")
+        return super().get_box_aspect()
+
+    def get_proj(self):
+        # Axes3D projects with the cached box proportions.
+        self.get_box_aspect()
+        return super().get_proj()
 
     def clear_scene(self):
         """Remove VTK plots while keeping axes settings and Matplotlib artists."""
@@ -167,41 +192,118 @@ class VtkAxes(Axes3D):
         if hasattr(self, "handles"):
             self.clear_scene()
         super().clear()
+        self._xmargin = self._ymargin = self._zmargin = self._view_margin = 0
+        self._tight = True
         if hasattr(self, "_viewport"):
             self.renderer.RemoveAllLights()
             self.add_artist(self._viewport)
             apply_axes_style(self)
 
     def fit(self):
-        if self.handles:
-            records = [h._raw_bounds() for h in self.handles]
-            records = [r for r in records if r[0] <= r[1] and np.isfinite(r).all()]
-            if records:
-                data = np.asarray(records).reshape(-1,3,2)
-                bounds = np.stack((data[:,:,0].min(axis=0),data[:,:,1].max(axis=0)),axis=1)
-                self.auto_scale_xyz(*bounds, had_data=False)
-                if self._fit_aspect:
-                    self.set_aspect(self.get_aspect(), self.get_adjustable())
-        self._limits_dirty = False
+        """Autoscale from the current visible VTK geometry."""
+        if self._update_data_limits():
+            super().autoscale_view()
+            if self._fit_aspect:
+                self.set_aspect(self.get_aspect(), self.get_adjustable())
 
-    def draw(self, renderer):
+    def _update_data_limits(self):
         for handle in self.handles:
             if isinstance(handle, charts._StreamingLine):
                 handle._flush()
+        visible = [handle for handle in self.handles if handle.get_visible()]
+        bounds = np.asarray([handle._raw_bounds() for handle in visible]).reshape(-1, 3, 2)
+        valid = _valid_bounds(bounds)
+        bounds = bounds[valid]
+        # Matplotlib reads the current limits while applying the new bounds.
+        self._limits_dirty = False
+        if not len(bounds):
+            return False
+        axes = (self.xaxis, self.yaxis, self.zaxis)
+        if all(axis.get_scale() == "linear" for axis in axes):
+            # Two corners encode the full union without allocating a path for each artist.
+            limits = _bounds_union(bounds)
+            self.xy_dataLim.update_from_data_xy(limits[:2, :].T, ignore=True)
+            self.zz_dataLim.update_from_data_x(limits[2], ignore=True)
+            return True
+
+        handles = [handle for handle, usable in zip(visible, valid) if usable]
+        updates = (self.xy_dataLim.update_from_data_x, self.xy_dataLim.update_from_data_y,
+                   self.zz_dataLim.update_from_data_x)
+        for dim, (axis, update) in enumerate(zip(axes, updates)):
+            ends = bounds[:, dim, :]
+            if axis.get_scale() != "linear":
+                ends = axis._nan_out_of_scale_range(ends)
+                # An out-of-scale bound can hide valid extrema inside the data.
+                missing = ~np.isfinite(ends).all(axis=1)
+                samples = [axis._nan_out_of_scale_range(vertices(handle.data)[:, dim])
+                           for handle, needs_samples in zip(handles, missing)
+                           if needs_samples and handle.data.IsA("vtkPolyData")]
+                if samples:
+                    ends = np.concatenate([ends.ravel(), *samples])
+                ends = ends[np.isfinite(ends)]
+            if ends.size:
+                update(ends, ignore=True)
+        return True
+
+    def autoscale_view(self, tight=None, scalex=True, scaley=True, scalez=True):
+        """Apply native autoscaling to up-to-date VTK data bounds."""
+        if self._limits_dirty:
+            self._update_data_limits()
+        super().autoscale_view(tight=tight, scalex=scalex, scaley=scaley, scalez=scalez)
+
+    def autoscale(self, enable=True, axis="both", tight=None):
+        """Set the autoscaling mode and refresh the selected limits."""
+        super().autoscale(enable=enable, axis=axis, tight=tight)
+        self._unstale_viewLim()
+
+    def _fit_if_needed(self):
         if self._limits_dirty:
             self.fit()
+
+    def get_xlim(self):
+        self._fit_if_needed()
+        return super().get_xlim()
+
+    get_xlim3d = get_xlim
+
+    def get_ylim(self):
+        self._fit_if_needed()
+        return super().get_ylim()
+
+    get_ylim3d = get_ylim
+
+    def get_zlim(self):
+        self._fit_if_needed()
+        return super().get_zlim()
+
+    get_zlim3d = get_zlim
+
+    def _set_lim3d(self, axis, *args, **kwargs):
+        self._fit_if_needed()
+        limits = super()._set_lim3d(axis, *args, **kwargs)
+        self._box_aspect_dirty = True
+        return limits
+
+    def _set_axis_scale(self, axis, value, **kwargs):
+        super()._set_axis_scale(axis, value, **kwargs)
+        if getattr(self, "handles", ()):
+            self._limits_dirty = True
+
+    def draw(self, renderer):
+        self._fit_if_needed()
         super().draw(renderer)
 
     def _sync_camera(self, projection, affine):
         # Matplotlib first projects data with get_proj(), then maps xy with
         # transData. OpenGL instead takes clip coordinates in [-w,w].
         limits = np.array(self.get_w_lims()).reshape(3,2)
+        visible = [handle for handle in self.handles if handle.get_visible()]
         scales = [axis.get_transform() for axis in (self.xaxis,self.yaxis,self.zaxis)]
         nonlinear = tuple(axis.get_scale() != "linear" for axis in (self.xaxis,self.yaxis,self.zaxis))
         for i in range(3):
             if nonlinear[i]:
                 limits[i] = scales[i].transform(limits[i])
-        for h in self.handles:
+        for h in visible:
             h._sync_geometry(scales,nonlinear)
         box = self.bbox
         ndc = np.array([[2/box.width,0,-1-2*box.x0/box.width],
@@ -210,12 +312,9 @@ class VtkAxes(Axes3D):
         m = projection
         combined = m.copy()
         combined[:2] = plane[:2] @ m[[0,1,3]]
-        bounds = limits.copy()
-        for h in self.handles:
-            b = np.asarray(h._render_bounds()).reshape(3,2)
-            if b[0,0] <= b[0,1]:
-                bounds[:,0] = np.minimum(bounds.min(axis=1), b[:,0])
-                bounds[:,1] = np.maximum(bounds.max(axis=1), b[:,1])
+        render_bounds = np.asarray([handle._render_bounds() for handle in visible]).reshape(-1, 3, 2)
+        valid = _valid_bounds(render_bounds)
+        bounds = _bounds_union(np.concatenate((np.sort(limits, axis=1)[None], render_bounds[valid])))
         # Include the visible axis box so extreme zoom still has a valid
         # depth interval when data behind the eye is clipped by OpenGL.
         corners = np.array(list(product(*limits)) + list(product(*bounds)))
@@ -235,7 +334,7 @@ class VtkAxes(Axes3D):
         billboard_right = np.cross(up,back)
         marker_matrix = np.eye(4)
         marker_matrix[:3,:3] = np.column_stack((billboard_right,up,back))
-        for handle in self.handles:
+        for handle in visible:
             if hasattr(handle,"_marker_transform"):
                 handle._marker_transform.SetMatrix(marker_matrix.ravel())
         distance = max(np.linalg.norm(np.ptp(limits,axis=1)), 1)
@@ -310,8 +409,7 @@ class VtkAxes(Axes3D):
                     prop.SetPointSize(size_px)
 
     def pixels(self, width, height):
-        if self._limits_dirty:
-            self.fit()
+        self._fit_if_needed()
         projection = self.get_proj()
         affine = self.transData.get_affine().get_matrix()
         key = self._frame_key(width, height, projection, affine)
