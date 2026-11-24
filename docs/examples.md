@@ -5,15 +5,10 @@ Run these commands from the root of an installed checkout. The export examples r
 | Example | What it demonstrates | Command |
 | --- | --- | --- |
 | [Exponential surface](../examples/exp_surface.py) | A surface, a colorbar, and two 2D cross-sections in one figure | `python examples/exp_surface.py surface.png` |
-| [Scientific plotting gallery](../examples/gallery.py) | A surface, a scalar slice, 3D lines, and streamtubes | `python examples/gallery.py gallery.png` |
-| [Matplotlib-style plots](../examples/chart_catalog.py) | Surfaces, contours, scatter, quiver, and bars | `python examples/chart_catalog.py charts.png` |
-| [VTK plot reference](../examples/function_reference.py) | Volume rendering, streams, point clouds, graphs, and image planes | `python examples/function_reference.py vtk_reference.png` |
 | [Random scalar field](../examples/random_isosurface.py) | A zero isosurface colored by vertex height | `python examples/random_isosurface.py isosurface.png` |
 | [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
 | [Intersecting planes](../examples/intersecting_planes.py) | Three perpendicular slices and their occlusion | `python examples/intersecting_planes.py slices.png` |
 | [Turing patterns](../examples/plot_turing_pattern.py) | Vertex colors on the Armadillo and Bunny meshes | `python examples/plot_turing_pattern.py turing.png` |
-
-Run `python examples/plot_catalog.py plots` to generate the general, Matplotlib-style, and VTK galleries in one directory.
 
 See the [API gallery](plot_catalog.md) to browse individual methods. Each figure has a **Documentation** link to the matching reference and a **Source code** link to its runnable script.
 

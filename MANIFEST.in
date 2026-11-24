@@ -4,7 +4,6 @@ include data/*.npz data/README.md data/LICENSE-my-mpl-style.txt
 include tests/test_*.py
 include docs/*.md
 include README.zh-CN.md
-recursive-include docs/figures *.png
 recursive-include docs/gallery *.png
 include benchmarks/*.py
 recursive-include benchmarks/results *.md *.png *.json

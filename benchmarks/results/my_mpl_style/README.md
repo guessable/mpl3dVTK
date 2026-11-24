@@ -1,6 +1,6 @@
 # Triangle mesh and isosurface benchmarks
 
-These comparisons use the original datasets from [my-mpl-style at `d3ab92f`](https://github.com/guessable/my-mpl-style/tree/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c) and the current `mpl3d-vtk` 0.5.0 implementation. The upper row of each image uses the built-in Matplotlib `mplot3d` projection. The lower row uses `vtk3d`.
+These comparisons were recorded with `mpl3d-vtk` 0.5.0 using the original datasets from [my-mpl-style at `d3ab92f`](https://github.com/guessable/my-mpl-style/tree/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c). The upper row of each image uses the built-in Matplotlib `mplot3d` projection. The lower row uses `vtk3d`.
 
 ## Triangle meshes
 
