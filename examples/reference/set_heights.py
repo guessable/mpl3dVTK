@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -42,7 +41,7 @@ def draw():
     fig, (before, after) = new_scene(2)
     for ax in (before, after):
         handle = sample(ax, cmap="viridis", vmin=-.6, vmax=.6)
-        ax.set_zlim(-.7, .7)
+        mpl3d_vtk.ax_setting(ax, zlim=(-.7, .7))
     before.set_title("Initial height")
     handle.set_heights(-z)
     after.set_title("Inverted height")
@@ -53,11 +52,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('set_heights', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

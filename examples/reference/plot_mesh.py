@@ -5,10 +5,11 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
+
+vtkplot = mpl3d_vtk
 
 
 STYLE = {
@@ -35,8 +36,7 @@ def draw(data_dir):
         mesh = ax.plot_mesh(data["vertices"], data["elements"], color="#e8eef5",
                             edgecolor="#2b5f8a", linewidth=.75)
     ax.set_title("peanut · indexed triangle mesh")
-    ax.fit()
-    ax.set_aspect("equal")
+    vtkplot.ax_setting(ax)
     return fig
 
 
@@ -44,11 +44,6 @@ def save(output, data_dir):
     with plt.rc_context(STYLE):
         try:
             fig = draw(data_dir)
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('plot_mesh', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

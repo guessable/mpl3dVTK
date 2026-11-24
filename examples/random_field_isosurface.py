@@ -28,8 +28,9 @@ def main(output=None):
     fig, ax = plt.subplots(figsize=(5.4, 4.35), layout="constrained",
                            subplot_kw={"projection": "vtk3d"})
     ax.plot_isosurface(values, coordinates=(coords,) * 3, level=0, facecolor="#18b83e")
-    ax.set(xticks=ticks, yticks=ticks, zticks=ticks,
-           xlabel="$x$", ylabel="$y$", zlabel="$z$")
+    limits = (-1, 1)
+    mpl3d_vtk.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
+    ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
     ax.set_title("plot_isosurface", fontfamily="monospace")
 
     if output is None:

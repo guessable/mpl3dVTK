@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -42,8 +41,8 @@ def draw():
     fig, (front, side) = new_scene(2)
     for ax in (front, side):
         sample(ax, cmap="viridis")
-    front.view_init(elev=30, azim=-127.5)
-    front.set_title("Default view")
+        mpl3d_vtk.ax_setting(ax)
+    front.set_title("Styled view")
     side.view_init(elev=54, azim=25, roll=8)
     side.set_title("Rotated view")
     return fig
@@ -53,11 +52,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('view_init', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

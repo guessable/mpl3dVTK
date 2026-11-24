@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -42,7 +41,7 @@ def draw():
     fig, (before, after) = new_scene(2)
     for ax in (before, after):
         sample(ax, color="tab:blue")
-        ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.6, .9))
+        mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-.6, .9))
         ax.text(0, 0, .75, "Matplotlib annotation")
     before.set_title("Before")
     after.clear_scene()
@@ -54,11 +53,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('clear_scene', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

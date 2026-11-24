@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -41,8 +40,8 @@ def draw():
 
     fig, ax = new_scene()
     sample(ax, color="#8ac6dc")
+    mpl3d_vtk.ax_setting(ax, zticks=[-.4, 0, .4])
     ax.tick_params(axis="z", colors="darkred", labelsize=13)
-    ax.set_zticks([-.4, 0, .4])
     ax.set_title("Styled Z ticks")
     return fig
 
@@ -51,11 +50,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('tick_params', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

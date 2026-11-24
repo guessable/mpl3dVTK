@@ -39,8 +39,8 @@ def main(destination, antialiasing=2):
                           lighting="gouraud", ambient=.62, diffuse=.41, specular=.09,
                           vmin=-1, vmax=1)
     handle.data.GetPointData().SetNormals(numpy_to_vtk(normals.reshape(-1, 3), deep=True))
-    ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-1, 1),
-           xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
+    mpl3d_vtk.ax_setting(ax, (-3, 3), (-3, 3), (-1, 1))
+    ax.set(xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$z$")
     fig.suptitle(r"$f(\theta,\phi)=\cos(3\theta)\cos\phi$", fontsize=21)
     fig.colorbar(handle, ax=ax, label=r"$f(\theta,\phi)$",
                  ticks=[-1, -.5, 0, .5, 1], shrink=.64, fraction=.043, pad=.125)

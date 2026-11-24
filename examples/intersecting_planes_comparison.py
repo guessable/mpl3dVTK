@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 import numpy as np
 
-from mpl3d_vtk._projected_ticks import apply_axes_style
+import mpl3d_vtk
 
 
 def draw_native(ax, limits, cmap, *, split):
@@ -24,13 +24,9 @@ def draw_native(ax, limits, cmap, *, split):
                 ax.contourf(*(array[rows, columns] for array in arrays),
                             norm=norm, levels=100, zdir=direction, offset=mid, cmap=cmap)
 
-    apply_axes_style(ax)
     ticks = np.linspace(*limits, 3 if limits[0] == 0 else 5)
-    ax.set(xticks=ticks, yticks=ticks, zticks=ticks)
-    ax.set(xlim=limits, ylim=limits, zlim=limits)
-    ax.set_proj_type("ortho")
-    ax.set_aspect("equal")
-    ax.view_init(elev=30, azim=-127.5)
+    mpl3d_vtk.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
+    ax.set(xlabel="x", ylabel="y", zlabel="z")
 
 
 def main(output):
@@ -48,11 +44,8 @@ def main(output):
             draw_native(original, limits, cmap, split=True)
             draw_native(unsplit, limits, cmap, split=False)
             surface = draw_planes(vtk, limits, cmap, "surface")
-            for ax, title in zip(axes, titles):
-                ax.set_xlabel("x", labelpad=-5)
-                ax.set_ylabel("y", labelpad=-5)
-                ax.set_zlabel("z", labelpad=-4)
-                if row == 0:
+            if row == 0:
+                for ax, title in zip(axes, titles):
                     ax.set_title(title, fontsize=14, pad=7)
             cax = fig.add_subplot(grid[row, 3].subgridspec(5, 1)[1:4, 0])
             fig.colorbar(surface, cax=cax, label="$u$", ticks=[-1, 0, 1])

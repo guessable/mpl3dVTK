@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -47,7 +46,7 @@ def draw():
         cloud = ax.plot_volume(values, coordinates=(coordinates,)*3,
                                cmap="viridis", blend_mode="maximum")
         ax.plot(t, np.zeros_like(t), -.65, color="tab:orange", linewidth=2)
-        ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+        mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-1, 1))
     before.set_title("Volume and line")
     cloud.remove()
     after.set_title("Line retained")
@@ -58,11 +57,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('VolumeGraphic.remove', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

@@ -38,8 +38,9 @@ def main(output=None):
     for plane, field in zip(planes, values):
         surface = ax.plot_surface(*plane, values=field, vmin=vmin, vmax=vmax)
     fig.colorbar(surface, ax=ax, label="$u$", shrink=.72, pad=.05)
-    ax.set(xticks=ticks, yticks=ticks, zticks=ticks,
-           xlabel="$x$", ylabel="$y$", zlabel="$z$")
+    limits = (-1, 1)
+    mpl3d_vtk.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
+    ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
     ax.set_title("plot_surface", fontfamily="monospace")
 
     if output is None:

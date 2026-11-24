@@ -7,7 +7,6 @@ import numpy as np
 import pytest
 
 import mpl3d_vtk as m
-from mpl3d_vtk._projected_ticks import apply_axes_style
 
 
 @pytest.fixture(autouse=True)
@@ -34,9 +33,7 @@ def _pixel(ax, point):
 def test_identical_native_axes():
     frames = []
     for name in ("3d", "vtk3d"):
-        fig, ax = _figure(name, proj_type="ortho")
-        if name == "3d":
-            apply_axes_style(ax)
+        fig, ax = _figure(name)
         ax.set(xlim=(-2, 2), ylim=(1, 3), zlim=(0, 4),
                xlabel=r"$x$", ylabel=r"$y$", zlabel=r"$u$")
         ax.set_box_aspect((1, 2, 1))
@@ -51,32 +48,69 @@ def test_identical_native_axes():
 
 def test_axes_defaults_and_explicit_controls():
     fig, ax = _figure()
-    assert (ax.elev, ax.azim) == (30,-127.5)
-    assert ax.get_aspect() == "equal"
     _, native = _figure("3d")
-    _, auto = _figure(aspect="auto")
-    assert auto.get_aspect() == "auto"
-    np.testing.assert_allclose(auto.get_box_aspect(), native.get_box_aspect())
-    assert np.isinf(ax._focal_length)
-    assert all(not axis.pane.get_fill() for axis in (ax.xaxis,ax.yaxis,ax.zaxis))
-    assert ax.xaxis.get_major_ticks()[0].get_pad() == -5
-    assert ax.xaxis._axinfo["grid"]["linewidth"] == .2
-    assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
+    assert (ax.elev, ax.azim, ax.roll) == (native.elev, native.azim, native.roll)
+    assert ax.get_aspect() == native.get_aspect() == "auto"
+    assert ax._focal_length == native._focal_length
+    np.testing.assert_allclose(ax.get_box_aspect(), native.get_box_aspect())
     ax.plot([0,4],[0,2],[0,1])
+    native.plot([0,4],[0,2],[0,1])
     fig.canvas.draw()
-    np.testing.assert_allclose(ax.get_w_lims(), [0,4,0,2,0,1])
-    np.testing.assert_allclose(ax.get_box_aspect()/ax.get_box_aspect()[2],[4,2,1])
+    np.testing.assert_allclose(ax.get_w_lims(), native.get_w_lims())
+    np.testing.assert_allclose(ax.get_box_aspect(), native.get_box_aspect())
     ax.set_box_aspect((1,1,1))
     ax.set_zlim(0,3)
     fig.canvas.draw()
     np.testing.assert_allclose(ax.get_box_aspect()/ax.get_box_aspect()[2],[1,1,1])
     ax.clear()
-    assert not ax.xaxis.pane.get_fill()
+    native.clear()
+    assert ax.xaxis.pane.get_fill() == native.xaxis.pane.get_fill()
+    assert ax.xaxis.get_major_ticks()[0].get_pad() == native.xaxis.get_major_ticks()[0].get_pad()
     for options in ({}, {"aspect": "auto"}):
         _, supplied = _figure(azim=105, elev=15, proj_type="persp", box_aspect=(1,1,2), **options)
         assert (supplied.elev,supplied.azim) == (15,105)
         assert np.isfinite(supplied._focal_length)
         np.testing.assert_allclose(supplied.get_box_aspect()/supplied.get_box_aspect()[0],[1,1,2])
+
+
+@pytest.mark.parametrize("projection", ["3d", "vtk3d"])
+def test_ax_setting_uses_and_preserves_current_axes_state(projection):
+    fig, ax = _figure(projection)
+    ax.plot([0, 4], [0, 2], [0, 1])
+    ax.set_xlim(-1, 5)
+    limits = ax.get_w_lims()
+    locator = ax.yaxis.get_major_locator()
+
+    assert m.ax_setting() is None
+    np.testing.assert_allclose(ax.get_w_lims(), limits)
+    assert not ax.get_autoscalex_on()
+    assert ax.get_autoscaley_on() and ax.get_autoscalez_on()
+    assert ax.yaxis.get_major_locator() is locator
+    assert ax.get_aspect() == "equal"
+    assert np.isinf(ax._focal_length)
+
+    ax.plot([0, 1], [0, 7], [0, 2])
+    assert ax.get_ylim()[1] >= 7
+
+    m.ax_setting(ax, xlim=(-2, 6), xticks=[-2, 0, 6], zticks=[],
+                 aspect="auto", box_aspect=(1, 2, 3), xticks_pad=-3)
+    fig.canvas.draw()
+    np.testing.assert_allclose(ax.get_xlim(), (-2, 6))
+    np.testing.assert_array_equal(ax.get_xticks(), [-2, 0, 6])
+    assert ax.get_zticks().size == 0
+    assert ax.get_aspect() == "auto"
+    assert ax.xaxis.get_major_ticks()[0].get_pad() == -3
+    box = ax.get_box_aspect()
+    np.testing.assert_allclose(box / box[0], (1, 2, 3))
+
+
+def test_ax_setting_requires_a_3d_axes():
+    with pytest.raises(ValueError, match="existing 3D axes"):
+        m.ax_setting()
+    assert not plt.get_fignums()
+    _, ax = plt.subplots()
+    with pytest.raises(TypeError, match="Matplotlib 3D axes"):
+        m.ax_setting(ax)
 
 
 @pytest.mark.parametrize("set_aspect_before_plot", [False, True])
@@ -106,11 +140,14 @@ def test_equal_aspect_tracks_vtk_autoscaling(set_aspect_before_plot, adjustable)
 
 
 def test_matplotlib_defaults_supply_colormap_and_color_cycle():
-    style = {"image.cmap": "inferno", "axes.facecolor": "gray",
+    style = {"image.cmap": "inferno", "axes.facecolor": "gray", "axes.labelpad": 11,
              "axes.prop_cycle": matplotlib.cycler(color=["red", "green"])}
     with matplotlib.rc_context(style):
         _, ax = _figure()
         xyz = np.array([[0., 1.], [0., 1.]])
+        assert all(axis.labelpad == 11 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
+        ax.set_zlabel("Height", labelpad=14)
+        assert ax.zaxis.labelpad == 14
         h = ax.plot_surface([0, 1], [0, 1], xyz, values=xyz)
         assert h.get_cmap().name == "inferno"
         assert ax.get_facecolor() == matplotlib.colors.to_rgba("gray")
@@ -127,6 +164,7 @@ def test_matplotlib_defaults_supply_colormap_and_color_cycle():
         assert matplotlib.rcParams["image.cmap"] == "inferno"
         h.set_cmap("gray")
         ax.clear()
+        assert all(axis.labelpad == 11 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
         assert ax.plot_surface([0, 1], [0, 1], xyz, values=xyz).get_cmap().name == "inferno"
 
 

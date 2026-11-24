@@ -5,10 +5,11 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
+
+vtkplot = mpl3d_vtk
 
 
 STYLE = {
@@ -34,8 +35,7 @@ def draw():
     pixels = np.sin(5*x[:, :, 0]) * np.cos(5*y[:, :, 0])
     image = ax.plot_image_plane(pixels, extent=(-1, 1, -1, 1), z=-.6,
                                 cmap="coolwarm", vmin=-1, vmax=1)
-    ax.set(zlim=(-.5, .5))
-    ax.set_box_aspect((1, 1, .6))
+    vtkplot.ax_setting(ax, (-1, 1), (-1, 1), (-.7, .5), box_aspect=(1, 1, .6))
     fig.colorbar(image, ax=ax)
     return fig
 
@@ -44,11 +44,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('plot_image_plane', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

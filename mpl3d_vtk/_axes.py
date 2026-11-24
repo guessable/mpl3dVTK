@@ -15,7 +15,6 @@ from mpl_toolkits.mplot3d import Axes3D
 
 from . import charts, graphs, planes, spatial, surfaces, vectors, volumes
 from ._geometry import surface_arrays, vertices
-from ._projected_ticks import apply_axes_style
 
 
 def _sampling_factor(value):
@@ -106,25 +105,11 @@ class VtkAxes(Axes3D):
     name = "vtk3d"
 
     def __init__(self, *args, antialiasing=2, **kwargs):
-        # Axes3D starts in auto mode. Reapplying it during initialization can
-        # reset an explicitly supplied box_aspect.
-        if kwargs.get("aspect") == "auto":
-            kwargs.pop("aspect")
-        elif kwargs.get("box_aspect") is None:
-            kwargs.setdefault("aspect", "equal")
-        kwargs.setdefault("elev", 30)
-        kwargs.setdefault("azim", -127.5)
-        focal_length = kwargs.get("focal_length")
-        kwargs.setdefault("proj_type", "persp" if focal_length is not None
-                          and np.isfinite(focal_length) else "ortho")
         self._antialiasing = _sampling_factor(antialiasing)
         self._fit_aspect = False
         self._box_aspect_dirty = False
         self._limits_dirty = False
         super().__init__(*args, **kwargs)
-        # Axes3D resets its extra view margin after the initial clear().
-        self._view_margin = 0
-        apply_axes_style(self)
         self.renderer = vtk.vtkRenderer()
         self.window = vtk.vtkRenderWindow()
         self.window.SetOffScreenRendering(True)
@@ -192,12 +177,9 @@ class VtkAxes(Axes3D):
         if hasattr(self, "handles"):
             self.clear_scene()
         super().clear()
-        self._xmargin = self._ymargin = self._zmargin = self._view_margin = 0
-        self._tight = True
         if hasattr(self, "_viewport"):
             self.renderer.RemoveAllLights()
             self.add_artist(self._viewport)
-            apply_axes_style(self)
 
     def fit(self):
         """Autoscale from the current visible VTK geometry."""

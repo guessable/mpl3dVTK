@@ -16,7 +16,7 @@ python -m pip install mpl3d-vtk
 
 ## 快速开始
 
-导入 `mpl3d_vtk` 注册投影，再用 `projection="vtk3d"` 创建子图。
+导入 `mpl3d_vtk` 注册 `vtk3d` 投影，再用 `mpl3d_vtk.ax_setting(ax)` 应用下方示例的坐标轴样式。
 
 ```python
 import matplotlib.pyplot as plt
@@ -30,6 +30,7 @@ z = np.exp(x * np.sin(y))
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
 surface = ax.plot_surface(x, y, z, cmap="viridis")
+mpl3d_vtk.ax_setting(ax)
 ax.set(xlabel="x", ylabel="y", zlabel="u")
 fig.colorbar(surface, ax=ax, shrink=.7)
 
@@ -43,7 +44,7 @@ plt.show()
 
 用 `ax.view_init()` 调整视角，用 `surface.set_heights()` 或 `surface.set_values()` 更新数据。同一个坐标轴上的多个 VTK 图元共用深度缓冲区。
 
-默认三个轴采用等数据单位比例，自动范围覆盖同一坐标系中可见图元的数据最小值和最大值。
+`ax_setting` 一次设置等比例、正交视角和刻度样式。省略范围或刻度位置时使用坐标轴的当前设置。
 
 ## 绘图示例
 

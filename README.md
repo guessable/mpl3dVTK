@@ -16,7 +16,7 @@ Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a work
 
 ## Quickstart
 
-Import `mpl3d_vtk` to register the projection, then create an axes with `projection="vtk3d"`.
+Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.ax_setting(ax)` to apply the axes style shown below.
 
 ```python
 import matplotlib.pyplot as plt
@@ -30,6 +30,7 @@ z = np.exp(x * np.sin(y))
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
 surface = ax.plot_surface(x, y, z, cmap="viridis")
+mpl3d_vtk.ax_setting(ax)
 ax.set(xlabel="x", ylabel="y", zlabel="u")
 fig.colorbar(surface, ax=ax, shrink=.7)
 
@@ -43,7 +44,7 @@ plt.show()
 
 Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.set_values()` to update data. Multiple plots on the same axes share the VTK depth buffer.
 
-By default, all three axes use equal data-unit lengths and their limits span the visible plots on the axes.
+`ax_setting` applies equal data scaling, an orthographic view, and projected ticks. Omitted limits and tick locations use the current axes settings.
 
 ## Examples
 

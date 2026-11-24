@@ -42,7 +42,7 @@ def sample(ax, **style):
 
 ## Axes controls
 
-[`VtkAxes`](#vtkaxes) · [`VtkAxes.set`](#vtkaxesset) · [`get_antialiasing`](#get_antialiasing) · [`set_antialiasing`](#set_antialiasing) · [`set_aspect`](#set_aspect) · [`set_box_aspect`](#set_box_aspect) · [`fit`](#fit) · [`clear_scene`](#clear_scene) · [`clear`](#clear) · [`VtkAxes.remove`](#vtkaxesremove) · [`get_legend_handles_labels`](#get_legend_handles_labels) · [`legend`](#legend) · [`pixels`](#pixels)
+[`VtkAxes`](#vtkaxes) · [`ax_setting`](#ax_setting) · [`VtkAxes.set`](#vtkaxesset) · [`get_antialiasing`](#get_antialiasing) · [`set_antialiasing`](#set_antialiasing) · [`set_aspect`](#set_aspect) · [`set_box_aspect`](#set_box_aspect) · [`fit`](#fit) · [`clear_scene`](#clear_scene) · [`clear`](#clear) · [`VtkAxes.remove`](#vtkaxesremove) · [`get_legend_handles_labels`](#get_legend_handles_labels) · [`legend`](#legend) · [`pixels`](#pixels)
 
 ### `VtkAxes`
 
@@ -52,7 +52,9 @@ fig.add_subplot(..., projection="vtk3d", antialiasing=2)
 
 Create a Matplotlib 3D subplot that renders geometry with VTK. Use `fig.add_subplot(..., projection="vtk3d")` or `plt.subplots(subplot_kw={"projection": "vtk3d"})`.
 
-X, Y, and Z labels use compact default padding. The native `set_xlabel()`, `set_ylabel()`, and `set_zlabel()` methods accept `labelpad` for individual labels.
+The projection uses Matplotlib's default axes appearance and camera. The gallery applies [`ax_setting`](#ax_setting) to set a common view and tick style.
+
+Axis titles follow Matplotlib's `axes.labelpad` setting. Pass `labelpad` to `set_xlabel()`, `set_ylabel()`, or `set_zlabel()` to override it for one axis.
 
 **Parameters**
 
@@ -72,7 +74,7 @@ X, Y, and Z labels use compact default padding. The native `set_xlabel()`, `set_
 
   Camera elevation in degrees.
 
-- **`azim`** (float, default `-127.5`)
+- **`azim`** (float, default `-60`)
 
   Camera azimuth in degrees.
 
@@ -88,21 +90,21 @@ X, Y, and Z labels use compact default padding. The native `set_xlabel()`, `set_
 
   Share Z-axis limits and scale with another 3D axes.
 
-- **`proj_type`** (str, default `"ortho"`)
+- **`proj_type`** (str, default `"persp"`)
 
-  Use `"ortho"` or `"persp"`. If omitted with a finite `focal_length`, defaults to `"persp"`.
+  Use `"ortho"` for orthographic projection or `"persp"` for perspective.
 
 - **`focal_length`** (float or `None`, default `None`)
 
   Camera focal length, as described under [`set_proj_type`](#set_proj_type).
 
-- **`aspect`** (str, default `"equal"` when `box_aspect` is omitted)
+- **`aspect`** (str, default `"auto"`)
 
   Data aspect mode, as described under [`set_aspect`](#set_aspect).
 
 - **`box_aspect`** (three floats or `None`, default `None`)
 
-  Display lengths ratio of the three box axes. With `None`, the data aspect determines the box proportions.
+  Display lengths ratio of the three box axes. `None` starts with Matplotlib's default `4:4:3`.
 
 - **`computed_zorder`** (bool, default `True`)
 
@@ -123,12 +125,84 @@ X, Y, and Z labels use compact default padding. The native `set_xlabel()`, `set_
 ```python
 fig, ax = new_scene()
 sample(ax, cmap="viridis")
+mpl3d_vtk.ax_setting(ax)
 ax.view_init(elev=24, azim=-60)
 ```
 
 <img src="gallery/reference/vtkaxes.png" width="460" alt="A vtk3d subplot showing a surface with a changed camera angle">
 
 [Source code](../examples/reference/vtkaxes.py).
+
+### `ax_setting`
+
+```text
+mpl3d_vtk.ax_setting(ax=None, xlim=None, ylim=None, zlim=None, *,
+                     xticks=None, yticks=None, zticks=None, aspect="equal",
+                     box_aspect=None, xticks_pad=-5, yticks_pad=-5,
+                     zticks_pad=0, box_on=False, xtick_length=0.02,
+                     ytick_length=0.02, ztick_length=0.02)
+```
+
+Apply the [my-mpl-style 3D axes style](https://github.com/guessable/my-mpl-style#3d-axes). The view is orthographic at elevation 30° and azimuth −127.5°. Grid lines are thin, pane fills are transparent, and tick lengths follow the longest projected axis.
+
+**Parameters**
+
+- **`ax`** (`Axes3D` or `None`, default `None`)
+
+  The `3d` or `vtk3d` subplot to style. Omit it to use the current pyplot axes, which must already be three-dimensional.
+
+- **`xlim`, `ylim`, `zlim`** (two finite floats or `None`, default `None`)
+
+  Axis bounds in data units. A pair sets manual limits. `None` uses the axis's current limits and preserves its autoscaling mode.
+
+- **`xticks`, `yticks`, `zticks`** (one-dimensional array or `None`, default `None`)
+
+  Tick locations in data units. `None` keeps the current locator. An empty sequence hides the ticks for that axis.
+
+- **`aspect`** (`"auto"` or `"equal"`, default `"equal"`)
+
+  `"equal"` gives each data unit the same display length in all three directions. `"auto"` uses the axes box proportions.
+
+- **`box_aspect`** (three positive floats or `None`, default `None`)
+
+  Display-length ratios of the X, Y, and Z box edges. A triple overrides the box proportions set by `aspect`.
+
+- **`xticks_pad`, `yticks_pad`** (float, default `-5`)
+
+  Padding in points for the X and Y tick labels.
+
+- **`zticks_pad`** (float, default `0`)
+
+  Extra padding for Z tick labels beyond the 2-point gap from the tick endpoint. The total gap is clamped at zero.
+
+- **`box_on`** (bool, default `False`)
+
+  Draw pane outlines in the axis line colors when `True`. The default color is gray.
+
+- **`xtick_length`, `ytick_length`, `ztick_length`** (float, default `0.02`)
+
+  Non-negative tick lengths as fractions of the longest projected axis. Lengths adjust to the view and figure size.
+
+**Returns**
+
+`None`. The selected axes is modified in place.
+
+**Examples**
+
+```python
+fig, (native, styled) = new_scene(2)
+fig.set_size_inches(8.2, 3.75)
+fig.get_layout_engine().set(w_pad=.17, h_pad=.12, wspace=.12)
+for ax in (native, styled):
+    sample(ax, cmap="viridis")
+native.set_title("Matplotlib defaults")
+mpl3d_vtk.ax_setting(styled)
+styled.set_title("Styled axes")
+```
+
+<img src="gallery/reference/ax_setting.png" width="700" alt="The same surface with Matplotlib defaults and with ax_setting applied">
+
+[Source code](../examples/reference/ax_setting.py).
 
 ### `VtkAxes.set`
 
@@ -221,6 +295,7 @@ Compare enlarged viewport edges at two supersampling factors.
 source, ax = new_scene()
 ax.set_axis_off()
 sample(ax, color="tab:blue", shade=False)
+mpl3d_vtk.ax_setting(ax)
 source.canvas.draw()
 
 fig, panels = plt.subplots(1, 2, figsize=(6.5, 3.1))
@@ -272,11 +347,9 @@ Equal modes are reapplied when VTK fits new or updated geometry. An explicit cal
 
 ```python
 fig, (auto, equal) = new_scene(2)
-auto.set_aspect("auto")
-auto.set_box_aspect(None)
 for ax in (auto, equal):
     ax.plot_surface(x, y, .25*z, cmap="viridis")
-    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.2, .2))
+    mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-.2, .2), zticks=[-.2, 0, .2], aspect="auto")
 auto.set_title("Auto box proportions")
 equal.set_aspect("equal")
 equal.set_title("Equal length per data unit")
@@ -314,6 +387,7 @@ Set the display box's proportions independently of the data coordinates.
 fig, (auto, fixed) = new_scene(2)
 for ax in (auto, fixed):
     sample(ax, cmap="plasma")
+    mpl3d_vtk.ax_setting(ax, aspect="auto")
 auto.set_title("Default aspect")
 fixed.set_box_aspect((1, 1, 1.8))
 fixed.set_title("Taller Z axis")
@@ -329,7 +403,7 @@ fixed.set_title("Taller Z axis")
 ax.fit()
 ```
 
-Update data bounds from the visible VTK geometry and apply enabled autoscaling. By default, limits use the combined minimum and maximum across the plots on each axis. Adding, updating, hiding, or removing plots updates these limits. A constant coordinate uses a small nonzero span so the axis can still be drawn.
+Update data bounds from the visible VTK geometry and apply Matplotlib's autoscaling and margins. Adding, updating, hiding, or removing plots updates these bounds. A constant coordinate uses a small nonzero span so the axis can still be drawn.
 
 Explicit limits set with `set_xlim()`, `set_ylim()`, or `set_zlim()` remain in effect on that axis. Use `ax.autoscale(axis="x")` to return X to automatic scaling, or `ax.margins(0.05)` to add a 5% margin around automatic limits.
 
@@ -347,7 +421,7 @@ A normal draw fits the scene after geometry changes. Call `fit()` explicitly whe
 fig, (fixed, fitted) = new_scene(2)
 for ax in (fixed, fitted):
     sample(ax, color="tab:blue")
-    ax.set(xlim=(-2, 2), ylim=(-2, 2), zlim=(-2, 2))
+    mpl3d_vtk.ax_setting(ax, (-2, 2), (-2, 2), (-2, 2))
 fixed.set_title("Manual limits")
 fitted.set_autoscale_on(True)
 fitted.fit()
@@ -376,7 +450,7 @@ Remove VTK plots and their dependent artists. Retain axes settings and independe
 fig, (before, after) = new_scene(2)
 for ax in (before, after):
     sample(ax, color="tab:blue")
-    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.6, .9))
+    mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-.6, .9))
     ax.text(0, 0, .75, "Matplotlib annotation")
 before.set_title("Before")
 after.clear_scene()
@@ -393,7 +467,7 @@ after.set_title("Annotation retained")
 ax.clear()
 ```
 
-Reset the axes and reapply the vtk3d style. The subplot stays in its figure, ready for another plot.
+Clear the VTK plots and reset the Matplotlib axes. The subplot stays in its figure, ready for another plot.
 
 **Returns**
 
@@ -545,6 +619,7 @@ Render the VTK viewport into an RGBA image. Matplotlib ticks, labels, and other 
 source, ax = new_scene()
 ax.set_axis_off()
 sample(ax, cmap="plasma")
+mpl3d_vtk.ax_setting(ax)
 source.canvas.draw()
 rgba = ax.pixels(240, 180)
 
@@ -689,7 +764,7 @@ fig, (before, after) = new_scene(2)
 for ax in (before, after):
     line = ax.add_streaming_line(color="tab:purple", linewidth=2)
     line.append(t, np.sin(4*t), np.cos(4*t))
-    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+    mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-1, 1))
 before.set_title("Old path")
 line.clear_points()
 line.append(t, t, 0)
@@ -999,7 +1074,7 @@ Update Z coordinates in place on a gridded surface. Connectivity is adjusted whe
 fig, (before, after) = new_scene(2)
 for ax in (before, after):
     handle = sample(ax, cmap="viridis", vmin=-.6, vmax=.6)
-    ax.set_zlim(-.7, .7)
+    mpl3d_vtk.ax_setting(ax, zlim=(-.7, .7))
 before.set_title("Initial height")
 handle.set_heights(-z)
 after.set_title("Inverted height")
@@ -1550,13 +1625,13 @@ Set the Matplotlib camera angles.
 fig, (front, side) = new_scene(2)
 for ax in (front, side):
     sample(ax, cmap="viridis")
-front.view_init(elev=30, azim=-127.5)
-front.set_title("Default view")
+    mpl3d_vtk.ax_setting(ax)
+front.set_title("Styled view")
 side.view_init(elev=54, azim=25, roll=8)
 side.set_title("Rotated view")
 ```
 
-<img src="gallery/reference/view_init.png" width="700" alt="The same surface seen from the default and a rotated camera">
+<img src="gallery/reference/view_init.png" width="700" alt="The same surface seen from the styled view and a rotated camera">
 
 [Source code](../examples/reference/view_init.py).
 
@@ -1586,9 +1661,10 @@ Set the camera's projection model.
 
 ```python
 fig, (ortho, perspective) = new_scene(2)
+fig.get_layout_engine().set(h_pad=.14)
 for ax in (ortho, perspective):
     sample(ax, color="tab:blue", edgecolor="#264e6c", rstride=8, cstride=8)
-ortho.set_proj_type("ortho")
+    mpl3d_vtk.ax_setting(ax)
 ortho.set_title("Orthographic")
 perspective.set_proj_type("persp", focal_length=.25)
 perspective.set_title("Perspective")
@@ -1767,8 +1843,8 @@ Style native Matplotlib ticks and tick labels.
 ```python
 fig, ax = new_scene()
 sample(ax, color="#8ac6dc")
+mpl3d_vtk.ax_setting(ax, zticks=[-.4, 0, .4])
 ax.tick_params(axis="z", colors="darkred", labelsize=13)
-ax.set_zticks([-.4, 0, .4])
 ax.set_title("Styled Z ticks")
 ```
 
@@ -1876,7 +1952,7 @@ for ax in (before, after):
     cloud = ax.plot_volume(values, coordinates=(coordinates,)*3,
                            cmap="magma", blend_mode="maximum")
     ax.scatter([.65], [.65], [.65], c="tab:blue", s=35)
-    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+    mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-1, 1))
 before.set_title("Volume shown")
 cloud.set_visible(False)
 after.set_title("Volume hidden")
@@ -1909,7 +1985,7 @@ for ax in (before, after):
     cloud = ax.plot_volume(values, coordinates=(coordinates,)*3,
                            cmap="viridis", blend_mode="maximum")
     ax.plot(t, np.zeros_like(t), -.65, color="tab:orange", linewidth=2)
-    ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-1, 1))
+    mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-1, 1))
 before.set_title("Volume and line")
 cloud.remove()
 after.set_title("Line retained")

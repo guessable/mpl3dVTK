@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -30,8 +29,7 @@ def draw():
 
     a, b = np.meshgrid(np.linspace(-1, 1, 5), np.linspace(-1, 1, 5))
     arrows = ax.quiver(a, b, 0, -b, a, .35, length=.32, color="tab:orange")
-    ax.set(zlim=(-.2, .65))
-    ax.set_box_aspect((1, 1, .55))
+    mpl3d_vtk.ax_setting(ax, zlim=(-.2, .65), box_aspect=(1, 1, .55))
     return fig
 
 
@@ -39,11 +37,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('quiver', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

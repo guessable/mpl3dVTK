@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -40,11 +39,9 @@ def draw():
         return ax.plot_surface(x, y, z, **style)
 
     fig, (auto, equal) = new_scene(2)
-    auto.set_aspect("auto")
-    auto.set_box_aspect(None)
     for ax in (auto, equal):
         ax.plot_surface(x, y, .25*z, cmap="viridis")
-        ax.set(xlim=(-1, 1), ylim=(-1, 1), zlim=(-.2, .2))
+        mpl3d_vtk.ax_setting(ax, (-1, 1), (-1, 1), (-.2, .2), zticks=[-.2, 0, .2], aspect="auto")
     auto.set_title("Auto box proportions")
     equal.set_aspect("equal")
     equal.set_title("Equal length per data unit")
@@ -55,11 +52,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('set_aspect', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

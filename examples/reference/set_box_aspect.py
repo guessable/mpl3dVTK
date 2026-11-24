@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -42,6 +41,7 @@ def draw():
     fig, (auto, fixed) = new_scene(2)
     for ax in (auto, fixed):
         sample(ax, cmap="plasma")
+        mpl3d_vtk.ax_setting(ax, aspect="auto")
     auto.set_title("Default aspect")
     fixed.set_box_aspect((1, 1, 1.8))
     fixed.set_title("Taller Z axis")
@@ -52,11 +52,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('set_box_aspect', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

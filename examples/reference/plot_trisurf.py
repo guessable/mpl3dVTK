@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -38,8 +37,7 @@ def draw(data_dir):
                               shade=False)
     ax.set_title(f"cheese · {len(faces):,} triangles")
     ax.set(xlabel="x", ylabel="y", zlabel="z")
-    ax.fit()
-    ax.set_aspect("equal")
+    mpl3d_vtk.ax_setting(ax)
     fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
     return fig
 
@@ -48,11 +46,6 @@ def save(output, data_dir):
     with plt.rc_context(STYLE):
         try:
             fig = draw(data_dir)
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('plot_trisurf', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

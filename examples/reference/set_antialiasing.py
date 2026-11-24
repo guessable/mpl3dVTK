@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -42,6 +41,7 @@ def draw():
     source, ax = new_scene()
     ax.set_axis_off()
     sample(ax, color="tab:blue", shade=False)
+    mpl3d_vtk.ax_setting(ax)
     source.canvas.draw()
 
     fig, panels = plt.subplots(1, 2, figsize=(6.5, 3.1))
@@ -56,11 +56,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('set_antialiasing', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

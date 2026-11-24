@@ -2,6 +2,10 @@
 
 Run these commands from the root of an installed checkout. The export examples render through Matplotlib and an offscreen VTK window. The [README quickstart](../README.md#quickstart) also shows a 3D surface and a 2D cross-section in one figure.
 
+```sh
+python -m pip install .
+```
+
 | Example | What it demonstrates | Command |
 | --- | --- | --- |
 | [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
@@ -10,6 +14,10 @@ Run these commands from the root of an installed checkout. The export examples r
 | [Random-field zero isosurface](../examples/random_field_isosurface.py) | A uniformly colored isosurface of a seeded random field | `python examples/random_field_isosurface.py zero.png` |
 
 See the [API gallery](plot_catalog.md) to browse individual methods. Each figure has a **Documentation** link to the matching reference and a **Source code** link to its runnable script.
+
+## Style the 3D axes
+
+`vtk3d` inherits Matplotlib's axes defaults. Call [`mpl3d_vtk.ax_setting(ax)`](scene.md#ax_setting) to apply the examples' orthographic view, equal scaling, and projected tick style. The current limits, autoscaling modes, and tick locators are used for each axis whose corresponding arguments are omitted.
 
 ## Three intersecting planes
 
@@ -37,6 +45,7 @@ c = np.full_like(a, 0.5)
 for x, y, z in ((c, a, b), (a, c, b), (a, b, c)):
     u = np.sin(10 * np.pi * (x + y + z))
     surface = ax.plot_surface(x, y, z, values=u, cmap="viridis", vmin=-1, vmax=1)
+mpl3d_vtk.ax_setting(ax, (0, 1), (0, 1), (0, 1))
 fig.colorbar(surface, ax=ax)
 ```
 
@@ -57,6 +66,7 @@ x, y, z = np.meshgrid(t, t, t, sparse=True)
 volume = np.sin(10 * np.pi * (x + y + z))
 slices = ax.plot_volume_slices(volume, coordinates=(t, t, t), x=.5, y=.5, z=.5,
                               cmap="viridis", vmin=-1, vmax=1)
+mpl3d_vtk.ax_setting(ax, (0, 1), (0, 1), (0, 1))
 fig.colorbar(slices[0], ax=ax)
 ```
 
@@ -74,6 +84,7 @@ Each [gallery](plot_catalog.md) image links to its API entry and its own runnabl
 
 ```sh
 python examples/render_reference.py
+python examples/intersecting_planes_comparison.py docs/gallery/intersecting_planes_comparison.png
 python examples/intersecting_scalar_slices.py docs/gallery/intersecting_scalar_slices.png
 python examples/random_field_isosurface.py docs/gallery/random_field_isosurface.png
 ```

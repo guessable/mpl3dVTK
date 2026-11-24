@@ -129,7 +129,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk'''
@@ -141,18 +140,19 @@ import mpl3d_vtk'''
     dataset = example.dataset
     draw_args = "data_dir" if dataset else ""
     data_arg = ", data_dir" if dataset else ""
-    body = indent(setup + "\n\n" + example.code, "    ")
-    draw = f"def draw({draw_args}):\n{body}\n    return fig"
+    body = setup + "\n\n" + example.code
+    if ".ax_setting(" not in example.code:
+        body += """
+
+for panel in fig.axes:
+    if isinstance(panel, mpl3d_vtk.VtkAxes):
+        mpl3d_vtk.ax_setting(panel)"""
+    draw = f"def draw({draw_args}):\n{indent(body, '    ')}\n    return fig"
 
     save = f'''def save(output{data_arg}):
     with plt.rc_context(STYLE):
         try:
             fig = draw({draw_args})
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle({example.title!r}, fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

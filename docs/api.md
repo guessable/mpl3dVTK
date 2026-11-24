@@ -12,7 +12,7 @@ For volume and vector fields, use the [VTK reference](function_reference.md). Fo
 
 ## Run the examples
 
-The examples below share this setup. Start each example with a fresh copy of it.
+The examples below share this setup. Start each example with a fresh copy of it. The [gallery scripts](plot_catalog.md) apply [`ax_setting`](scene.md#ax_setting) to style their axes.
 
 ```python
 import matplotlib.pyplot as plt
@@ -342,8 +342,7 @@ surface = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1)
                           shade=False)
 ax.set_title(f"cheese · {len(faces):,} triangles")
 ax.set(xlabel="x", ylabel="y", zlabel="z")
-ax.fit()
-ax.set_aspect("equal")
+mpl3d_vtk.ax_setting(ax)
 fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
 ```
 
@@ -618,8 +617,7 @@ Draw VTK arrows. Positions and vector components broadcast to a common shape. No
 ```python
 a, b = np.meshgrid(np.linspace(-1, 1, 5), np.linspace(-1, 1, 5))
 arrows = ax.quiver(a, b, 0, -b, a, .35, length=.32, color="tab:orange")
-ax.set(zlim=(-.2, .65))
-ax.set_box_aspect((1, 1, .55))
+mpl3d_vtk.ax_setting(ax, zlim=(-.2, .65), box_aspect=(1, 1, .55))
 ```
 
 <img src="gallery/reference/quiver.png" width="460" alt="An array of arrows showing the directions of a swirling vector field">
@@ -678,7 +676,7 @@ Draw cuboid bars. All six geometry inputs broadcast together. Entries with nonfi
 
 ```python
 bars = ax.bar3d([0, 1, 2], [0, .5, 1], 0, .65, .65, [2, 5, 3], cmap="plasma")
-ax.set_box_aspect((2.6, 1.65, 3))
+mpl3d_vtk.ax_setting(ax, box_aspect=(2.6, 1.65, 3))
 ```
 
 <img src="gallery/reference/bar3d.png" width="460" alt="Three cuboid bars colored according to their heights">

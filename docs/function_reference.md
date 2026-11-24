@@ -103,8 +103,7 @@ with np.load(data_dir / "peanut.npz", allow_pickle=False) as data:
     mesh = ax.plot_mesh(data["vertices"], data["elements"], color="#e8eef5",
                         edgecolor="#2b5f8a", linewidth=.75)
 ax.set_title("peanut · indexed triangle mesh")
-ax.fit()
-ax.set_aspect("equal")
+vtkplot.ax_setting(ax)
 ```
 
 <img src="gallery/reference/plot_mesh.png" width="460" alt="The original peanut mesh drawn from its stored XYZ vertices and triangle indices">
@@ -224,6 +223,9 @@ Extract and draw an isosurface. The example draws the zero level of a seeded ran
 coords = np.linspace(-1, 1, 20)
 values = np.random.default_rng(42).uniform(-1, 1, size=(20,) * 3)
 ax.plot_isosurface(values, coordinates=(coords,) * 3, level=0, facecolor="#18b83e")
+limits = (-1, 1)
+ticks = np.linspace(*limits, 5)
+vtkplot.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
 ```
 
 <img src="gallery/random_field_isosurface.png" width="650" alt="Green zero isosurface of a seeded random field">
@@ -971,8 +973,7 @@ Place a depth-tested image in the XY plane at a fixed Z.
 pixels = np.sin(5*x[:, :, 0]) * np.cos(5*y[:, :, 0])
 image = ax.plot_image_plane(pixels, extent=(-1, 1, -1, 1), z=-.6,
                             cmap="coolwarm", vmin=-1, vmax=1)
-ax.set(zlim=(-.5, .5))
-ax.set_box_aspect((1, 1, .6))
+vtkplot.ax_setting(ax, (-1, 1), (-1, 1), (-.7, .5), box_aspect=(1, 1, .6))
 fig.colorbar(image, ax=ax)
 ```
 

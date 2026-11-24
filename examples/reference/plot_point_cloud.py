@@ -5,7 +5,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoLocator, MaxNLocator
 import numpy as np
 
 import mpl3d_vtk
@@ -33,6 +32,10 @@ def draw():
 
     points = np.random.default_rng(12).normal(size=(140, 3))
     cloud = ax.plot_point_cloud(points, c=points[:, 2], s=28, cmap="viridis")
+
+    for panel in fig.axes:
+        if isinstance(panel, mpl3d_vtk.VtkAxes):
+            mpl3d_vtk.ax_setting(panel)
     return fig
 
 
@@ -40,11 +43,6 @@ def save(output):
     with plt.rc_context(STYLE):
         try:
             fig = draw()
-            for ax in fig.axes:
-                if isinstance(ax, mpl3d_vtk.VtkAxes):
-                    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
-                        if isinstance(axis.get_major_locator(), AutoLocator):
-                            axis.set_major_locator(MaxNLocator(nbins=3))
             fig.suptitle('plot_point_cloud', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:
