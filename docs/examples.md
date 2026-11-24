@@ -1,11 +1,9 @@
 # Examples and figure export
 
-Run these commands from the root of an installed checkout. The export examples render through Matplotlib and an offscreen VTK window.
+Run these commands from the root of an installed checkout. The export examples render through Matplotlib and an offscreen VTK window. The [README quickstart](../README.md#quickstart) also shows a 3D surface and a 2D cross-section in one figure.
 
 | Example | What it demonstrates | Command |
 | --- | --- | --- |
-| [Exponential surface](../examples/exp_surface.py) | A surface, a colorbar, and two 2D cross-sections in one figure | `python examples/exp_surface.py surface.png` |
-| [Random scalar field](../examples/random_isosurface.py) | A zero isosurface colored by vertex height | `python examples/random_isosurface.py isosurface.png` |
 | [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
 | [Intersecting planes](../examples/intersecting_planes.py) | Three perpendicular slices and their occlusion | `python examples/intersecting_planes.py slices.png` |
 | [Intersecting scalar slices](../examples/intersecting_scalar_slices.py) | Three slices of a scalar field with a shared colorbar | `python examples/intersecting_scalar_slices.py slices.png` |
@@ -72,11 +70,12 @@ Closing an interactive figure releases its VTK windows. With Agg, call `ax.remov
 
 ## Regenerate the reference figures
 
-Each [gallery](plot_catalog.md) image links to its API entry and its own runnable Python script. The scripts in [`examples/reference/`](../examples/reference/) and their PNGs in `docs/gallery/reference/` are generated from the API snippets. The random isosurface has its own script.
+Each [gallery](plot_catalog.md) image links to its API entry and its own runnable Python script. The gallery builder generates the reference scripts and PNGs from the API snippets. Run the standalone scripts to regenerate the two README figures.
 
 ```sh
 python examples/render_reference.py
-python examples/random_isosurface.py docs/gallery/random_isosurface.png
+python examples/intersecting_scalar_slices.py docs/gallery/intersecting_scalar_slices.png
+python examples/random_field_isosurface.py docs/gallery/random_field_isosurface.png
 ```
 
 To render a single figure, run the script linked below its thumbnail and pass the output filename.

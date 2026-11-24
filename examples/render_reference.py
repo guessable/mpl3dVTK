@@ -18,8 +18,8 @@ from mpl3d_vtk.spatial import VolumeGraphic
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
 SOURCES = ROOT / "examples/reference"
-RANDOM_IMAGE = "gallery/random_isosurface.png"
-RANDOM_SOURCE = ROOT / "examples/random_isosurface.py"
+RANDOM_SOURCE = ROOT / "examples/random_field_isosurface.py"
+RANDOM_IMAGE = f"gallery/{RANDOM_SOURCE.stem}.png"
 DATA_DIR = ROOT / "data"
 PAGES = ("api.md", "function_reference.md", "scene.md")
 MESH_EXAMPLES = ("plot_trisurf", "plot_mesh")
@@ -183,7 +183,7 @@ def write_gallery(examples):
         return f"[Documentation]({reference}) · [Source code]({source})"
 
     by_name = {example.name: example for example in examples}
-    random = by_name["random_isosurface"]
+    random = by_name[RANDOM_SOURCE.stem]
     random_reference = f"{random.page}#{slug(random.title)}"
     groups = {"Isosurfaces and triangle meshes": [by_name[name] for name in MESH_EXAMPLES]}
     for example in examples:
@@ -219,7 +219,7 @@ def write_gallery(examples):
         if featured:
             page.extend([
                 "", "### Random isosurface", "",
-                "The zero level of a 19 × 19 × 19 field of uniform random samples in [−1, 1], with seed 42. Colors show vertex height.",
+                "The zero level of a 20 × 20 × 20 field of uniform random samples in [−1, 1], with seed 42.",
                 "",
                 f"[![{random.title}. {random.alt}]({random.image})]({random_reference})",
                 "",

@@ -161,8 +161,8 @@ An out-of-range level returns empty geometry. Pass the result to `ax.plot_mesh(*
 **Examples**
 
 ```python
-coords = np.linspace(-1, 1, 19)
-values = np.random.default_rng(42).uniform(-1, 1, size=(19, 19, 19))
+coords = np.linspace(-1, 1, 20)
+values = np.random.default_rng(42).uniform(-1, 1, size=(20,) * 3)
 height = np.broadcast_to(coords, values.shape)
 mesh = vtkplot.extract_isosurface(values, level=0, coordinates=(coords,) * 3,
                                  color_values=height)
@@ -178,7 +178,7 @@ ax.plot_isosurface(values, *, level=None, coordinates=None,
                    color_values=None, share_vertices=True, **style)
 ```
 
-Extract and draw an isosurface. The example colors a seeded random field's zero isosurface by Z.
+Extract and draw an isosurface. The example draws the zero level of a seeded random field.
 
 **Parameters**
 
@@ -221,18 +221,14 @@ Extract and draw an isosurface. The example colors a seeded random field's zero 
 **Examples**
 
 ```python
-coords = np.linspace(-1, 1, 19)
-values = np.random.default_rng(42).uniform(-1, 1, size=(19, 19, 19))
-height = np.broadcast_to(coords, values.shape)
-surface = ax.plot_isosurface(values, level=0, coordinates=(coords,) * 3,
-                             color_values=height, vmin=-1, vmax=1,
-                             ambient=.48, diffuse=.6, specular=.07)
-fig.colorbar(surface, ax=ax, label="z")
+coords = np.linspace(-1, 1, 20)
+values = np.random.default_rng(42).uniform(-1, 1, size=(20,) * 3)
+ax.plot_isosurface(values, coordinates=(coords,) * 3, level=0, facecolor="#18b83e")
 ```
 
-<img src="gallery/random_isosurface.png" width="650" alt="Zero isosurface of uniform random samples, colored by vertex height">
+<img src="gallery/random_field_isosurface.png" width="650" alt="Green zero isosurface of a seeded random field">
 
-[Source code](../examples/random_isosurface.py).
+[Source code](../examples/random_field_isosurface.py).
 
 ### `plot_volume_slices`
 

@@ -17,11 +17,11 @@ The triangle mesh figures use the original cheese and peanut datasets.
 
 ### Random isosurface
 
-The zero level of a 19 × 19 × 19 field of uniform random samples in [−1, 1], with seed 42. Colors show vertex height.
+The zero level of a 20 × 20 × 20 field of uniform random samples in [−1, 1], with seed 42.
 
-[![plot_isosurface. Zero isosurface of uniform random samples, colored by vertex height](gallery/random_isosurface.png)](function_reference.md#plot_isosurface)
+[![plot_isosurface. Green zero isosurface of a seeded random field](gallery/random_field_isosurface.png)](function_reference.md#plot_isosurface)
 
-[Documentation](function_reference.md#plot_isosurface) · [Source code](../examples/random_isosurface.py)
+[Documentation](function_reference.md#plot_isosurface) · [Source code](../examples/random_field_isosurface.py)
 
 ## Surfaces and contours
 
