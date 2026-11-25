@@ -123,19 +123,21 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert matplotlib.rcParams["mathtext.fontset"] == "cm"
         assert matplotlib.rcParams["axes.formatter.use_mathtext"]
         _, lines = plt.subplots()
-        colors = [lines.plot([0, 1], [i, i])[0].get_color() for i in range(3)]
-        assert colors == ["#0072BD", "#D95319", "#EDB120"]
-        assert lines.xaxis.get_major_ticks()[0].get_tickdir() == "in"
-        assert lines.get_axisbelow() == "line"
+        lines.plot([0, 1], [0, 1], label="Example")
+        assert lines.xaxis.get_major_ticks()[0].get_tickdir() == "out"
         assert all(spine.get_visible() for spine in lines.spines.values())
         assert not any(line.get_visible() for line in lines.get_xgridlines())
+        legend = lines.legend()
+        assert legend.get_frame_on()
+        assert legend.get_frame().get_alpha() == 1
+        assert isinstance(legend.get_frame().get_boxstyle(), matplotlib.patches.BoxStyle.Square)
 
         fig, ax = _figure()
         surface = ax.plot_surface([0, 1], [0, 1], [[0, 1], [1, 0]], cmap=plt.get_cmap())
-        m.ax_setting(ax)
         fig.canvas.draw()
         assert surface.get_cmap().name == plt.get_cmap().name == "plasma"
-        np.testing.assert_allclose(ax.xaxis.gridlines.get_colors()[0, 3], .15)
+        assert all(axis.pane.get_facecolor()[-1] == 0 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
+        assert ax.xaxis.gridlines.get_segments()
 
         m.plot_rc(grid=True, grid_3d=False, tick_top=True, tick_right=True,
                   save_dpi=180, save_bbox="standard")
@@ -147,9 +149,26 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert matplotlib.rcParams["savefig.dpi"] == 180
         assert matplotlib.rcParams["savefig.bbox"] is None
 
-        m.plot_rc()
-        assert not matplotlib.rcParams["xtick.top"] and not matplotlib.rcParams["ytick.right"]
     assert matplotlib.rcParams["image.cmap"] == original_cmap
+
+
+@pytest.mark.parametrize("options", [
+    {},
+    dict(grid=True, tick_direction="in", tick_top=True, tick_right=True, save_bbox="standard"),
+])
+def test_plot_rc_matches_my_mpl_style_outside_legend_and_3d(options):
+    from my_mpl_style import plot_rc as source_plot_rc
+
+    existing = {"image.cmap": "plasma", "lines.linewidth": 2.25, "axes.spines.right": False}
+    with plt.rc_context(existing):
+        source_plot_rc(**options)
+        expected = dict(matplotlib.rcParams)
+    with plt.rc_context(existing):
+        m.plot_rc(**options)
+        differences = {key for key, value in expected.items()
+                       if not key.startswith(("legend.", "axes3d."))
+                       and matplotlib.rcParams[key] != value}
+    assert not differences
 
 
 @pytest.mark.parametrize("set_aspect_before_plot", [False, True])

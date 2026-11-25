@@ -141,7 +141,8 @@ import mpl3d_vtk'''
     draw_args = "data_dir" if dataset else ""
     data_arg = ", data_dir" if dataset else ""
     body = setup + "\n\n" + example.code
-    if ".ax_setting(" not in example.code:
+    # The plot_rc comparison needs to show the effects of rcParams alone.
+    if example.name != "plot_rc" and ".ax_setting(" not in example.code:
         body += """
 
 for panel in fig.axes:

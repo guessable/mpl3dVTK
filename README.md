@@ -16,7 +16,7 @@ Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a work
 
 ## Quickstart
 
-Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.plot_rc()` before creating a figure to apply a MATLAB-inspired style to both 2D and 3D plots.
+Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.plot_rc()` before creating a figure to apply the my-mpl-style preset with custom legends and 3D axes.
 
 ```python
 import matplotlib.pyplot as plt

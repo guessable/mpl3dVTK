@@ -16,7 +16,7 @@ python -m pip install mpl3d-vtk
 
 ## 快速开始
 
-导入 `mpl3d_vtk` 注册 `vtk3d` 投影。创建图形前调用 `mpl3d_vtk.plot_rc()`，即可给 2D 和 3D 图应用接近 MATLAB 的配色和样式。
+导入 `mpl3d_vtk` 注册 `vtk3d` 投影。创建图形前调用 `mpl3d_vtk.plot_rc()`，即可应用 my-mpl-style 样式以及本包的图例和 3D 坐标轴设置。
 
 ```python
 import matplotlib.pyplot as plt

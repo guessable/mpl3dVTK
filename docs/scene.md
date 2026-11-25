@@ -1588,13 +1588,13 @@ after.set_title("Surface retained")
 ### `plot_rc`
 
 ```text
-mpl3d_vtk.plot_rc(grid=False, tick_direction="in", tick_right=False, tick_top=False,
+mpl3d_vtk.plot_rc(grid=False, tick_direction="out", tick_right=False, tick_top=False,
                   save_dpi=300, save_bbox="tight", save_pad_inches=0.05,
                   font_family="serif",
                   font_serif=("Arial", "Helvetica", "DejaVu Sans"), *, grid_3d=True)
 ```
 
-Apply a light style before creating a figure. The preset uses the classic seven-color line order, a four-sided 2D axes box, inward ticks, and faint grid lines. Typography follows [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc), and scalar plots use Matplotlib's active colormap. [MATLAB color order](https://www.mathworks.com/help/matlab/ref/colororder.html)
+Apply the [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc) preset before creating a figure. This function adds square, opaque legend frames and transparent 3D panes with a separate grid switch. The original preset controls fonts, line colors, 2D axes, and export settings. Scalar plots use Matplotlib's active colormap.
 
 Use [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to also apply an orthographic camera and projected ticks. Pass `cmap=plt.get_cmap()` to `plot_surface` to color the surface with the active colormap.
 
@@ -1604,7 +1604,7 @@ Use [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to also apply an or
 
   Draw the major grid on 2D axes.
 
-- **`tick_direction`** (`"in"` or `"out"`, default `"in"`)
+- **`tick_direction`** (`"in"` or `"out"`, default `"out"`)
 
   Direction of the 2D tick marks.
 
@@ -1671,10 +1671,12 @@ for column, (style, title) in enumerate(styles, start=1):
 
         ax = fig.add_subplot(2, 2, column + 2, projection="vtk3d")
         surface = ax.plot_surface(a, b, field, cmap=plt.get_cmap(), vmin=-7, vmax=9)
-        mpl3d_vtk.ax_setting(ax, (-3, 3), (-3, 3), (-7, 9),
-                             xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
-                             box_aspect=(1, 1, .7))
-        ax.set(xlabel="x", ylabel="y", zlabel="z")
+        ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-7, 9),
+               xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
+               xlabel="x", ylabel="y", zlabel="z")
+        ax.set_box_aspect((1, 1, .7))
+        ax.set_proj_type("ortho")
+        ax.view_init(elev=30, azim=-127.5)
         fig.colorbar(surface, ax=ax, shrink=.65, ticks=[-6, -2, 2, 6])
         fig.canvas.draw()
 ```

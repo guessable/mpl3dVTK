@@ -4,29 +4,24 @@ import matplotlib as mpl
 from mpl_toolkits.mplot3d import Axes3D
 
 
-# The classic MATLAB color order documented by MathWorks.
-_LINE_COLORS = ("#0072BD", "#D95319", "#EDB120", "#7E2F8E", "#77AC30", "#4DBEEE", "#A2142F")
-
-
 def plot_rc(
-    grid=False, tick_direction="in", tick_right=False, tick_top=False,
+    grid=False, tick_direction="out", tick_right=False, tick_top=False,
     save_dpi=300, save_bbox="tight", save_pad_inches=.05, font_family="serif",
     font_serif=("Arial", "Helvetica", "DejaVu Sans"), *, grid_3d=True,
 ):
-    """Apply a MATLAB-inspired light style to Matplotlib's defaults.
+    """Apply my-mpl-style defaults with custom legends and 3D axes.
 
     Call before creating the figure. Use a Matplotlib `rc_context` to limit
-    the changes to one figure. The style sets the line palette and uses
-    the active Matplotlib colormap for scalar data.
+    the changes to one figure.
 
     Parameters
     ----------
     grid : bool, default False
         Show the major grid on 2D axes.
-    tick_direction : {"in", "out"}, default "in"
+    tick_direction : {"in", "out"}, default "out"
         Direction of the 2D tick marks.
     tick_right, tick_top : bool, default False
-        Add ticks and tick labels to the right Y or top X spine of the 2D box.
+        Add ticks and tick labels on the right Y or top X side.
     save_dpi : float, default 300
         Default output resolution in dots per inch.
     save_bbox : {"tight", "standard"}, default "tight"
@@ -54,43 +49,10 @@ def plot_rc(
         font_family=font_family, font_serif=font_serif,
     )
     mpl.rcParams.update({
-        "figure.facecolor": "white",
-        "axes.facecolor": "white",
-        "axes.edgecolor": "0.15",
-        "axes.labelcolor": "0.15",
-        "text.color": "0.15",
-        "axes.linewidth": .5,
-        "axes.prop_cycle": mpl.cycler(color=_LINE_COLORS),
-        "axes.spines.left": True,
-        "axes.spines.bottom": True,
-        "axes.spines.right": True,
-        "axes.spines.top": True,
-        "axes.axisbelow": "line",
-        "axes.grid.which": "major",
-        "axes.grid.axis": "both",
         "axes3d.grid": bool(grid_3d),
         "axes3d.xaxis.panecolor": "none",
         "axes3d.yaxis.panecolor": "none",
         "axes3d.zaxis.panecolor": "none",
-        "lines.linewidth": .75,
-        "xtick.color": "0.15",
-        "ytick.color": "0.15",
-        "xtick.major.width": .5,
-        "ytick.major.width": .5,
-        "xtick.minor.width": .5,
-        "ytick.minor.width": .5,
-        "xtick.bottom": True,
-        "ytick.left": True,
-        "xtick.labelbottom": True,
-        "ytick.labelleft": True,
-        "xtick.top": bool(tick_top),
-        "ytick.right": bool(tick_right),
-        "xtick.labeltop": bool(tick_top),
-        "ytick.labelright": bool(tick_right),
-        "grid.color": (.15, .15, .15, .15),
-        "grid.linestyle": "-",
-        "grid.alpha": .15,
-        "grid.linewidth": .5,
         "legend.frameon": True,
         "legend.fancybox": False,
         "legend.edgecolor": "0.15",
