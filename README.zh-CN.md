@@ -16,20 +16,21 @@ python -m pip install mpl3d-vtk
 
 ## 快速开始
 
-导入 `mpl3d_vtk` 注册 `vtk3d` 投影，再用 `mpl3d_vtk.ax_setting(ax)` 应用下方示例的坐标轴样式。
+导入 `mpl3d_vtk` 注册 `vtk3d` 投影。创建图形前调用 `mpl3d_vtk.plot_rc()`，即可给 2D 和 3D 图应用接近 MATLAB 的配色和样式。
 
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
 import mpl3d_vtk
 
+mpl3d_vtk.plot_rc()
 t = np.linspace(-2, 2, 201)
 x, y = np.meshgrid(t, t)
 z = np.exp(x * np.sin(y))
 
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
-surface = ax.plot_surface(x, y, z, cmap="viridis")
+surface = ax.plot_surface(x, y, z, cmap=plt.get_cmap())
 mpl3d_vtk.ax_setting(ax)
 ax.set(xlabel="x", ylabel="y", zlabel="u")
 fig.colorbar(surface, ax=ax, shrink=.7)

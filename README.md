@@ -16,20 +16,21 @@ Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a work
 
 ## Quickstart
 
-Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.ax_setting(ax)` to apply the axes style shown below.
+Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.plot_rc()` before creating a figure to apply a MATLAB-inspired style to both 2D and 3D plots.
 
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
 import mpl3d_vtk
 
+mpl3d_vtk.plot_rc()
 t = np.linspace(-2, 2, 201)
 x, y = np.meshgrid(t, t)
 z = np.exp(x * np.sin(y))
 
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
-surface = ax.plot_surface(x, y, z, cmap="viridis")
+surface = ax.plot_surface(x, y, z, cmap=plt.get_cmap())
 mpl3d_vtk.ax_setting(ax)
 ax.set(xlabel="x", ylabel="y", zlabel="u")
 fig.colorbar(surface, ax=ax, shrink=.7)

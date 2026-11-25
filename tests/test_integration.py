@@ -113,6 +113,45 @@ def test_ax_setting_requires_a_3d_axes():
         m.ax_setting(ax)
 
 
+def test_plot_rc_styles_2d_and_3d_figures():
+    original_cmap = matplotlib.rcParams["image.cmap"]
+    with plt.rc_context():
+        matplotlib.rcParams["image.cmap"] = "plasma"
+        m.plot_rc()
+        assert matplotlib.rcParams["font.family"] == ["serif"]
+        assert matplotlib.rcParams["font.serif"] == ["Arial", "Helvetica", "DejaVu Sans"]
+        assert matplotlib.rcParams["mathtext.fontset"] == "cm"
+        assert matplotlib.rcParams["axes.formatter.use_mathtext"]
+        _, lines = plt.subplots()
+        colors = [lines.plot([0, 1], [i, i])[0].get_color() for i in range(3)]
+        assert colors == ["#0072BD", "#D95319", "#EDB120"]
+        assert lines.xaxis.get_major_ticks()[0].get_tickdir() == "in"
+        assert lines.get_axisbelow() == "line"
+        assert all(spine.get_visible() for spine in lines.spines.values())
+        assert not any(line.get_visible() for line in lines.get_xgridlines())
+
+        fig, ax = _figure()
+        surface = ax.plot_surface([0, 1], [0, 1], [[0, 1], [1, 0]], cmap=plt.get_cmap())
+        m.ax_setting(ax)
+        fig.canvas.draw()
+        assert surface.get_cmap().name == plt.get_cmap().name == "plasma"
+        np.testing.assert_allclose(ax.xaxis.gridlines.get_colors()[0, 3], .15)
+
+        m.plot_rc(grid=True, grid_3d=False, tick_top=True, tick_right=True,
+                  save_dpi=180, save_bbox="standard")
+        _, custom = plt.subplots()
+        assert custom.xaxis.get_major_ticks()[0].tick2line.get_visible()
+        assert custom.yaxis.get_major_ticks()[0].tick2line.get_visible()
+        assert all(line.get_visible() for line in custom.get_xgridlines())
+        assert not matplotlib.rcParams["axes3d.grid"]
+        assert matplotlib.rcParams["savefig.dpi"] == 180
+        assert matplotlib.rcParams["savefig.bbox"] is None
+
+        m.plot_rc()
+        assert not matplotlib.rcParams["xtick.top"] and not matplotlib.rcParams["ytick.right"]
+    assert matplotlib.rcParams["image.cmap"] == original_cmap
+
+
 @pytest.mark.parametrize("set_aspect_before_plot", [False, True])
 @pytest.mark.parametrize("adjustable", ["box", "datalim"])
 def test_equal_aspect_tracks_vtk_autoscaling(set_aspect_before_plot, adjustable):

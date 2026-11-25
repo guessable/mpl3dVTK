@@ -1583,7 +1583,105 @@ after.set_title("Surface retained")
 
 ## Matplotlib controls
 
-[`view_init`](#view_init) · [`set_proj_type`](#set_proj_type) · [`Figure.colorbar`](#figurecolorbar) · [`grid`](#grid) · [`text`](#text) · [`tick_params`](#tick_params) · [`set_norm`](#set_norm) · [`set_label`](#set_label)
+[`plot_rc`](#plot_rc) · [`view_init`](#view_init) · [`set_proj_type`](#set_proj_type) · [`Figure.colorbar`](#figurecolorbar) · [`grid`](#grid) · [`text`](#text) · [`tick_params`](#tick_params) · [`set_norm`](#set_norm) · [`set_label`](#set_label)
+
+### `plot_rc`
+
+```text
+mpl3d_vtk.plot_rc(grid=False, tick_direction="in", tick_right=False, tick_top=False,
+                  save_dpi=300, save_bbox="tight", save_pad_inches=0.05,
+                  font_family="serif",
+                  font_serif=("Arial", "Helvetica", "DejaVu Sans"), *, grid_3d=True)
+```
+
+Apply a light style before creating a figure. The preset uses the classic seven-color line order, a four-sided 2D axes box, inward ticks, and faint grid lines. Typography follows [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc), and scalar plots use Matplotlib's active colormap. [MATLAB color order](https://www.mathworks.com/help/matlab/ref/colororder.html)
+
+Use [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to also apply an orthographic camera and projected ticks. Pass `cmap=plt.get_cmap()` to `plot_surface` to color the surface with the active colormap.
+
+**Parameters**
+
+- **`grid`** (bool, default `False`)
+
+  Draw the major grid on 2D axes.
+
+- **`tick_direction`** (`"in"` or `"out"`, default `"in"`)
+
+  Direction of the 2D tick marks.
+
+- **`tick_right`** (bool, default `False`)
+
+  Add ticks and tick labels to the right Y spine on 2D axes.
+
+- **`tick_top`** (bool, default `False`)
+
+  Add ticks and tick labels to the top X spine on 2D axes.
+
+- **`save_dpi`** (float, default `300`)
+
+  Default output resolution in dots per inch.
+
+- **`save_bbox`** (`"tight"` or `"standard"`, default `"tight"`)
+
+  Use `"tight"` to crop to the plotted artists, or `"standard"` to export the whole figure canvas.
+
+- **`save_pad_inches`** (float, default `0.05`)
+
+  Padding in inches around a tight export.
+
+- **`font_family`** (str, default `"serif"`)
+
+  Matplotlib font family used by the original `plot_rc` style.
+
+- **`font_serif`** (sequence of str, default `("Arial", "Helvetica", "DejaVu Sans")`)
+
+  Font candidates used when the font family is serif.
+
+- **`grid_3d`** (bool, default `True`)
+
+  Draw the grid on 3D axes. This setting is independent of `grid`.
+
+**Returns**
+
+`None`. The function updates Matplotlib's `rcParams`. Use `with plt.rc_context():` to limit the style to one figure.
+
+**Examples**
+
+```python
+from my_mpl_style import plot_rc as previous_style
+
+fig = plt.figure(figsize=(9.8, 7.5), layout="constrained")
+fig.get_layout_engine().set(w_pad=.14, h_pad=.12)
+time = np.linspace(0, 2*np.pi, 300)
+coordinates = np.linspace(-3, 3, 101)
+a, b = np.meshgrid(coordinates, coordinates)
+field = (3*(1-a)**2 * np.exp(-a*a-(b+1)**2)
+         - 10*(a/5-a**3-b**5) * np.exp(-a*a-b*b)
+         - np.exp(-(a+1)**2-b*b)/3)
+styles = ((previous_style, "my-mpl-style"), (mpl3d_vtk.plot_rc, "mpl3d-vtk"))
+
+for column, (style, title) in enumerate(styles, start=1):
+    with plt.rc_context():
+        plt.rcdefaults()
+        style()
+        lines = fig.add_subplot(2, 2, column)
+        for i, phase in enumerate(np.arange(4)*np.pi/4, start=1):
+            lines.plot(time, np.sin(time + phase)*np.exp(-.12*time), label=f"Series {i}")
+        lines.set(title=title, xlabel="Time", ylabel="Amplitude", ylim=(-1.1, 1.45))
+        lines.legend(loc="upper right", ncol=2, fontsize=8)
+
+        ax = fig.add_subplot(2, 2, column + 2, projection="vtk3d")
+        surface = ax.plot_surface(a, b, field, cmap=plt.get_cmap(), vmin=-7, vmax=9)
+        mpl3d_vtk.ax_setting(ax, (-3, 3), (-3, 3), (-7, 9),
+                             xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
+                             box_aspect=(1, 1, .7))
+        ax.set(xlabel="x", ylabel="y", zlabel="z")
+        fig.colorbar(surface, ax=ax, shrink=.65, ticks=[-6, -2, 2, 6])
+        fig.canvas.draw()
+```
+
+<img src="gallery/reference/plot_rc.png" width="800" alt="The same line plot and peaks surface using my-mpl-style and the mpl3d-vtk plot_rc preset">
+
+[Source code](../examples/reference/plot_rc.py).
 
 ### `view_init`
 

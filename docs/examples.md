@@ -19,6 +19,8 @@ See the [API gallery](plot_catalog.md) to browse individual methods. Each figure
 
 `vtk3d` inherits Matplotlib's axes defaults. Call [`mpl3d_vtk.ax_setting(ax)`](scene.md#ax_setting) to apply the examples' orthographic view, equal scaling, and projected tick style. The current limits, autoscaling modes, and tick locators are used for each axis whose corresponding arguments are omitted.
 
+Call [`mpl3d_vtk.plot_rc()`](scene.md#plot_rc) before creating a figure to apply shared line colors, typography, and axes styling to its 2D and 3D plots.
+
 ## Three intersecting planes
 
 The comparison reproduces the [my-mpl-style example](https://github.com/guessable/my-mpl-style/blob/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c/examples/Intersecting_planes.py) for the field `sin(10π(x + y + z))`. Each row uses three midplane slices, an orthographic view, equal data-unit lengths, and a shared color range. The upper row spans `[0, 1]` on all axes and the lower row spans `[-1, 1]`.
