@@ -143,7 +143,7 @@ mpl3d_vtk.ax_setting(ax=None, xlim=None, ylim=None, zlim=None, *,
                      ytick_length=0.02, ztick_length=0.02)
 ```
 
-Apply the [my-mpl-style 3D axes style](https://github.com/guessable/my-mpl-style#3d-axes). The view is orthographic at elevation 30° and azimuth −127.5°. Grid lines are thin, pane fills are transparent, and tick lengths follow the longest projected axis.
+Apply a MATLAB-inspired 3D axes style based on [my-mpl-style](https://github.com/guessable/my-mpl-style#3d-axes). The view is orthographic at elevation 30° and Matplotlib azimuth −127.5°. Axis lines, pane outlines, ticks, and grid lines are 0.5 points wide. The panes are transparent, the grid opacity is 0.15, and tick lengths follow the longest projected axis. [MATLAB view](https://www.mathworks.com/help/matlab/ref/view.html) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
 
 **Parameters**
 
@@ -1596,7 +1596,7 @@ mpl3d_vtk.plot_rc(grid=False, tick_direction="out", tick_right=False, tick_top=F
 
 Apply the [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc) preset before creating a figure. This function adds square, opaque legend frames and transparent 3D panes with a separate grid switch. The original preset controls fonts, line colors, 2D axes, and export settings. Scalar plots use Matplotlib's active colormap.
 
-Use [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to also apply an orthographic camera and projected ticks. Pass `cmap=plt.get_cmap()` to `plot_surface` to color the surface with the active colormap.
+Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to apply the orthographic camera, light grid, and projected ticks. Pass `cmap=plt.get_cmap()` to `plot_surface` to color the surface with the active colormap. The example applies both functions on the right.
 
 **Parameters**
 
@@ -1674,9 +1674,12 @@ for column, (style, title) in enumerate(styles, start=1):
         ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-7, 9),
                xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
                xlabel="x", ylabel="y", zlabel="z")
-        ax.set_box_aspect((1, 1, .7))
-        ax.set_proj_type("ortho")
-        ax.view_init(elev=30, azim=-127.5)
+        if column == 1:
+            ax.set_box_aspect((1, 1, .7))
+            ax.set_proj_type("ortho")
+            ax.view_init(elev=30, azim=-127.5)
+        else:
+            mpl3d_vtk.ax_setting(ax, box_aspect=(1, 1, .7))
         fig.colorbar(surface, ax=ax, shrink=.65, ticks=[-6, -2, 2, 6])
         fig.canvas.draw()
 ```

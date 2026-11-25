@@ -66,7 +66,7 @@ def ax_setting(
     xticks_pad=-5, yticks_pad=-5, zticks_pad=0, box_on=False,
     xtick_length=.02, ytick_length=.02, ztick_length=.02,
 ):
-    """Apply an orthographic view and projected ticks to a 3D axes.
+    """Apply an orthographic view, light grid, and projected ticks to a 3D axes.
 
     Parameters
     ----------
@@ -132,3 +132,10 @@ def ax_setting(
     finally:
         for name, enabled in autoscale.items():
             getattr(ax, f"set_autoscale{name}_on")(enabled)
+
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.line.set_linewidth(.5)
+        axis.pane.set_linewidth(.5)
+        # mplot3d reads these per-axis settings when it draws the ticks and grid.
+        axis._axinfo["tick"]["linewidth"].update({True: .5, False: .5})
+        axis._axinfo["grid"].update(color=(.15, .15, .15, .15), linewidth=.5, linestyle="-")

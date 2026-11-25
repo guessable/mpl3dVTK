@@ -10,4 +10,4 @@ from .vectors import trace_streamlines
 from .volumes import extract_isosurface
 
 __all__ = ["Graphic", "VtkAxes", "ax_setting", "extract_isosurface", "plot_rc", "trace_streamlines"]
-__version__ = "0.5.6"
+__version__ = "0.5.7"

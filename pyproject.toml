@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mpl3d-vtk"
-version = "0.5.6"
+version = "0.5.7"
 description = "Scientific 3D plotting with VTK and native Matplotlib axes"
 readme = "README.md"
 requires-python = ">=3.11"

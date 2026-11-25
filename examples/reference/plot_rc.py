@@ -65,9 +65,12 @@ def draw():
             ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-7, 9),
                    xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
                    xlabel="x", ylabel="y", zlabel="z")
-            ax.set_box_aspect((1, 1, .7))
-            ax.set_proj_type("ortho")
-            ax.view_init(elev=30, azim=-127.5)
+            if column == 1:
+                ax.set_box_aspect((1, 1, .7))
+                ax.set_proj_type("ortho")
+                ax.view_init(elev=30, azim=-127.5)
+            else:
+                mpl3d_vtk.ax_setting(ax, box_aspect=(1, 1, .7))
             fig.colorbar(surface, ax=ax, shrink=.65, ticks=[-6, -2, 2, 6])
             fig.canvas.draw()
     return fig

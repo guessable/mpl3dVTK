@@ -76,6 +76,7 @@ def test_axes_defaults_and_explicit_controls():
 @pytest.mark.parametrize("projection", ["3d", "vtk3d"])
 def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     fig, ax = _figure(projection)
+    ax.grid(True)
     ax.plot([0, 4], [0, 2], [0, 1])
     ax.set_xlim(-1, 5)
     limits = ax.get_w_lims()
@@ -88,6 +89,7 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     assert ax.yaxis.get_major_locator() is locator
     assert ax.get_aspect() == "equal"
     assert np.isinf(ax._focal_length)
+    assert (ax.elev, ax.azim) == (30, -127.5)
 
     ax.plot([0, 1], [0, 7], [0, 2])
     assert ax.get_ylim()[1] >= 7
@@ -102,6 +104,11 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -3
     box = ax.get_box_aspect()
     np.testing.assert_allclose(box / box[0], (1, 2, 3))
+    assert ax.xaxis.line.get_linewidth() == .5
+    assert ax.xaxis.pane.get_linewidth() == .5
+    assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == .5
+    np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.15, .15, .15, .15]])
+    np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [.5])
 
 
 def test_ax_setting_requires_a_3d_axes():
@@ -146,6 +153,9 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert custom.yaxis.get_major_ticks()[0].tick2line.get_visible()
         assert all(line.get_visible() for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
+        _, grid_off = _figure("3d")
+        m.ax_setting(grid_off)
+        assert not grid_off._draw_grid
         assert matplotlib.rcParams["savefig.dpi"] == 180
         assert matplotlib.rcParams["savefig.bbox"] is None
 
@@ -165,6 +175,8 @@ def test_plot_rc_matches_my_mpl_style_outside_legend_and_3d(options):
         expected = dict(matplotlib.rcParams)
     with plt.rc_context(existing):
         m.plot_rc(**options)
+        _, scene = _figure("3d")
+        m.ax_setting(scene)
         differences = {key for key, value in expected.items()
                        if not key.startswith(("legend.", "axes3d."))
                        and matplotlib.rcParams[key] != value}
