@@ -90,12 +90,21 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     assert ax.get_aspect() == "equal"
     assert np.isinf(ax._focal_length)
     assert (ax.elev, ax.azim) == (30, -127.5)
+    fig.canvas.draw()
+    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        assert axis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
+        assert not axis.pane.get_fill()
+        tick_line = axis.get_major_ticks()[1].tick1line
+        points = tick_line.get_transform().transform(tick_line.get_xydata())
+        np.testing.assert_allclose(np.linalg.norm(points[1] - points[0]),
+                                   .025 * ax._style3d_geometry.longest)
 
     ax.plot([0, 1], [0, 7], [0, 2])
     assert ax.get_ylim()[1] >= 7
 
     m.ax_setting(ax, xlim=(-2, 6), xticks=[-2, 0, 6], zticks=[],
-                 aspect="auto", box_aspect=(1, 2, 3), xticks_pad=-3)
+                 aspect="auto", box_aspect=(1, 2, 3), xticks_pad=-3,
+                 box_on=True, xtick_length=.01)
     fig.canvas.draw()
     np.testing.assert_allclose(ax.get_xlim(), (-2, 6))
     np.testing.assert_array_equal(ax.get_xticks(), [-2, 0, 6])
@@ -106,8 +115,10 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     np.testing.assert_allclose(box / box[0], (1, 2, 3))
     assert ax.xaxis.line.get_linewidth() == .5
     assert ax.xaxis.pane.get_linewidth() == .5
+    assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba(ax.xaxis.line.get_color())
     assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == .5
-    np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.15, .15, .15, .15]])
+    assert ax.xaxis._style3d_extension.length == .01
+    np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.1294, .1294, .1294, .15]])
     np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [.5])
 
 
@@ -118,6 +129,35 @@ def test_ax_setting_requires_a_3d_axes():
     _, ax = plt.subplots()
     with pytest.raises(TypeError, match="Matplotlib 3D axes"):
         m.ax_setting(ax)
+
+
+@pytest.mark.parametrize("projection", ["3d", "vtk3d"])
+def test_ax_setting_styles_current_and_new_tick_labels(projection):
+    with plt.rc_context({"xtick.labelsize": 16, "ytick.labelsize": 16,
+                         "font.weight": "bold"}):
+        fig, ax = _figure(projection)
+        m.ax_setting(ax, xticks=[0], yticks=[0], zticks=[])
+        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+            axis.set_ticks([0, 0.25, 0.5])
+            axis.set_ticks([0.125, 0.375], minor=True)
+        ax.view_init(elev=20, azim=45)
+        fig.canvas.draw()
+
+        for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+            assert axis.label.get_fontsize() == 11
+            assert axis.label.get_fontweight() == "normal"
+            assert axis.get_offset_text().get_fontsize() == 10
+            assert axis.get_offset_text().get_fontweight() == "normal"
+            assert axis.label.get_color() == axis.line.get_color() == "0.1294"
+            for tick in (*axis.get_major_ticks(), *axis.get_minor_ticks()):
+                assert tick.tick1line.get_color() == "0.1294"
+                for label in (tick.label1, tick.label2):
+                    assert label.get_fontsize() == 10
+                    assert label.get_fontweight() == "normal"
+                    assert label.get_color() == "0.1294"
+        assert matplotlib.rcParams["xtick.labelsize"] == 16
+        assert matplotlib.rcParams["ytick.labelsize"] == 16
+        assert matplotlib.rcParams["font.weight"] == "bold"
 
 
 def test_plot_rc_styles_2d_and_3d_figures():

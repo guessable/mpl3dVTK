@@ -139,11 +139,11 @@ ax.view_init(elev=24, azim=-60)
 mpl3d_vtk.ax_setting(ax=None, xlim=None, ylim=None, zlim=None, *,
                      xticks=None, yticks=None, zticks=None, aspect="equal",
                      box_aspect=None, xticks_pad=-5, yticks_pad=-5,
-                     zticks_pad=0, box_on=False, xtick_length=0.02,
-                     ytick_length=0.02, ztick_length=0.02)
+                     zticks_pad=0, box_on=False, xtick_length=0.025,
+                     ytick_length=0.025, ztick_length=0.025)
 ```
 
-Apply a MATLAB-inspired 3D axes style based on [my-mpl-style](https://github.com/guessable/my-mpl-style#3d-axes). The view is orthographic at elevation 30° and Matplotlib azimuth −127.5°. Axis lines, pane outlines, ticks, and grid lines are 0.5 points wide. The panes are transparent, the grid opacity is 0.15, and tick lengths follow the longest projected axis. [MATLAB view](https://www.mathworks.com/help/matlab/ref/view.html) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
+Apply a MATLAB-inspired 3D axes style based on my-mpl-style. The view is orthographic at elevation 30° and Matplotlib azimuth −127.5°. The three back panes have transparent faces and gray outlines. Axis lines, tick marks, and outlines are 0.5 points wide. Grid lines use the same width and 15% opacity. The outward ticks are 2.5% as long as the longest projected axis. Tick labels and scientific notation offsets use 10-point text. The X, Y, and Z axis labels use 11-point text. All use normal weight and the MATLAB R2025a light theme's dark gray. [my-mpl-style](https://github.com/guessable/my-mpl-style#3d-axes) · [MATLAB view](https://www.mathworks.com/help/matlab/ref/view.html) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
 
 **Parameters**
 
@@ -161,7 +161,7 @@ Apply a MATLAB-inspired 3D axes style based on [my-mpl-style](https://github.com
 
 - **`aspect`** (`"auto"` or `"equal"`, default `"equal"`)
 
-  `"equal"` gives each data unit the same display length in all three directions. `"auto"` uses the axes box proportions.
+  `"equal"` gives each data unit the same display length in all three directions. `"auto"` uses the axes box proportions. Use `aspect="auto", box_aspect=(1, 1, 1)` to approximate the cubic plot box used by MATLAB when its aspect ratios are automatic. [MATLAB aspect ratios](https://www.mathworks.com/help/matlab/creating_plots/manipulating-axes-aspect-ratio.html)
 
 - **`box_aspect`** (three positive floats or `None`, default `None`)
 
@@ -177,11 +177,11 @@ Apply a MATLAB-inspired 3D axes style based on [my-mpl-style](https://github.com
 
 - **`box_on`** (bool, default `False`)
 
-  Draw pane outlines in the axis line colors when `True`. The default color is gray.
+  Draw the back pane outlines in gray by default. Use `True` to match their color to the axis lines.
 
-- **`xtick_length`, `ytick_length`, `ztick_length`** (float, default `0.02`)
+- **`xtick_length`, `ytick_length`, `ztick_length`** (float, default `0.025`)
 
-  Non-negative tick lengths as fractions of the longest projected axis. Lengths adjust to the view and figure size.
+  Non-negative lengths of outward tick marks as fractions of the longest projected axis. Lengths adjust to the view and figure size.
 
 **Returns**
 

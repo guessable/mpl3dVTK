@@ -64,9 +64,12 @@ def ax_setting(
     ax=None, xlim=None, ylim=None, zlim=None, *,
     xticks=None, yticks=None, zticks=None, aspect="equal", box_aspect=None,
     xticks_pad=-5, yticks_pad=-5, zticks_pad=0, box_on=False,
-    xtick_length=.02, ytick_length=.02, ztick_length=.02,
+    xtick_length=.025, ytick_length=.025, ztick_length=.025,
 ):
     """Apply an orthographic view, light grid, and projected ticks to a 3D axes.
+
+    Use the MATLAB light theme's dark gray for the axes. Tick labels use
+    10-point text and axis labels use 11-point text, both with normal weight.
 
     Parameters
     ----------
@@ -88,9 +91,11 @@ def ax_setting(
     zticks_pad : float, default 0
         Adjust the Z tick-label gap, which is ``max(0, 2 + zticks_pad)`` points.
     box_on : bool, default False
-        Use the axis line colors for the pane outlines. The default is gray.
-    xtick_length, ytick_length, ztick_length : float, default 0.02
-        Non-negative lengths as fractions of the longest projected axis.
+        Draw the back pane outlines in gray by default. Use `True` to match
+        their color to the axis lines.
+    xtick_length, ytick_length, ztick_length : float, default 0.025
+        Non-negative outward tick lengths as fractions of the longest
+        projected axis.
 
     Returns
     -------
@@ -133,9 +138,21 @@ def ax_setting(
         for name, enabled in autoscale.items():
             getattr(ax, f"set_autoscale{name}_on")(enabled)
 
+    axis_color = "0.1294"
+    grid_color = mpl.colors.to_rgba(axis_color, .15)
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+        axis.line.set_color(axis_color)
         axis.line.set_linewidth(.5)
         axis.pane.set_linewidth(.5)
+        if box_on:
+            axis.pane.set_edgecolor(axis_color)
         # mplot3d reads these per-axis settings when it draws the ticks and grid.
         axis._axinfo["tick"]["linewidth"].update({True: .5, False: .5})
-        axis._axinfo["grid"].update(color=(.15, .15, .15, .15), linewidth=.5, linestyle="-")
+        axis._axinfo["grid"].update(color=grid_color, linewidth=.5, linestyle="-")
+        axis.set_tick_params(which="both", colors=axis_color, labelsize=10)
+        axis.label.set(color=axis_color, fontsize=11, fontweight="normal")
+        axis.get_offset_text().set(color=axis_color, fontsize=10, fontweight="normal")
+        # Matplotlib copies label properties from the first tick when adding ticks.
+        for tick in (*axis.majorTicks, *axis.minorTicks):
+            tick.label1.set_fontweight("normal")
+            tick.label2.set_fontweight("normal")
