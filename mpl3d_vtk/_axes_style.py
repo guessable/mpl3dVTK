@@ -5,7 +5,6 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 _AXIS_COLOR = "0.1294"
-_AXIS_LINEWIDTH = .5
 _GRID_COLOR = mpl.colors.to_rgba(_AXIS_COLOR, .15)
 _TICK_LABEL_SIZE = 10
 _AXIS_LABEL_SIZE = 11
@@ -23,6 +22,7 @@ def plot_rc(
 
     Call before creating the figure. Axis labels and titles are 11 pt,
     tick labels are 10 pt, and legends are 9 pt. Titles use bold weight.
+    Line widths follow the active Matplotlib settings.
     Use a Matplotlib `rc_context` to limit the changes to one figure and
     `ax_setting` to apply the orthographic view and outward ticks to 3D axes.
 
@@ -55,8 +55,9 @@ def plot_rc(
     """
     from my_mpl_style import plot_rc as base_plot_rc
 
+    # Enable the grid below to retain Matplotlib's grid width.
     base_plot_rc(
-        grid=grid, tick_direction=tick_direction, tick_right=tick_right, tick_top=tick_top,
+        grid=False, tick_direction=tick_direction, tick_right=tick_right, tick_top=tick_top,
         save_dpi=save_dpi, save_bbox=save_bbox, save_pad_inches=save_pad_inches,
         font_family=font_family, font_serif=font_serif,
     )
@@ -66,8 +67,8 @@ def plot_rc(
         "figure.facecolor": "white",
         "axes.facecolor": "white",
         "axes.edgecolor": _AXIS_COLOR,
-        "axes.linewidth": _AXIS_LINEWIDTH,
         "axes.axisbelow": True,
+        "axes.grid": bool(grid),
         "axes.grid.axis": "both",
         "axes.grid.which": "major",
         "axes.labelcolor": _AXIS_COLOR,
@@ -82,7 +83,6 @@ def plot_rc(
         "axes.prop_cycle": mpl.cycler(color=_SERIES_COLORS),
         "grid.color": _GRID_COLOR,
         "grid.alpha": _GRID_COLOR[-1],
-        "grid.linewidth": _AXIS_LINEWIDTH,
         "grid.linestyle": "-",
         "axes3d.grid": bool(grid_3d),
         "axes3d.xaxis.panecolor": "none",
@@ -93,7 +93,6 @@ def plot_rc(
         "legend.fancybox": False,
         "legend.facecolor": "white",
         "legend.edgecolor": _AXIS_COLOR,
-        "legend.linewidth": _AXIS_LINEWIDTH,
         "legend.framealpha": 1,
         "legend.frameon": True,
         "xtick.bottom": True,
@@ -111,10 +110,8 @@ def plot_rc(
             f"{axis}.labelcolor": _AXIS_COLOR,
             f"{axis}.labelsize": _TICK_LABEL_SIZE,
             f"{axis}.major.size": 3.5,
-            f"{axis}.major.width": _AXIS_LINEWIDTH,
             f"{axis}.minor.visible": False,
             f"{axis}.minor.size": 1.75,
-            f"{axis}.minor.width": _AXIS_LINEWIDTH,
         })
 
 
@@ -126,8 +123,9 @@ def ax_setting(
 ):
     """Apply an orthographic view, light grid, and projected ticks to a 3D axes.
 
-    Use the MATLAB light theme's dark gray for the axes. Tick labels use
-    10-point text and axis labels use 11-point text, both with normal weight.
+    Use the MATLAB light theme's dark gray for the axes and keep the active
+    Matplotlib line widths. Tick labels use 10-point text and axis labels
+    use 11-point text, both with normal weight.
 
     Parameters
     ----------
@@ -178,6 +176,9 @@ def ax_setting(
 
     from my_mpl_style import ax_setting3D
 
+    axes = (ax.xaxis, ax.yaxis, ax.zaxis)
+    # The upstream helper assigns its own pane and grid line widths.
+    widths = [(axis.pane.get_linewidth(), axis._axinfo["grid"]["linewidth"]) for axis in axes]
     bounds = (xlim, ylim, zlim)
     limits = [getattr(ax, f"get_{name}lim")() if pair is None else pair
               for name, pair in zip("xyz", bounds)]
@@ -196,15 +197,13 @@ def ax_setting(
         for name, enabled in autoscale.items():
             getattr(ax, f"set_autoscale{name}_on")(enabled)
 
-    for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
+    for axis, (pane_width, grid_width) in zip(axes, widths):
         axis.line.set_color(_AXIS_COLOR)
-        axis.line.set_linewidth(_AXIS_LINEWIDTH)
-        axis.pane.set_linewidth(_AXIS_LINEWIDTH)
+        axis.pane.set_linewidth(pane_width)
         if box_on:
             axis.pane.set_edgecolor(_AXIS_COLOR)
-        # mplot3d reads these per-axis settings when it draws the ticks and grid.
-        axis._axinfo["tick"]["linewidth"].update({True: _AXIS_LINEWIDTH, False: _AXIS_LINEWIDTH})
-        axis._axinfo["grid"].update(color=_GRID_COLOR, linewidth=_AXIS_LINEWIDTH, linestyle="-")
+        # mplot3d reads these per-axis settings when it draws the grid.
+        axis._axinfo["grid"].update(color=_GRID_COLOR, linewidth=grid_width, linestyle="-")
         axis.set_tick_params(which="both", colors=_AXIS_COLOR, labelsize=_TICK_LABEL_SIZE)
         axis.label.set(color=_AXIS_COLOR, fontsize=_AXIS_LABEL_SIZE, fontweight="normal")
         axis.get_offset_text().set(color=_AXIS_COLOR, fontsize=_TICK_LABEL_SIZE, fontweight="normal")

@@ -94,6 +94,8 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         assert axis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
         assert not axis.pane.get_fill()
+        assert axis.line.get_linewidth() == matplotlib.rcParamsDefault["axes.linewidth"]
+        assert axis.pane.get_linewidth() == matplotlib.rcParamsDefault["patch.linewidth"]
         tick_line = axis.get_major_ticks()[1].tick1line
         points = tick_line.get_transform().transform(tick_line.get_xydata())
         np.testing.assert_allclose(np.linalg.norm(points[1] - points[0]),
@@ -102,6 +104,8 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     ax.plot([0, 1], [0, 7], [0, 2])
     assert ax.get_ylim()[1] >= 7
 
+    ax.xaxis.line.set_linewidth(1.2)
+    ax.xaxis.pane.set_linewidth(1.4)
     m.ax_setting(ax, xlim=(-2, 6), xticks=[-2, 0, 6], zticks=[],
                  aspect="auto", box_aspect=(1, 2, 3), xticks_pad=-3,
                  box_on=True, xtick_length=.01)
@@ -113,13 +117,13 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     assert ax.xaxis.get_major_ticks()[0].get_pad() == -3
     box = ax.get_box_aspect()
     np.testing.assert_allclose(box / box[0], (1, 2, 3))
-    assert ax.xaxis.line.get_linewidth() == .5
-    assert ax.xaxis.pane.get_linewidth() == .5
+    assert ax.xaxis.line.get_linewidth() == 1.2
+    assert ax.xaxis.pane.get_linewidth() == 1.4
     assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba(ax.xaxis.line.get_color())
-    assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == .5
+    assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == matplotlib.rcParamsDefault["xtick.major.width"]
     assert ax.xaxis._style3d_extension.length == .01
     np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.1294, .1294, .1294, .15]])
-    np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [.5])
+    np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [matplotlib.rcParamsDefault["grid.linewidth"]])
 
 
 def test_ax_setting_requires_a_3d_axes():
@@ -176,10 +180,10 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert tick.get_tickdir() == "in"
         assert tick.label1.get_fontsize() == 10
         assert tick.label1.get_fontweight() == "normal"
-        assert tick.tick1line.get_markeredgewidth() == .5
+        assert tick.tick1line.get_markeredgewidth() == matplotlib.rcParamsDefault["xtick.major.width"]
         for spine in lines.spines.values():
             assert spine.get_visible()
-            assert spine.get_linewidth() == .5
+            assert spine.get_linewidth() == matplotlib.rcParamsDefault["axes.linewidth"]
         label = lines.set_xlabel("Time")
         title = lines.set_title("Example")
         assert (label.get_fontsize(), label.get_fontweight()) == (11, "normal")
@@ -188,7 +192,7 @@ def test_plot_rc_styles_2d_and_3d_figures():
         legend = lines.legend()
         assert legend.get_frame_on()
         assert legend.get_frame().get_alpha() == 1
-        assert legend.get_frame().get_linewidth() == .5
+        assert legend.get_frame().get_linewidth() == matplotlib.rcParamsDefault["patch.linewidth"]
         assert legend.get_texts()[0].get_fontsize() == 9
         assert isinstance(legend.get_frame().get_boxstyle(), matplotlib.patches.BoxStyle.Square)
 
@@ -209,6 +213,8 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert custom.xaxis.get_major_ticks()[0].get_tickdir() == "out"
         assert all(line.get_visible() for line in custom.get_xgridlines())
         assert all(line.get_alpha() == .15 for line in custom.get_xgridlines())
+        assert all(line.get_linewidth() == matplotlib.rcParamsDefault["grid.linewidth"]
+                   for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
         _, grid_off = _figure("3d")
         m.ax_setting(grid_off)
@@ -226,9 +232,12 @@ def test_plot_rc_styles_2d_and_3d_figures():
 
 @pytest.mark.parametrize("projection", ["rectilinear", "3d", "vtk3d"])
 def test_plot_rc_uses_seven_series_colors(projection):
-    with plt.rc_context({"lines.linewidth": 2.25}):
-        m.plot_rc()
-        assert matplotlib.rcParams["lines.linewidth"] == 2.25
+    widths = {"lines.linewidth": 2.25, "axes.linewidth": 1.2,
+              "legend.linewidth": 1.3, "grid.linewidth": .6,
+              "xtick.major.width": .7, "ytick.minor.width": .4}
+    with plt.rc_context(widths):
+        m.plot_rc(grid=True)
+        assert {key: matplotlib.rcParams[key] for key in widths} == widths
         _, ax = _figure(projection)
         ax.plot([0, 1], [0, 1], color="orange")
         colors = []
