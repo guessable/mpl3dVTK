@@ -169,12 +169,14 @@ def test_plot_rc_styles_2d_and_3d_figures():
 
     with plt.rc_context():
         base_plot_rc(grid=True)
-        grid_alpha = matplotlib.rcParams["grid.alpha"]
         grid_width = matplotlib.rcParams["grid.linewidth"]
+        grid_rgba = matplotlib.colors.to_rgba(matplotlib.rcParamsDefault["grid.color"], .2)
 
     original_cmap = matplotlib.rcParams["image.cmap"]
     with plt.rc_context():
         matplotlib.rcParams["image.cmap"] = "plasma"
+        matplotlib.rcParams["grid.major.alpha"] = .8
+        matplotlib.rcParams["grid.major.linewidth"] = 1.8
         m.plot_rc()
         assert matplotlib.rcParams["font.family"] == ["serif"]
         assert matplotlib.rcParams["font.serif"] == ["Arial", "Helvetica", "DejaVu Sans"]
@@ -219,7 +221,8 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert custom.yaxis.get_major_ticks()[0].tick2line.get_visible()
         assert custom.xaxis.get_major_ticks()[0].get_tickdir() == "out"
         assert all(line.get_visible() for line in custom.get_xgridlines())
-        assert all(line.get_alpha() == grid_alpha for line in custom.get_xgridlines())
+        assert all(matplotlib.colors.to_rgba(line.get_color(), line.get_alpha()) == grid_rgba
+                   for line in custom.get_xgridlines())
         assert all(line.get_linewidth() == grid_width for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
         _, grid_off = _figure("3d")
@@ -233,7 +236,7 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert not defaults.xaxis.get_major_ticks()[0].tick2line.get_visible()
         assert not defaults.yaxis.get_major_ticks()[0].tick2line.get_visible()
         defaults.grid(True)
-        assert all(line.get_alpha() == grid_alpha and line.get_linewidth() == grid_width
+        assert all(line.get_alpha() == .2 and line.get_linewidth() == grid_width
                    for line in defaults.get_xgridlines())
 
     assert matplotlib.rcParams["image.cmap"] == original_cmap

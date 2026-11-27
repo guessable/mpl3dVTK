@@ -1603,7 +1603,7 @@ Apply a MATLAB-inspired style before creating a figure. The preset uses the my-m
 | Axes titles | 11 pt, bold |
 | Legend | 9 pt, upper right, white background, square frame |
 | 2D axes | Four dark gray spines with inward bottom and left ticks |
-| 2D major grid | 0.5 pt and 30% opacity, matching my-mpl-style |
+| 2D major grid | Matplotlib's standard gray, 0.5 pt as in my-mpl-style, 20% opacity |
 | 3D major grid | 0.5 pt and 15% opacity |
 
 Matplotlib controls the widths of 2D spines and legend frames. Its standard defaults are 0.8 pt and 1 pt respectively. `ax_setting()` applies 0.5 pt default strokes to the 3D axes and their outlines.

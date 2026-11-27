@@ -23,7 +23,7 @@ def plot_rc(
 
     Call before creating the figure. Axis labels and titles are 11 pt,
     tick labels are 10 pt, and legends are 9 pt. Titles use bold weight.
-    The 2D grid uses the my-mpl-style defaults of 0.5 pt and 30% opacity.
+    The 2D grid uses the my-mpl-style width of 0.5 pt and 20% opacity.
     Use a Matplotlib `rc_context` to limit the changes to one figure and
     `ax_setting` to apply the orthographic view and outward ticks to 3D axes.
 
@@ -80,10 +80,16 @@ def plot_rc(
         "axes.titlesize": _AXIS_LABEL_SIZE,
         "axes.titleweight": "bold",
         "axes.prop_cycle": mpl.cycler(color=_SERIES_COLORS),
-        # mplot3d reads grid.color while 2D ticks prefer their specific colors.
+        # mplot3d takes its opacity from grid.color. 2D ticks use the gray
+        # colors below and inherit their opacity and width from the grid.
         "grid.color": _GRID_COLOR,
-        "grid.major.color": _AXIS_COLOR,
-        "grid.minor.color": _AXIS_COLOR,
+        "grid.alpha": .2,
+        "grid.major.color": mpl.rcParamsDefault["grid.color"],
+        "grid.minor.color": mpl.rcParamsDefault["grid.color"],
+        "grid.major.alpha": None,
+        "grid.minor.alpha": None,
+        "grid.major.linewidth": None,
+        "grid.minor.linewidth": None,
         "grid.linestyle": "-",
         "axes3d.grid": bool(grid_3d),
         "axes3d.xaxis.panecolor": "none",
