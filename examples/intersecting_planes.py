@@ -35,7 +35,9 @@ def draw_planes(ax, limits, cmap, method):
     return surface
 
 
+@plt.rc_context()
 def main(output, method="surface"):
+    mpl3d_vtk.plot_rc(save_bbox="standard")
     fig, axes = plt.subplots(1, 2, figsize=(9, 4.4), layout="constrained",
                              subplot_kw={"projection": "vtk3d"})
     try:

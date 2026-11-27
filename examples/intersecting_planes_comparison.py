@@ -29,7 +29,9 @@ def draw_native(ax, limits, cmap, *, split):
     ax.set(xlabel="x", ylabel="y", zlabel="z")
 
 
+@plt.rc_context()
 def main(output):
+    mpl3d_vtk.plot_rc(save_bbox="standard")
     fig = plt.figure(figsize=(12.2, 7.7), facecolor="white")
     grid = fig.add_gridspec(2, 4, width_ratios=(1, 1, 1, .055), left=.065, right=.946,
                            bottom=.07, top=.946, wspace=.27, hspace=.16)

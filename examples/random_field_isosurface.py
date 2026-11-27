@@ -19,7 +19,9 @@ import numpy as np
 import mpl3d_vtk  # Registers the vtk3d projection.
 
 
+@plt.rc_context()
 def main(output=None):
+    mpl3d_vtk.plot_rc(save_bbox="standard")
     n = 20
     coords = np.linspace(-1, 1, n)
     values = np.random.default_rng(42).uniform(-1, 1, size=(n,) * 3)

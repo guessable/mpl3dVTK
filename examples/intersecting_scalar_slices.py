@@ -23,7 +23,9 @@ def u(x, y, z):
     return np.exp(-(x**2) - y**2 - z**2) * (x + 2 * x + 3 * y)
 
 
+@plt.rc_context()
 def main(output=None):
+    mpl3d_vtk.plot_rc(save_bbox="standard")
     coords = np.linspace(-1, 1, 100)
     a, b = np.meshgrid(coords, coords)
     zero = np.zeros_like(a)

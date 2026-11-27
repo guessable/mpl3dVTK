@@ -974,7 +974,7 @@ pixels = np.sin(5*x[:, :, 0]) * np.cos(5*y[:, :, 0])
 image = ax.plot_image_plane(pixels, extent=(-1, 1, -1, 1), z=-.6,
                             cmap="coolwarm", vmin=-1, vmax=1)
 vtkplot.ax_setting(ax, (-1, 1), (-1, 1), (-.7, .5), box_aspect=(1, 1, .6))
-fig.colorbar(image, ax=ax)
+fig.colorbar(image, ax=ax, pad=.12)
 ```
 
 <img src="gallery/reference/plot_image_plane.png" width="460" alt="A scalar image embedded as a textured plane in 3D">

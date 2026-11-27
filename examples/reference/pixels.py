@@ -13,11 +13,9 @@ import mpl3d_vtk
 STYLE = {
     'figure.figsize': (4.25, 3.15),
     'figure.constrained_layout.use': True,
-    'font.size': 9,
-    'axes.titlesize': 10,
+    'figure.constrained_layout.h_pad': 0.15,
+    'figure.constrained_layout.w_pad': 0.18,
     'axes.titlepad': 7,
-    'xtick.labelsize': 8,
-    'ytick.labelsize': 8,
 }
 
 
@@ -28,7 +26,7 @@ def draw():
 
 
     def new_scene(columns=1):
-        fig, axes = plt.subplots(1, columns, figsize=(3.6*columns, 3.1), layout="constrained",
+        fig, axes = plt.subplots(1, columns, figsize=(3.8*columns, 3.65), layout="constrained",
                                  subplot_kw={"projection": "vtk3d"})
         for ax in np.atleast_1d(axes):
             ax.set(xlabel="x", ylabel="y", zlabel="z")
@@ -54,8 +52,10 @@ def draw():
 
 def save(output):
     with plt.rc_context(STYLE):
+        mpl3d_vtk.plot_rc(save_bbox="standard")
         try:
             fig = draw()
+            fig.get_layout_engine().set(rect=(.06, .10, .88, .87))
             fig.suptitle('pixels', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

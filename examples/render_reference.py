@@ -39,11 +39,9 @@ NATIVE_METHODS = {
 STYLE = {
     "figure.figsize": (4.25, 3.15),
     "figure.constrained_layout.use": True,
-    "font.size": 9,
-    "axes.titlesize": 10,
+    "figure.constrained_layout.h_pad": .15,
+    "figure.constrained_layout.w_pad": .18,
     "axes.titlepad": 7,
-    "xtick.labelsize": 8,
-    "ytick.labelsize": 8,
 }
 
 
@@ -149,10 +147,15 @@ for panel in fig.axes:
         mpl3d_vtk.ax_setting(panel)"""
     draw = f"def draw({draw_args}):\n{indent(body, '    ')}\n    return fig"
 
+    style_call = ""
+    layout_call = ""
+    if example.name not in ("ax_setting", "plot_rc"):
+        style_call = '\n        mpl3d_vtk.plot_rc(save_bbox="standard")'
+        layout_call = "\n            fig.get_layout_engine().set(rect=(.06, .10, .88, .87))"
     save = f'''def save(output{data_arg}):
-    with plt.rc_context(STYLE):
+    with plt.rc_context(STYLE):{style_call}
         try:
-            fig = draw({draw_args})
+            fig = draw({draw_args}){layout_call}
             fig.suptitle({example.title!r}, fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:

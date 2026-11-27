@@ -12,7 +12,7 @@ For volume and vector fields, use the [VTK reference](function_reference.md). Fo
 
 ## Run the examples
 
-The examples below share this setup. Start each example with a fresh copy of it. The [gallery scripts](plot_catalog.md) apply [`ax_setting`](scene.md#ax_setting) to style their axes.
+The examples below share this setup. Start each example with a fresh copy of it. The gallery scripts use `plot_rc()` before creating figures and `ax_setting()` to style their 3D axes. [Gallery](plot_catalog.md) · [Plot styles](scene.md#plot_rc)
 
 ```python
 import matplotlib.pyplot as plt

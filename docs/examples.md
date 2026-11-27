@@ -19,7 +19,7 @@ See the [API gallery](plot_catalog.md) to browse individual methods. Each figure
 
 `vtk3d` inherits Matplotlib's axes defaults. Call [`mpl3d_vtk.ax_setting(ax)`](scene.md#ax_setting) to apply the examples' orthographic view, equal scaling, light grid, and projected ticks. The current limits, autoscaling modes, and tick locators are used for each axis whose corresponding arguments are omitted.
 
-Call [`mpl3d_vtk.plot_rc()`](scene.md#plot_rc) before creating a figure to apply my-mpl-style defaults with custom legends and 3D axes.
+Call [`mpl3d_vtk.plot_rc()`](scene.md#plot_rc) before creating a figure to use the gallery's typography, axis styling, and seven-color cycle in 2D and 3D.
 
 ## Three intersecting planes
 

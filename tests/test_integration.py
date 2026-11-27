@@ -170,13 +170,26 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert matplotlib.rcParams["mathtext.fontset"] == "cm"
         assert matplotlib.rcParams["axes.formatter.use_mathtext"]
         _, lines = plt.subplots()
-        lines.plot([0, 1], [0, 1], label="Example")
-        assert lines.xaxis.get_major_ticks()[0].get_tickdir() == "out"
-        assert all(spine.get_visible() for spine in lines.spines.values())
+        line, = lines.plot([0, 1], [0, 1], label="Example")
+        assert line.get_linewidth() == matplotlib.rcParamsDefault["lines.linewidth"]
+        tick = lines.xaxis.get_major_ticks()[0]
+        assert tick.get_tickdir() == "in"
+        assert tick.label1.get_fontsize() == 10
+        assert tick.label1.get_fontweight() == "normal"
+        assert tick.tick1line.get_markeredgewidth() == .5
+        for spine in lines.spines.values():
+            assert spine.get_visible()
+            assert spine.get_linewidth() == .5
+        label = lines.set_xlabel("Time")
+        title = lines.set_title("Example")
+        assert (label.get_fontsize(), label.get_fontweight()) == (11, "normal")
+        assert (title.get_fontsize(), title.get_fontweight()) == (11, "bold")
         assert not any(line.get_visible() for line in lines.get_xgridlines())
         legend = lines.legend()
         assert legend.get_frame_on()
         assert legend.get_frame().get_alpha() == 1
+        assert legend.get_frame().get_linewidth() == .5
+        assert legend.get_texts()[0].get_fontsize() == 9
         assert isinstance(legend.get_frame().get_boxstyle(), matplotlib.patches.BoxStyle.Square)
 
         fig, ax = _figure()
@@ -185,13 +198,17 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert surface.get_cmap().name == plt.get_cmap().name == "plasma"
         assert all(axis.pane.get_facecolor()[-1] == 0 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
         assert ax.xaxis.gridlines.get_segments()
+        np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.1294, .1294, .1294, .15]])
+        assert (ax.set_title("Surface").get_fontsize(), ax.title.get_fontweight()) == (11, "bold")
 
         m.plot_rc(grid=True, grid_3d=False, tick_top=True, tick_right=True,
-                  save_dpi=180, save_bbox="standard")
+                  tick_direction="out", save_dpi=180, save_bbox="standard")
         _, custom = plt.subplots()
         assert custom.xaxis.get_major_ticks()[0].tick2line.get_visible()
         assert custom.yaxis.get_major_ticks()[0].tick2line.get_visible()
+        assert custom.xaxis.get_major_ticks()[0].get_tickdir() == "out"
         assert all(line.get_visible() for line in custom.get_xgridlines())
+        assert all(line.get_alpha() == .15 for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
         _, grid_off = _figure("3d")
         m.ax_setting(grid_off)
@@ -199,28 +216,28 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert matplotlib.rcParams["savefig.dpi"] == 180
         assert matplotlib.rcParams["savefig.bbox"] is None
 
+        m.plot_rc()
+        _, defaults = plt.subplots()
+        assert not defaults.xaxis.get_major_ticks()[0].tick2line.get_visible()
+        assert not defaults.yaxis.get_major_ticks()[0].tick2line.get_visible()
+
     assert matplotlib.rcParams["image.cmap"] == original_cmap
 
 
-@pytest.mark.parametrize("options", [
-    {},
-    dict(grid=True, tick_direction="in", tick_top=True, tick_right=True, save_bbox="standard"),
-])
-def test_plot_rc_matches_my_mpl_style_outside_legend_and_3d(options):
-    from my_mpl_style import plot_rc as source_plot_rc
-
-    existing = {"image.cmap": "plasma", "lines.linewidth": 2.25, "axes.spines.right": False}
-    with plt.rc_context(existing):
-        source_plot_rc(**options)
-        expected = dict(matplotlib.rcParams)
-    with plt.rc_context(existing):
-        m.plot_rc(**options)
-        _, scene = _figure("3d")
-        m.ax_setting(scene)
-        differences = {key for key, value in expected.items()
-                       if not key.startswith(("legend.", "axes3d."))
-                       and matplotlib.rcParams[key] != value}
-    assert not differences
+@pytest.mark.parametrize("projection", ["rectilinear", "3d", "vtk3d"])
+def test_plot_rc_uses_seven_series_colors(projection):
+    with plt.rc_context({"lines.linewidth": 2.25}):
+        m.plot_rc()
+        assert matplotlib.rcParams["lines.linewidth"] == 2.25
+        _, ax = _figure(projection)
+        ax.plot([0, 1], [0, 1], color="orange")
+        colors = []
+        for i in range(8):
+            line, = ax.plot([0, 1], [i, i])
+            color = line.constant_color if projection == "vtk3d" else line.get_color()
+            colors.append(matplotlib.colors.to_hex(color))
+        assert colors == ["#4477bb", "#cc4466", "#117788", "#775500", "#882288", "#228833",
+                          "#444444", "#4477bb"]
 
 
 @pytest.mark.parametrize("set_aspect_before_plot", [False, True])

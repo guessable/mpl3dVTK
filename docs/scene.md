@@ -29,7 +29,7 @@ z = .55 * np.cos(2*x) * np.sin(2*y)
 
 
 def new_scene(columns=1):
-    fig, axes = plt.subplots(1, columns, figsize=(3.6*columns, 3.1), layout="constrained",
+    fig, axes = plt.subplots(1, columns, figsize=(3.8*columns, 3.65), layout="constrained",
                              subplot_kw={"projection": "vtk3d"})
     for ax in np.atleast_1d(axes):
         ax.set(xlabel="x", ylabel="y", zlabel="z")
@@ -191,8 +191,8 @@ Apply a MATLAB-inspired 3D axes style based on my-mpl-style. The view is orthogr
 
 ```python
 fig, (native, styled) = new_scene(2)
-fig.set_size_inches(8.2, 3.75)
-fig.get_layout_engine().set(w_pad=.17, h_pad=.12, wspace=.12)
+fig.set_size_inches(8.2, 4.05)
+fig.get_layout_engine().set(w_pad=.17, h_pad=.18, wspace=.12)
 for ax in (native, styled):
     sample(ax, cmap="viridis")
 native.set_title("Matplotlib defaults")
@@ -387,7 +387,7 @@ Set the display box's proportions independently of the data coordinates.
 fig, (auto, fixed) = new_scene(2)
 for ax in (auto, fixed):
     sample(ax, cmap="plasma")
-    mpl3d_vtk.ax_setting(ax, aspect="auto")
+    mpl3d_vtk.ax_setting(ax, aspect="auto", xticks=[-1, 0, 1], yticks=[-1, 0, 1])
 auto.set_title("Default aspect")
 fixed.set_box_aspect((1, 1, 1.8))
 fixed.set_title("Taller Z axis")
@@ -1030,7 +1030,7 @@ Get the active scalar color limits.
 fig, ax = new_scene()
 handle = sample(ax, cmap="coolwarm", vmin=-.5, vmax=.5)
 limits = handle.get_clim()
-fig.colorbar(handle, ax=ax, shrink=.65, ticks=[limits[0], 0, limits[1]])
+fig.colorbar(handle, ax=ax, shrink=.65, pad=.12, ticks=[limits[0], 0, limits[1]])
 ax.set_title(f"Color limits: {limits[0]:.1f} to {limits[1]:.1f}")
 ```
 
@@ -1155,7 +1155,7 @@ Set the Matplotlib scalar array used for normalization and colorbars.
 fig, ax = new_scene()
 handle = sample(ax, cmap="coolwarm", vmin=-1, vmax=1)
 handle.set_array(x.ravel())
-fig.colorbar(handle, ax=ax, shrink=.65, label="X coordinate")
+fig.colorbar(handle, ax=ax, shrink=.65, pad=.12, label="X coordinate")
 ```
 
 <img src="gallery/reference/set_array.png" width="460" alt="A surface colored by an attached scalar array of X coordinates">
@@ -1588,15 +1588,26 @@ after.set_title("Surface retained")
 ### `plot_rc`
 
 ```text
-mpl3d_vtk.plot_rc(grid=False, tick_direction="out", tick_right=False, tick_top=False,
+mpl3d_vtk.plot_rc(grid=False, tick_direction="in", tick_right=False, tick_top=False,
                   save_dpi=300, save_bbox="tight", save_pad_inches=0.05,
                   font_family="serif",
                   font_serif=("Arial", "Helvetica", "DejaVu Sans"), *, grid_3d=True)
 ```
 
-Apply the [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc) preset before creating a figure. This function adds square, opaque legend frames and transparent 3D panes with a separate grid switch. The original preset controls fonts, line colors, 2D axes, and export settings. Scalar plots use Matplotlib's active colormap.
+Apply a MATLAB-inspired style before creating a figure. The preset uses the my-mpl-style font families, Computer Modern math, and export settings. [my-mpl-style](https://github.com/guessable/my-mpl-style#plot_rc)
 
-Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to apply the orthographic camera, light grid, and projected ticks. Pass `cmap=plt.get_cmap()` to `plot_surface` to color the surface with the active colormap. The example applies both functions on the right.
+| Element | Default |
+| --- | --- |
+| Tick labels | 10 pt, normal weight |
+| Axis labels | 11 pt, normal weight |
+| Axes titles | 11 pt, bold |
+| Legend | 9 pt, upper right, white background, square 0.5 pt frame |
+| 2D axes | Four dark gray spines, 0.5 pt wide, with inward bottom and left ticks |
+| Major grid | 0.5 pt solid dark gray at 15% opacity with separate switches for 2D and 3D |
+
+The seven series colors are `#4477BB`, `#CC4466`, `#117788`, `#775500`, `#882288`, `#228833`, and `#444444`, in that order. They come from Paul Tol's dark palette, which is designed to provide contrast on white. Matplotlib's `lines.linewidth` controls native data curves, and scalar plots use their active colormap. [Paul Tol's palette](https://sronpersonalpages.nl/~pault/) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
+
+Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot for the orthographic camera, transparent panes with gray back outlines, and outward projected ticks. To use 9-point text on an individual colorbar, call `colorbar.ax.tick_params(labelsize=9)` after creating it.
 
 **Parameters**
 
@@ -1604,7 +1615,7 @@ Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to apply the ortho
 
   Draw the major grid on 2D axes.
 
-- **`tick_direction`** (`"in"` or `"out"`, default `"out"`)
+- **`tick_direction`** (`"in"` or `"out"`, default `"in"`)
 
   Direction of the 2D tick marks.
 
@@ -1630,7 +1641,7 @@ Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to apply the ortho
 
 - **`font_family`** (str, default `"serif"`)
 
-  Matplotlib font family used by the original `plot_rc` style.
+  Matplotlib font family passed to my-mpl-style.
 
 - **`font_serif`** (sequence of str, default `("Arial", "Helvetica", "DejaVu Sans")`)
 
@@ -1649,7 +1660,7 @@ Call [`ax_setting`](#ax_setting) on a `3d` or `vtk3d` subplot to apply the ortho
 ```python
 from my_mpl_style import plot_rc as previous_style
 
-fig = plt.figure(figsize=(9.8, 7.5), layout="constrained")
+fig = plt.figure(figsize=(10.6, 10.9), layout="constrained")
 fig.get_layout_engine().set(w_pad=.14, h_pad=.12)
 time = np.linspace(0, 2*np.pi, 300)
 coordinates = np.linspace(-3, 3, 101)
@@ -1662,18 +1673,25 @@ styles = ((previous_style, "my-mpl-style"), (mpl3d_vtk.plot_rc, "mpl3d-vtk"))
 for column, (style, title) in enumerate(styles, start=1):
     with plt.rc_context():
         plt.rcdefaults()
-        style()
-        lines = fig.add_subplot(2, 2, column)
-        for i, phase in enumerate(np.arange(4)*np.pi/4, start=1):
-            lines.plot(time, np.sin(time + phase)*np.exp(-.12*time), label=f"Series {i}")
-        lines.set(title=title, xlabel="Time", ylabel="Amplitude", ylim=(-1.1, 1.45))
-        lines.legend(loc="upper right", ncol=2, fontsize=8)
+        style(grid=True)
+        lines = fig.add_subplot(3, 2, column)
+        for i in range(7):
+            signal = i + .35*np.sin(2*time + i*.6)*np.exp(-.12*time)
+            lines.plot(time, signal, label=f"Series {i + 1}")
+        lines.set(title=title, xlabel="Time", ylabel="Amplitude",
+                  ylim=(-.6, 9.4), yticks=[0, 2, 4, 6, 8])
+        lines.legend(loc="upper right", ncols=3)
 
-        ax = fig.add_subplot(2, 2, column + 2, projection="vtk3d")
+        contours = fig.add_subplot(3, 2, column + 2)
+        filled = contours.contourf(a, b, field, levels=np.arange(-7, 10), cmap=plt.get_cmap())
+        contours.set(title="Filled contours", xlabel="x", ylabel="y", aspect="equal")
+        fig.colorbar(filled, ax=contours, shrink=.88, ticks=[-6, -2, 2, 6])
+
+        ax = fig.add_subplot(3, 2, column + 4, projection="vtk3d")
         surface = ax.plot_surface(a, b, field, cmap=plt.get_cmap(), vmin=-7, vmax=9)
         ax.set(xlim=(-3, 3), ylim=(-3, 3), zlim=(-7, 9),
                xticks=[-3, 0, 3], yticks=[-3, 0, 3], zticks=[-5, 0, 5],
-               xlabel="x", ylabel="y", zlabel="z")
+               title="3D surface", xlabel="x", ylabel="y", zlabel="z")
         if column == 1:
             ax.set_box_aspect((1, 1, .7))
             ax.set_proj_type("ortho")
@@ -1684,7 +1702,7 @@ for column, (style, title) in enumerate(styles, start=1):
         fig.canvas.draw()
 ```
 
-<img src="gallery/reference/plot_rc.png" width="800" alt="The same line plot and peaks surface using my-mpl-style and the mpl3d-vtk plot_rc preset">
+<img src="gallery/reference/plot_rc.png" width="800" alt="Seven lines, filled contours, and a 3D surface using my-mpl-style and the mpl3d-vtk plot_rc preset">
 
 [Source code](../examples/reference/plot_rc.py).
 
@@ -1818,7 +1836,7 @@ Show the scalar mapping associated with a plot handle.
 ```python
 fig, ax = new_scene()
 surface = sample(ax, cmap="plasma", vmin=-.6, vmax=.6)
-fig.colorbar(surface, ax=ax, shrink=.7, label="Height", ticks=[-.6, 0, .6])
+fig.colorbar(surface, ax=ax, shrink=.7, pad=.12, label="Height", ticks=[-.6, 0, .6])
 ```
 
 <img src="gallery/reference/figure_colorbar.png" width="460" alt="A Plasma-colored surface with its height colorbar">
@@ -2246,7 +2264,7 @@ fig, ax = new_scene()
 image = ax.plot_image_plane(z, extent=(-1, 1, -1, 1), cmap="viridis", vmin=0, vmax=2)
 image.set_array(x*x+y*y)
 ax.set(zlim=(-.4, .4))
-fig.colorbar(image, ax=ax, shrink=.7, label="Radial value")
+fig.colorbar(image, ax=ax, shrink=.7, pad=.12, label="Radial value")
 ```
 
 <img src="gallery/reference/image_set_array.png" width="460" alt="A textured plane updated with a radial scalar array and shown with its colorbar">

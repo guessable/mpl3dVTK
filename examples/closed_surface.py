@@ -11,7 +11,9 @@ from vtk.util.numpy_support import numpy_to_vtk
 import mpl3d_vtk  # Registers the vtk3d projection.
 
 
+@plt.rc_context()
 def main(destination, antialiasing=2):
+    mpl3d_vtk.plot_rc(save_bbox="standard")
     theta, phi = np.meshgrid(
         np.linspace(0, 2*np.pi, 240, endpoint=False),
         np.linspace(0, 2*np.pi, 96, endpoint=False),
@@ -45,7 +47,7 @@ def main(destination, antialiasing=2):
     fig.colorbar(handle, ax=ax, label=r"$f(\theta,\phi)$",
                  ticks=[-1, -.5, 0, .5, 1], shrink=.64, fraction=.043, pad=.125)
     try:
-        fig.savefig(destination)
+        fig.savefig(destination, dpi=fig.dpi)
     finally:
         ax.remove()
         plt.close(fig)

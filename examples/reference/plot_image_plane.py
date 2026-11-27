@@ -15,11 +15,9 @@ vtkplot = mpl3d_vtk
 STYLE = {
     'figure.figsize': (4.25, 3.15),
     'figure.constrained_layout.use': True,
-    'font.size': 9,
-    'axes.titlesize': 10,
+    'figure.constrained_layout.h_pad': 0.15,
+    'figure.constrained_layout.w_pad': 0.18,
     'axes.titlepad': 7,
-    'xtick.labelsize': 8,
-    'ytick.labelsize': 8,
 }
 
 
@@ -36,14 +34,16 @@ def draw():
     image = ax.plot_image_plane(pixels, extent=(-1, 1, -1, 1), z=-.6,
                                 cmap="coolwarm", vmin=-1, vmax=1)
     vtkplot.ax_setting(ax, (-1, 1), (-1, 1), (-.7, .5), box_aspect=(1, 1, .6))
-    fig.colorbar(image, ax=ax)
+    fig.colorbar(image, ax=ax, pad=.12)
     return fig
 
 
 def save(output):
     with plt.rc_context(STYLE):
+        mpl3d_vtk.plot_rc(save_bbox="standard")
         try:
             fig = draw()
+            fig.get_layout_engine().set(rect=(.06, .10, .88, .87))
             fig.suptitle('plot_image_plane', fontfamily="monospace", fontsize=12)
             fig.savefig(output, facecolor="white", dpi=140)
         finally:
