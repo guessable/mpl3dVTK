@@ -6,7 +6,7 @@ from matplotlib.artist import Artist
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import ListedColormap, to_rgb, to_rgba
 
-from ._geometry import array, numeric, points, vertices
+from ._geometry import array, numeric, points, surface_cells, vertices
 
 
 def _cmap(value):
@@ -272,18 +272,18 @@ class Graphic(Artist, ScalarMappable):
     @property
     def faces(self):
         cells = self.data.GetPolys()
-        ids = vtk_to_numpy(cells.GetConnectivityArray())
-        offsets = vtk_to_numpy(cells.GetOffsetsArray())
-        sizes = np.diff(offsets)
-        if not len(sizes):
+        count = cells.GetNumberOfCells()
+        if not count:
             return np.empty((0, 3), dtype=int)
-        if np.all(sizes == sizes[0]):
-            return ids.reshape(-1, sizes[0]).copy()
+        ids = vtk_to_numpy(cells.GetConnectivityArray())
+        cell_size = cells.IsHomogeneous()
+        if cell_size >= 0:
+            return ids.reshape(count, cell_size).copy()
+        offsets = vtk_to_numpy(cells.GetOffsetsArray())
         return [ids[a:b].copy() for a,b in zip(offsets, offsets[1:])]
 
     def set_heights(self, z):
         """Update the heights of a gridded surface without replacing its points."""
-        from ._geometry import cells, surface_faces
         z = numeric(z)
         if z.shape != getattr(self, "_surface_shape", None):
             raise ValueError("heights must match the original surface grid")
@@ -294,9 +294,9 @@ class Graphic(Artist, ScalarMappable):
             old_valid = np.isfinite(xyz).all(axis=1)
             new_valid = np.isfinite(xyz[:, :2]).all(axis=1) & np.isfinite(new_heights)
             if not np.array_equal(old_valid, new_valid):
-                self.data.SetPolys(cells(surface_faces(z.shape, new_valid)))
+                self.data.SetPolys(surface_cells(z.shape, new_valid))
         elif not self._surface_all_finite:
-            self.data.SetPolys(cells(surface_faces(z.shape)))
+            self.data.SetPolys(surface_cells(z.shape))
         self._surface_all_finite = all_finite
         xyz[:, 2] = new_heights
         self.data.GetPoints().Modified()

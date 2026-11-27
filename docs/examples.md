@@ -113,3 +113,11 @@ python benchmarks/benchmark.py --surface 128 256 512 --volume 40 80 128 --segmen
 ```
 
 The benchmark reports geometry construction, a full first draw, rotation redraws, height and color updates, and VTK isosurface extraction. It reports medians and 95th percentiles for repeated operations. Match the device, canvas, dataset, and antialiasing when comparing runs. For measurements on upstream data, see the [triangle mesh and isosurface comparisons](../benchmarks/results/my_mpl_style/README.md).
+
+Version 0.6.0 builds regular-grid connectivity directly in VTK-owned memory. Fixed-size polygons also use VTK's implicit cell offsets on VTK 9.6 and later. The table shows medians of 41 geometry builds per version on Windows 11 with Python 3.13.5, NumPy 2.3.0, and VTK 9.6.1. The measurements cover geometry construction before rendering.
+
+| Geometry | 0.5.10 | 0.6.0 | Polygon cell storage |
+| --- | ---: | ---: | ---: |
+| 512 × 512 surface | 6.75 ms | 5.47 ms | 5,102 → 4,082 KiB |
+| 1,024 × 1,024 surface | 44.85 ms | 38.04 ms | 20,442 → 16,354 KiB |
+| Cheese mesh, 307,708 triangles | 5.49 ms | 4.50 ms | 4,808 → 3,607 KiB |

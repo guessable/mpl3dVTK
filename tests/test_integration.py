@@ -94,8 +94,8 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
         assert axis.pane.get_edgecolor() == matplotlib.colors.to_rgba("gray")
         assert not axis.pane.get_fill()
-        assert axis.line.get_linewidth() == matplotlib.rcParamsDefault["axes.linewidth"]
-        assert axis.pane.get_linewidth() == matplotlib.rcParamsDefault["patch.linewidth"]
+        assert axis.line.get_linewidth() == .5
+        assert axis.pane.get_linewidth() == .5
         tick_line = axis.get_major_ticks()[1].tick1line
         points = tick_line.get_transform().transform(tick_line.get_xydata())
         np.testing.assert_allclose(np.linalg.norm(points[1] - points[0]),
@@ -120,10 +120,10 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     assert ax.xaxis.line.get_linewidth() == 1.2
     assert ax.xaxis.pane.get_linewidth() == 1.4
     assert ax.xaxis.pane.get_edgecolor() == matplotlib.colors.to_rgba(ax.xaxis.line.get_color())
-    assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == matplotlib.rcParamsDefault["xtick.major.width"]
+    assert ax.xaxis.get_major_ticks()[0].tick1line.get_linewidth() == .5
     assert ax.xaxis._style3d_extension.length == .01
     np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.1294, .1294, .1294, .15]])
-    np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [matplotlib.rcParamsDefault["grid.linewidth"]])
+    np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [.5])
 
 
 def test_ax_setting_requires_a_3d_axes():
@@ -165,6 +165,13 @@ def test_ax_setting_styles_current_and_new_tick_labels(projection):
 
 
 def test_plot_rc_styles_2d_and_3d_figures():
+    from my_mpl_style import plot_rc as base_plot_rc
+
+    with plt.rc_context():
+        base_plot_rc(grid=True)
+        grid_alpha = matplotlib.rcParams["grid.alpha"]
+        grid_width = matplotlib.rcParams["grid.linewidth"]
+
     original_cmap = matplotlib.rcParams["image.cmap"]
     with plt.rc_context():
         matplotlib.rcParams["image.cmap"] = "plasma"
@@ -212,9 +219,8 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert custom.yaxis.get_major_ticks()[0].tick2line.get_visible()
         assert custom.xaxis.get_major_ticks()[0].get_tickdir() == "out"
         assert all(line.get_visible() for line in custom.get_xgridlines())
-        assert all(line.get_alpha() == .15 for line in custom.get_xgridlines())
-        assert all(line.get_linewidth() == matplotlib.rcParamsDefault["grid.linewidth"]
-                   for line in custom.get_xgridlines())
+        assert all(line.get_alpha() == grid_alpha for line in custom.get_xgridlines())
+        assert all(line.get_linewidth() == grid_width for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
         _, grid_off = _figure("3d")
         m.ax_setting(grid_off)
@@ -226,6 +232,9 @@ def test_plot_rc_styles_2d_and_3d_figures():
         _, defaults = plt.subplots()
         assert not defaults.xaxis.get_major_ticks()[0].tick2line.get_visible()
         assert not defaults.yaxis.get_major_ticks()[0].tick2line.get_visible()
+        defaults.grid(True)
+        assert all(line.get_alpha() == grid_alpha and line.get_linewidth() == grid_width
+                   for line in defaults.get_xgridlines())
 
     assert matplotlib.rcParams["image.cmap"] == original_cmap
 
@@ -233,8 +242,7 @@ def test_plot_rc_styles_2d_and_3d_figures():
 @pytest.mark.parametrize("projection", ["rectilinear", "3d", "vtk3d"])
 def test_plot_rc_uses_seven_series_colors(projection):
     widths = {"lines.linewidth": 2.25, "axes.linewidth": 1.2,
-              "legend.linewidth": 1.3, "grid.linewidth": .6,
-              "xtick.major.width": .7, "ytick.minor.width": .4}
+              "legend.linewidth": 1.3, "xtick.major.width": .7, "ytick.minor.width": .4}
     with plt.rc_context(widths):
         m.plot_rc(grid=True)
         assert {key: matplotlib.rcParams[key] for key in widths} == widths

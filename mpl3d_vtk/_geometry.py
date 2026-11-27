@@ -28,14 +28,18 @@ def points(xyz):
 
 def cells(indices, offsets=None):
     indices = np.asarray(indices)
+    if offsets is None and indices.ndim != 2:
+        raise ValueError("connectivity must be a matrix")
     dtype = np.int32 if indices.dtype == np.int32 and indices.size <= np.iinfo(np.int32).max else np.int64
-    if offsets is None:
-        if indices.ndim != 2:
-            raise ValueError("connectivity must be a matrix")
-        offsets = np.arange(len(indices) + 1, dtype=dtype) * indices.shape[1]
+    connectivity = numpy_to_vtk(np.ascontiguousarray(indices, dtype=dtype).ravel(), deep=True)
     c = vtk.vtkCellArray()
-    c.SetData(numpy_to_vtk(np.ascontiguousarray(offsets, dtype=dtype), deep=True),
-              numpy_to_vtk(np.ascontiguousarray(indices, dtype=dtype).ravel(), deep=True))
+    if offsets is None:
+        cell_size = indices.shape[1]
+        if cell_size:
+            c.SetData(cell_size, connectivity)
+            return c
+        offsets = np.zeros(len(indices) + 1, dtype=dtype)
+    c.SetData(numpy_to_vtk(np.ascontiguousarray(offsets, dtype=dtype), deep=True), connectivity)
     return c
 
 
@@ -126,16 +130,25 @@ def surface_arrays(x, y, z):
     return x, y, z
 
 
-def surface_faces(shape, valid=None):
+def surface_cells(shape, valid=None):
     ny, nx = shape
-    dtype = np.int32 if nx * ny <= np.iinfo(np.int32).max else np.int64
+    # Both point IDs and offsets must fit in the selected storage width.
+    fits_int32 = max(nx * ny, 4 * (ny - 1) * (nx - 1)) <= np.iinfo(np.int32).max
+    dtype = np.int32 if fits_int32 else np.int64
     rows = np.arange(ny - 1, dtype=dtype) * nx
     columns = np.arange(nx - 1, dtype=dtype)
     starts = rows[:, None] + columns[None, :]
     if valid is not None:
         valid = valid.reshape(shape)
         starts = starts[valid[:-1, :-1] & valid[:-1, 1:] & valid[1:, 1:] & valid[1:, :-1]]
-    return starts.reshape(-1, 1) + np.array([0, 1, nx + 1, nx], dtype=dtype)
+    # Fill the final connectivity buffer directly in VTK-owned memory.
+    connectivity = vtk.vtkTypeInt32Array() if fits_int32 else vtk.vtkTypeInt64Array()
+    connectivity.SetNumberOfValues(4 * starts.size)
+    np.add(starts.reshape(-1, 1), np.array([0, 1, nx + 1, nx], dtype=dtype),
+           out=vtk_to_numpy(connectivity).reshape(-1, 4))
+    faces = vtk.vtkCellArray()
+    faces.SetData(4, connectivity)
+    return faces
 
 
 def surface_poly(x, y, z):
@@ -150,7 +163,7 @@ def surface_poly(x, y, z):
     data = vtk.vtkPolyData()
     data.SetPoints(grid_points)
     valid = np.isfinite(x) & np.isfinite(y) & np.isfinite(z)
-    data.SetPolys(cells(surface_faces(z.shape, None if valid.all() else valid)))
+    data.SetPolys(surface_cells(z.shape, None if valid.all() else valid))
     return data
 
 

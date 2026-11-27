@@ -50,8 +50,12 @@ def test_surface_updates_reuse_buffers_and_refresh_the_viewport(axes):
     points_before = h.data.GetPoints()
     h.set_heights(np.where(np.eye(3, dtype=bool), np.nan, 1))
     assert len(h.faces) == 0
+    masked = z.copy()
+    masked[0, 0] = np.nan
+    h.set_heights(masked)
+    np.testing.assert_array_equal(h.faces, [[1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]])
     h.set_heights(z + 2)
-    assert len(h.faces) == 4
+    np.testing.assert_array_equal(h.faces, [[0, 1, 4, 3], [1, 2, 5, 4], [3, 4, 7, 6], [4, 5, 8, 7]])
     assert points_before is h.data.GetPoints() is points
     axes.figure.canvas.draw()
 
@@ -64,7 +68,11 @@ def test_contours_and_ragged_mesh(axes):
     np.testing.assert_allclose(h.vertices[:, 2], -2)
     vertices = [[0,0,0], [1,0,0], [1,1,0], [0,1,0], [0,-1,0]]
     mesh = axes.plot_mesh(vertices, [[0,1,2,3], [0,1,4]], values=[1, 2], association="cell")
-    assert [len(face) for face in mesh.faces] == [4, 3]
+    assert [face.tolist() for face in mesh.faces] == [[0, 1, 2, 3], [0, 1, 4]]
+    indices = np.array([[2, 1, 0], [4, 1, 0]], dtype=np.int32)[:, ::-1]
+    triangles = axes.plot_mesh(vertices, indices)
+    indices[:] = 0
+    np.testing.assert_array_equal(triangles.faces, [[0, 1, 2], [0, 1, 4]])
 
 
 def test_nonuniform_slice_and_flying_edges_colors(axes):

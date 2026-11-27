@@ -143,7 +143,7 @@ mpl3d_vtk.ax_setting(ax=None, xlim=None, ylim=None, zlim=None, *,
                      ytick_length=0.025, ztick_length=0.025)
 ```
 
-Apply a MATLAB-inspired 3D axes style based on my-mpl-style. The view is orthographic at elevation 30° and Matplotlib azimuth −127.5°. The three back panes have transparent faces and gray outlines. Axis lines, pane outlines, ticks, and grid lines use their Matplotlib widths. Grid lines use 15% opacity. The outward ticks are 2.5% as long as the longest projected axis. Tick labels and scientific notation offsets use 10-point text. The X, Y, and Z axis labels use 11-point text. All use normal weight and the MATLAB R2025a light theme's dark gray. [my-mpl-style](https://github.com/guessable/my-mpl-style#3d-axes) · [MATLAB view](https://www.mathworks.com/help/matlab/ref/view.html) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
+Apply a MATLAB-inspired 3D axes style based on my-mpl-style. The view is orthographic at elevation 30° and Matplotlib azimuth −127.5°. The three back panes have transparent faces and gray outlines. Axis lines, pane outlines, ticks, and grid lines use 0.5 pt by default and honor custom widths already set on the axes. Grid lines use 15% opacity. The outward ticks are 2.5% as long as the longest projected axis. Tick labels and scientific notation offsets use 10-point text. The X, Y, and Z axis labels use 11-point text. All use normal weight and the MATLAB R2025a light theme's dark gray. [my-mpl-style](https://github.com/guessable/my-mpl-style#3d-axes) · [MATLAB view](https://www.mathworks.com/help/matlab/ref/view.html) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
 
 **Parameters**
 
@@ -1603,9 +1603,10 @@ Apply a MATLAB-inspired style before creating a figure. The preset uses the my-m
 | Axes titles | 11 pt, bold |
 | Legend | 9 pt, upper right, white background, square frame |
 | 2D axes | Four dark gray spines with inward bottom and left ticks |
-| Major grid | Solid dark gray at 15% opacity with separate switches for 2D and 3D |
+| 2D major grid | 0.5 pt and 30% opacity, matching my-mpl-style |
+| 3D major grid | 0.5 pt and 15% opacity |
 
-Line widths follow the active Matplotlib settings. The standard defaults include 0.8 pt for axes spines and 1 pt for legend frames.
+Matplotlib controls the widths of 2D spines and legend frames. Its standard defaults are 0.8 pt and 1 pt respectively. `ax_setting()` applies 0.5 pt default strokes to the 3D axes and their outlines.
 
 The seven series colors are `#4477BB`, `#CC4466`, `#117788`, `#775500`, `#882288`, `#228833`, and `#444444`, in that order. They come from Paul Tol's dark palette, which is designed to provide contrast on white. Matplotlib's `lines.linewidth` controls native data curves, and scalar plots use their active colormap. [Paul Tol's palette](https://sronpersonalpages.nl/~pault/) · [MATLAB axes properties](https://www.mathworks.com/help/matlab/ref/matlab.graphics.axis.axes-properties.html)
 
