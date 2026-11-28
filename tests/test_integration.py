@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D, proj3d
 import numpy as np
 import pytest
 
-import mpl3d_vtk as m
+import mpl_depth_style as m
 
 
 @pytest.fixture(autouse=True)
@@ -74,7 +74,7 @@ def test_axes_defaults_and_explicit_controls():
 
 
 @pytest.mark.parametrize("projection", ["3d", "vtk3d"])
-def test_ax_setting_uses_and_preserves_current_axes_state(projection):
+def test_ax3D_setting_uses_and_preserves_current_axes_state(projection):
     fig, ax = _figure(projection)
     ax.grid(True)
     ax.plot([0, 4], [0, 2], [0, 1])
@@ -82,7 +82,7 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     limits = ax.get_w_lims()
     locator = ax.yaxis.get_major_locator()
 
-    assert m.ax_setting() is None
+    assert m.ax3D_setting() is None
     np.testing.assert_allclose(ax.get_w_lims(), limits)
     assert not ax.get_autoscalex_on()
     assert ax.get_autoscaley_on() and ax.get_autoscalez_on()
@@ -106,7 +106,7 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
 
     ax.xaxis.line.set_linewidth(1.2)
     ax.xaxis.pane.set_linewidth(1.4)
-    m.ax_setting(ax, xlim=(-2, 6), xticks=[-2, 0, 6], zticks=[],
+    m.ax3D_setting(ax, xlim=(-2, 6), xticks=[-2, 0, 6], zticks=[],
                  aspect="auto", box_aspect=(1, 2, 3), xticks_pad=-3,
                  box_on=True, xtick_length=.01)
     fig.canvas.draw()
@@ -126,21 +126,21 @@ def test_ax_setting_uses_and_preserves_current_axes_state(projection):
     np.testing.assert_allclose(ax.xaxis.gridlines.get_linewidths(), [.5])
 
 
-def test_ax_setting_requires_a_3d_axes():
+def test_ax3D_setting_requires_a_3d_axes():
     with pytest.raises(ValueError, match="existing 3D axes"):
-        m.ax_setting()
+        m.ax3D_setting()
     assert not plt.get_fignums()
     _, ax = plt.subplots()
     with pytest.raises(TypeError, match="Matplotlib 3D axes"):
-        m.ax_setting(ax)
+        m.ax3D_setting(ax)
 
 
 @pytest.mark.parametrize("projection", ["3d", "vtk3d"])
-def test_ax_setting_styles_current_and_new_tick_labels(projection):
+def test_ax3D_setting_styles_current_and_new_tick_labels(projection):
     with plt.rc_context({"xtick.labelsize": 16, "ytick.labelsize": 16,
                          "font.weight": "bold"}):
         fig, ax = _figure(projection)
-        m.ax_setting(ax, xticks=[0], yticks=[0], zticks=[])
+        m.ax3D_setting(ax, xticks=[0], yticks=[0], zticks=[])
         for axis in (ax.xaxis, ax.yaxis, ax.zaxis):
             axis.set_ticks([0, 0.25, 0.5])
             axis.set_ticks([0.125, 0.375], minor=True)
@@ -164,7 +164,7 @@ def test_ax_setting_styles_current_and_new_tick_labels(projection):
         assert matplotlib.rcParams["font.weight"] == "bold"
 
 
-def test_plot_rc_styles_2d_and_3d_figures():
+def test_plot_rc_styles_2d_and_preserves_3d_grid_and_panes():
     from my_mpl_style import plot_rc as base_plot_rc
 
     with plt.rc_context():
@@ -173,7 +173,9 @@ def test_plot_rc_styles_2d_and_3d_figures():
         grid_rgba = matplotlib.colors.to_rgba(matplotlib.rcParamsDefault["grid.color"], .2)
 
     original_cmap = matplotlib.rcParams["image.cmap"]
-    with plt.rc_context():
+    native_grid = {"axes3d.grid": False, "grid.color": "purple", "grid.linewidth": 1.25}
+    native_grid.update({f"axes3d.{axis}axis.panecolor": (.2, .4, .6, .7) for axis in "xyz"})
+    with plt.rc_context(native_grid):
         matplotlib.rcParams["image.cmap"] = "plasma"
         matplotlib.rcParams["grid.major.alpha"] = .8
         matplotlib.rcParams["grid.major.linewidth"] = 1.8
@@ -209,12 +211,21 @@ def test_plot_rc_styles_2d_and_3d_figures():
         surface = ax.plot_surface([0, 1], [0, 1], [[0, 1], [1, 0]], cmap=plt.get_cmap())
         fig.canvas.draw()
         assert surface.get_cmap().name == plt.get_cmap().name == "plasma"
+        assert {name: matplotlib.rcParams[name] for name in native_grid} == native_grid
+        assert all(axis.pane.get_facecolor()[-1] == .7 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
+        assert not ax._draw_grid
+        assert ax.xaxis._axinfo["grid"]["color"] == "purple"
+        assert ax.xaxis._axinfo["grid"]["linewidth"] == 1.25
+        assert (ax.set_title("Surface").get_fontsize(), ax.title.get_fontweight()) == (11, "bold")
+
+        m.ax3D_setting(ax, grid=True)
+        fig.canvas.draw()
+        assert ax._draw_grid
         assert all(axis.pane.get_facecolor()[-1] == 0 for axis in (ax.xaxis, ax.yaxis, ax.zaxis))
         assert ax.xaxis.gridlines.get_segments()
         np.testing.assert_allclose(ax.xaxis.gridlines.get_colors(), [[.1294, .1294, .1294, .15]])
-        assert (ax.set_title("Surface").get_fontsize(), ax.title.get_fontweight()) == (11, "bold")
 
-        m.plot_rc(grid=True, grid_3d=False, tick_top=True, tick_right=True,
+        m.plot_rc(grid=True, tick_top=True, tick_right=True,
                   tick_direction="out", save_dpi=180, save_bbox="standard")
         _, custom = plt.subplots()
         assert custom.xaxis.get_major_ticks()[0].tick2line.get_visible()
@@ -226,7 +237,10 @@ def test_plot_rc_styles_2d_and_3d_figures():
         assert all(line.get_linewidth() == grid_width for line in custom.get_xgridlines())
         assert not matplotlib.rcParams["axes3d.grid"]
         _, grid_off = _figure("3d")
-        m.ax_setting(grid_off)
+        grid_off.grid(True)
+        m.ax3D_setting(grid_off, grid=False)
+        assert not grid_off._draw_grid
+        m.ax3D_setting(grid_off)
         assert not grid_off._draw_grid
         assert matplotlib.rcParams["savefig.dpi"] == 180
         assert matplotlib.rcParams["savefig.bbox"] is None
@@ -363,25 +377,22 @@ def test_native_drag_colorbar_layout_and_export(tmp_path):
     fig.canvas.draw()
 
 
-def test_volume_axes_order_and_glyphs():
+def test_isosurface_axes_order_and_glyphs():
     _, ax = _figure()
     x, y, z = (np.linspace(a,b,n) for a,b,n in [(0,3,9),(-3,1,7),(-1,1,5)])
     X,Y,Z = np.meshgrid(x,y,z)
     v = X + 2*Y + 3*Z
-    h, = ax.plot_volume_slices(v, coordinates=(x,y,z), x=1.5)
-    np.testing.assert_allclose(h.vertices[:,0], 1.5)
-    np.testing.assert_allclose(h.get_array(), h.vertices @ [1,2,3], atol=1e-6)
     iso = ax.plot_isosurface(v, coordinates=(x,y,z), level=1.3)
     np.testing.assert_allclose(iso.vertices @ [1,2,3], 1.3, atol=1e-6)
-    g = ax.quiver([0,1],[0,0],[0,0],[1,2],[0,0],[0,0])
+    g = ax.scatter([0, 1], [0, 0], [0, 0], marker="s")
     assert g.mapper.IsA("vtkGlyph3DMapper")
     ax.figure.canvas.draw()
 
 
 def test_supersampling_softens_edges_without_darkening_transparency():
     fig, ax = _figure()
-    vertices = [[-1,-.9,0], [1,-.65,0], [-.6,1,0]]
-    handle = ax.plot_mesh(vertices, [[0,1,2]], color="red")
+    vertices = np.array([[-1, -.9, 0], [1, -.65, 0], [-.6, 1, 0]])
+    handle = ax.plot_trisurf(*vertices.T, triangles=[[0, 1, 2]], color="red")
     ax.set(xlim=(-1.5,1.5), ylim=(-1.5,1.5), zlim=(-1,1))
     ax.set_axis_off()
     ax.view_init(elev=90, azim=-90)
@@ -433,7 +444,7 @@ def test_viewport_rgba_compositing_matches_matplotlib_image(extents):
     from matplotlib.backends.backend_agg import RendererAgg
     from matplotlib.image import BboxImage
     from matplotlib.transforms import Bbox
-    from mpl3d_vtk._axes import _Viewport
+    from mpl_depth_style._axes import _Viewport
 
     box = Bbox.from_extents(*extents)
     w, h = map(round, box.size)

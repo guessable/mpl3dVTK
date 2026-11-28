@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mpl3d_vtk
+import mpl_depth_style
 
 
 STYLE = {
@@ -31,14 +31,14 @@ def draw():
     fig.colorbar(points, ax=ax)
 
     for panel in fig.axes:
-        if isinstance(panel, mpl3d_vtk.VtkAxes):
-            mpl3d_vtk.ax_setting(panel)
+        if isinstance(panel, mpl_depth_style.VtkAxes):
+            mpl_depth_style.ax3D_setting(panel)
     return fig
 
 
 def save(output):
     with plt.rc_context(STYLE):
-        mpl3d_vtk.plot_rc(save_bbox="standard")
+        mpl_depth_style.plot_rc(save_bbox="standard")
         try:
             fig = draw()
             fig.get_layout_engine().set(rect=(.06, .10, .88, .87))
@@ -48,7 +48,7 @@ def save(output):
             for number in plt.get_fignums():
                 fig = plt.figure(number)
                 for ax in fig.axes:
-                    if isinstance(ax, mpl3d_vtk.VtkAxes):
+                    if isinstance(ax, mpl_depth_style.VtkAxes):
                         ax.remove()
                 plt.close(fig)
 

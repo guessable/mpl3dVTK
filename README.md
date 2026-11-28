@@ -1,29 +1,27 @@
-# mpl3d-vtk
+# mpl-depth-style
 
-[简体中文](https://github.com/guessable/mpl3dVTK/blob/main/README.zh-CN.md)
+[简体中文](https://github.com/guessable/mpl-depth-style/blob/main/README.zh-CN.md)
 
-`mpl3d-vtk` adds a VTK-backed `vtk3d` projection to Matplotlib. Draw NumPy data as surfaces, triangle meshes, scalar volumes, or vector fields. Use Matplotlib for axes, camera controls, colorbars, layout, and figure export.
+`mpl-depth-style` adds a VTK-backed `vtk3d` projection to Matplotlib. Draw NumPy data as gridded surfaces, triangle meshes, isosurfaces, lines, and scatter plots. Use Matplotlib for axes, camera controls, colorbars, layout, and figure export.
 
 ## Installation
 
-```sh
-python -m pip install mpl3d-vtk
-```
+From the root of a source checkout, run `python -m pip install .`.
 
-To install from a source checkout, run `python -m pip install .` from its root.
+To install a published release from PyPI, run `python -m pip install mpl-depth-style`.
 
-Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a working OpenGL context. For headless rendering, see the [export guide](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md#export-and-cleanup).
+Requires Python 3.11+, NumPy 1.25+, Matplotlib 3.11.x, VTK 9.4–9.x, and a working OpenGL context. For headless rendering, see the [export guide](https://github.com/guessable/mpl-depth-style/blob/main/docs/examples.md#export-and-cleanup).
 
 ## Quickstart
 
-Import `mpl3d_vtk` to register the `vtk3d` projection. Call `mpl3d_vtk.plot_rc()` before creating a figure for MATLAB-inspired typography, ticks, and legends in 2D and 3D, with a seven-color series cycle. See the [style preview](docs/scene.md#plot_rc).
+Import `mpl_depth_style` to register the `vtk3d` projection. Call `mpl_depth_style.plot_rc()` before creating a figure to set typography, 2D styling, and a seven-color series cycle. See the [style preview](docs/scene.md#plot_rc).
 
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
-import mpl3d_vtk
+import mpl_depth_style
 
-mpl3d_vtk.plot_rc()
+mpl_depth_style.plot_rc()
 t = np.linspace(-2, 2, 201)
 x, y = np.meshgrid(t, t)
 z = np.exp(x * np.sin(y))
@@ -31,7 +29,7 @@ z = np.exp(x * np.sin(y))
 fig = plt.figure(figsize=(9, 4), layout="constrained")
 ax = fig.add_subplot(121, projection="vtk3d")
 surface = ax.plot_surface(x, y, z, cmap=plt.get_cmap())
-mpl3d_vtk.ax_setting(ax)
+mpl_depth_style.ax3D_setting(ax)
 ax.set(xlabel="x", ylabel="y", zlabel="u")
 fig.colorbar(surface, ax=ax, shrink=.7)
 
@@ -45,19 +43,19 @@ plt.show()
 
 Use `ax.view_init()` to change the view and `surface.set_heights()` or `surface.set_values()` to update data. Multiple plots on the same axes share the VTK depth buffer.
 
-`ax_setting` applies equal data scaling, an orthographic view, and projected ticks. Omitted limits and tick locations use the current axes settings.
+`ax3D_setting` applies equal data scaling, an orthographic view, and projected ticks with regular-weight labels. Omitted limits and tick locations use the current axes settings. Pass `grid=False` to hide the 3D grid on that subplot.
 
 ## Examples
 
 | Intersecting scalar slices | Random-field zero isosurface |
 | --- | --- |
 | ![Three intersecting scalar slices with a shared colorbar](docs/gallery/intersecting_scalar_slices.png) | ![Green zero isosurface of a seeded random field](docs/gallery/random_field_isosurface.png) |
-| [Source code](examples/intersecting_scalar_slices.py) | [Source code](examples/random_field_isosurface.py) |
+| [Documentation](docs/api.md#plot_surface) · [Source code](examples/intersecting_scalar_slices.py) | [Documentation](docs/api.md#plot_isosurface) · [Source code](examples/random_field_isosurface.py) |
 
 ## Documentation
 
-- [Gallery](https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
-- [Examples and export](https://github.com/guessable/mpl3dVTK/blob/main/docs/examples.md) · Run a complete script or save a figure.
-- [Example datasets](https://github.com/guessable/mpl3dVTK/blob/main/data/README.md) · Load triangle meshes from NumPy archives.
-- API reference · [Plotting](https://github.com/guessable/mpl3dVTK/blob/main/docs/api.md), [VTK geometry](https://github.com/guessable/mpl3dVTK/blob/main/docs/function_reference.md), and [Scene and handles](https://github.com/guessable/mpl3dVTK/blob/main/docs/scene.md).
-- [Benchmarks](https://github.com/guessable/mpl3dVTK/blob/main/benchmarks/results/my_mpl_style/README.md) · Compare triangle meshes and isosurfaces with mplot3d.
+- [Gallery](https://github.com/guessable/mpl-depth-style/blob/main/docs/plot_catalog.md) · Browse figures with their API references and runnable Python sources.
+- [Examples and export](https://github.com/guessable/mpl-depth-style/blob/main/docs/examples.md) · Run a complete script or save a figure.
+- [Example datasets](https://github.com/guessable/mpl-depth-style/blob/main/data/README.md) · Load triangle meshes from NumPy archives.
+- API reference · [Plotting](https://github.com/guessable/mpl-depth-style/blob/main/docs/api.md) and [Styles and plot handles](https://github.com/guessable/mpl-depth-style/blob/main/docs/scene.md).
+- [Benchmarks](https://github.com/guessable/mpl-depth-style/blob/main/docs/examples.md#tests-and-benchmarks) · Measure plot construction and compare rendering with mplot3d.

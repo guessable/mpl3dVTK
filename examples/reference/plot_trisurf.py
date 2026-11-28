@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mpl3d_vtk
+import mpl_depth_style
 
 
 STYLE = {
@@ -35,14 +35,14 @@ def draw(data_dir):
                               shade=False)
     ax.set_title(f"cheese · {len(faces):,} triangles")
     ax.set(xlabel="x", ylabel="y", zlabel="z")
-    mpl3d_vtk.ax_setting(ax)
+    mpl_depth_style.ax3D_setting(ax)
     fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
     return fig
 
 
 def save(output, data_dir):
     with plt.rc_context(STYLE):
-        mpl3d_vtk.plot_rc(save_bbox="standard")
+        mpl_depth_style.plot_rc(save_bbox="standard")
         try:
             fig = draw(data_dir)
             fig.get_layout_engine().set(rect=(.06, .10, .88, .87))
@@ -52,7 +52,7 @@ def save(output, data_dir):
             for number in plt.get_fignums():
                 fig = plt.figure(number)
                 for ax in fig.axes:
-                    if isinstance(ax, mpl3d_vtk.VtkAxes):
+                    if isinstance(ax, mpl_depth_style.VtkAxes):
                         ax.remove()
                 plt.close(fig)
 

@@ -1,5 +1,6 @@
 """Replot and benchmark guessable/my-mpl-style data with both renderers."""
 from argparse import ArgumentParser
+from importlib.metadata import version
 from io import BytesIO
 import json
 from pathlib import Path
@@ -17,11 +18,11 @@ from skimage import __version__ as skimage_version
 from skimage.measure import marching_cubes
 import vtk
 
-import mpl3d_vtk as m
+import mpl_depth_style as m
 
 
 MPL = "Matplotlib"
-VTK = "mpl3d-vtk"
+VTK = "mpl-depth-style"
 ELEVATION = 30
 AZIMUTH = -127.5
 
@@ -55,12 +56,12 @@ def _draw_triangles(ax, renderer, data, native_aa, dpi=100):
                                 antialiased=native_aa,linewidth=0,shade=False)
             h.set_array(face_values)
             return h
-        return ax.plot_mesh(xyz, triangles, values=face_values, association="cell", cmap="viridis", norm=norm)
+        return ax.plot_trisurf(x, y, z, triangles=triangles, values=face_values, association="cell", cmap="viridis", norm=norm)
     if renderer == MPL:
         return ax.plot_trisurf(x,y,z,triangles=triangles,color="#e8eef5",edgecolor="#2b5f8a",
                                linewidth=.35,antialiased=native_aa,shade=False)
     # Matplotlib expects points, whereas the VTK draw path uses output pixels.
-    return ax.plot_mesh(xyz, triangles, facecolor="#e8eef5", edgecolor="#2b5f8a", linewidth=.35*dpi/72)
+    return ax.plot_trisurf(x, y, z, triangles=triangles, facecolor="#e8eef5", edgecolor="#2b5f8a", linewidth=.35*dpi/72)
 
 
 def _axes_parameters(data):
@@ -140,10 +141,13 @@ def render(root, output, meshes):
             ax.set_title(rf"$\bar{{\phi}}={mean:.2f}$  |  Matplotlib",fontsize=13,pad=9)
             ax = _axes(fig,(2,3,col+4),VTK)
             # Source marching cubes treats the stored volume as (x,y,z).
-            # mpl3d-vtk accepts array order (y,x,z).
+            # mpl-depth-style accepts array order (y,x,z).
             h = ax.plot_isosurface(volume.transpose(1, 0, 2), coordinates=coords, level=0,
                                   facecolor="#18b83e", ambient=.33, diffuse=.67, specular=.06)
-            ax.add_light(light.direction)
+            source = vtk.vtkLight()
+            source.SetLightTypeToSceneLight()
+            source.SetPosition(*light.direction)
+            ax.renderer.AddLight(source)
             _format(ax,[(0,50)]*3,[[0,25,50]]*3,source_style=ax_setting3D)
             ax.set_title(rf"$\bar{{\phi}}={mean:.2f}$  |  VTK",fontsize=13,pad=9)
             count_vtk = h.data.GetNumberOfPolys()
@@ -258,7 +262,7 @@ def main():
                 rows.append(_phase_bench(mesh,renderer,aa,args.rotations,args.fresh_figures,args.exports,source_style))
         stats = {"source_commit":head,"platform":platform.platform(),
                  "python":platform.python_version(),"matplotlib":matplotlib.__version__,
-                 "mpl3d_vtk":m.__version__,"vtk":vtk.vtkVersion.GetVTKVersion(),
+                 "mpl_depth_style":version("mpl-depth-style"),"vtk":vtk.vtkVersion.GetVTKVersion(),
                  "numpy":np.__version__,"scikit_image":skimage_version,"backend":"Agg",
                  "canvas_px":[800,600],"png_px":[1600,1200],
                  "axes_presentation":"reference" if args.source_style else "renderer defaults",

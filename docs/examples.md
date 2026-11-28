@@ -1,123 +1,70 @@
 # Examples and figure export
 
-Run these commands from the root of an installed checkout. The export examples render through Matplotlib and an offscreen VTK window. The [README quickstart](../README.md#quickstart) also shows a 3D surface and a 2D cross-section in one figure.
+Install the checkout so that the example scripts can import the local package.
 
 ```sh
-python -m pip install .
+python -m pip install -e .
 ```
-
-| Example | What it demonstrates | Command |
-| --- | --- | --- |
-| [Closed triangle mesh](../examples/closed_surface.py) | A torus with scalar coloring and custom vertex normals | `python examples/closed_surface.py torus.png --antialiasing 4` |
-| [Intersecting planes](../examples/intersecting_planes.py) | Three perpendicular slices and their occlusion | `python examples/intersecting_planes.py slices.png` |
-| [Intersecting scalar slices](../examples/intersecting_scalar_slices.py) | Three slices of a scalar field with a shared colorbar | `python examples/intersecting_scalar_slices.py slices.png` |
-| [Random-field zero isosurface](../examples/random_field_isosurface.py) | A uniformly colored isosurface of a seeded random field | `python examples/random_field_isosurface.py zero.png` |
-
-See the [API gallery](plot_catalog.md) to browse individual methods. Each figure has a **Documentation** link to the matching reference and a **Source code** link to its runnable script.
-
-## Style the 3D axes
-
-`vtk3d` inherits Matplotlib's axes defaults. Call [`mpl3d_vtk.ax_setting(ax)`](scene.md#ax_setting) to apply the examples' orthographic view, equal scaling, light grid, and projected ticks. The current limits, autoscaling modes, and tick locators are used for each axis whose corresponding arguments are omitted.
-
-Call [`mpl3d_vtk.plot_rc()`](scene.md#plot_rc) before creating a figure to use the gallery's typography, axis styling, and seven-color cycle in 2D and 3D.
 
 ## Three intersecting planes
 
-The comparison reproduces the [my-mpl-style example](https://github.com/guessable/my-mpl-style/blob/d3ab92fcaef3852701dfc2cccd22c90b5c0ecb2c/examples/Intersecting_planes.py) for the field `sin(10π(x + y + z))`. Each row uses three midplane slices, an orthographic view, equal data-unit lengths, and a shared color range. The upper row spans `[0, 1]` on all axes and the lower row spans `[-1, 1]`.
+Evaluate a scalar field on each plane and call [`plot_surface`](api.md#plot_surface) once per grid. Use the same color limits for all three surfaces and attach a single colorbar. The VTK depth buffer determines which parts of each plane remain visible at their intersections.
 
-The left column shows the original workaround, which draws four parts of each slice separately. In the center column, the horizontal plane hides regions of the vertical planes that should be visible in front of it. The right column draws three full planes with per-pixel depth testing in VTK.
+[![Three intersecting planes with a shared colorbar](gallery/intersecting_scalar_slices.png)](api.md#plot_surface)
 
-![Three intersecting planes drawn with split mplot3d surfaces, full mplot3d surfaces, and full vtk3d surfaces](gallery/intersecting_planes_comparison.png)
+[Documentation](api.md#plot_surface) · [Source code](../examples/intersecting_scalar_slices.py)
 
-[Documentation](function_reference.md#plot_volume_slices) · [Source code](../examples/intersecting_planes_comparison.py)
-
-### Evaluate an analytic field on each plane
-
-Use `plot_surface` when you can evaluate the field directly on the slices or already have 2D samples. The example samples 100×100 points per plane. It passes the coordinates and color values separately.
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-import mpl3d_vtk
-
-fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
-t = np.linspace(0, 1, 100)
-a, b = np.meshgrid(t, t)
-c = np.full_like(a, 0.5)
-for x, y, z in ((c, a, b), (a, c, b), (a, b, c)):
-    u = np.sin(10 * np.pi * (x + y + z))
-    surface = ax.plot_surface(x, y, z, values=u, cmap="viridis", vmin=-1, vmax=1)
-mpl3d_vtk.ax_setting(ax, (0, 1), (0, 1), (0, 1))
-fig.colorbar(surface, ax=ax)
+```sh
+python examples/intersecting_scalar_slices.py intersecting_scalar_slices.png
 ```
 
-This is the default `--method surface` in [intersecting_planes.py](../examples/intersecting_planes.py).
+## Triangle meshes and isosurfaces
 
-### Slice an existing scalar volume
+The [Cheese example](api.md#plot_trisurf) colors the bundled mesh by a scalar function and adds a colorbar. For a 3D scalar array, the [random-field example](api.md#plot_isosurface) extracts the zero isosurface using seed 42.
 
-Pass a `(ny, nx, nz)` array and the three coordinate vectors to `plot_volume_slices`. This example creates a sample volume with the midpoint on the grid. The returned handles follow X, Y, Z order and share a color range.
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-import mpl3d_vtk
-
-fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
-t = np.linspace(0, 1, 101)
-x, y, z = np.meshgrid(t, t, t, sparse=True)
-volume = np.sin(10 * np.pi * (x + y + z))
-slices = ax.plot_volume_slices(volume, coordinates=(t, t, t), x=.5, y=.5, z=.5,
-                              cmap="viridis", vmin=-1, vmax=1)
-mpl3d_vtk.ax_setting(ax, (0, 1), (0, 1), (0, 1))
-fig.colorbar(slices[0], ax=ax)
+```sh
+python examples/reference/plot_trisurf.py cheese.png
+python examples/random_field_isosurface.py random_field.png
 ```
 
-Run the [example script](../examples/intersecting_planes.py) with `--method volume` to generate both sets of slices with this method. See [`plot_volume_slices`](function_reference.md#plot_volume_slices) for interpolation options.
+The mesh example uses the repository's `data/cheese.npz` by default. Pass `--data-dir` to load the archives from another directory. [Example data](../data/README.md)
 
 ## Export and cleanup
 
-Use `fig.savefig("plot.png", dpi=200)` for raster output. PDF and SVG embed the VTK viewport as an RGBA image at the output DPI. Matplotlib axes, text, and ordinary 2D plots can remain vector elements. A headless host needs an offscreen OpenGL implementation supported by its VTK build, such as EGL or OSMesa.
+Use `fig.savefig("figure.png", dpi=180)` as in a regular Matplotlib figure. SVG and PDF keep Matplotlib axes, text, and colorbars in their regular output format and embed a raster image for the VTK geometry.
 
-Closing an interactive figure releases its VTK windows. With Agg, call `ax.remove()` after saving to release that subplot's VTK window immediately, then call `plt.close(fig)`. Repeat `remove()` for each VTK subplot in a batch figure.
+The examples use the Agg Matplotlib backend for automated image generation. VTK also needs a working OpenGL context. On a headless host, use a VTK build with a supported off-screen backend such as EGL or OSMesa. Use `ax.remove()` when disposing of a VTK axes in a long-running render loop and close the figure when finished.
 
 ## Regenerate the reference figures
 
-Each [gallery](plot_catalog.md) image links to its API entry and its own runnable Python script. The gallery builder generates the reference scripts and PNGs from the API snippets. Run the standalone scripts to regenerate the two README figures.
+Run the individual scripts in [the Gallery](plot_catalog.md) or regenerate the API reference figures and their scripts in one command.
 
 ```sh
 python examples/render_reference.py
-python examples/intersecting_planes_comparison.py docs/gallery/intersecting_planes_comparison.png
-python examples/intersecting_scalar_slices.py docs/gallery/intersecting_scalar_slices.png
 python examples/random_field_isosurface.py docs/gallery/random_field_isosurface.png
+python examples/intersecting_scalar_slices.py docs/gallery/intersecting_scalar_slices.png
 ```
 
-To render a single figure, run the script linked below its thumbnail and pass the output filename.
-
-```sh
-python examples/reference/plot_surface.py surface.png
-python examples/reference/plot_trisurf.py cheese.png
-```
-
-## Example datasets
-
-The Cheese and Peanut meshes are in [`data/`](../data/README.md). The mesh scripts read this directory by default. Pass `--data-dir` to use another copy of the files. See [mesh color interpolation](function_reference.md#mesh-color-interpolation) to choose between per-vertex and per-face values.
-
-The [benchmark comparisons](../benchmarks/results/my_mpl_style/README.md) include their own instructions for obtaining the upstream PFC volumes.
+Each generated reference script can also be run independently with an optional output path.
 
 ## Tests and benchmarks
 
 ```sh
-python -m pip install ".[test]"
+python -m pip install -e ".[test]"
 python -m pytest -q
-python benchmarks/benchmark.py --surface 128 256 512 --volume 40 80 128 --segments 20000 --frames 20
+python benchmarks/benchmark.py
 ```
 
-The benchmark reports geometry construction, a full first draw, rotation redraws, height and color updates, and VTK isosurface extraction. It reports medians and 95th percentiles for repeated operations. Match the device, canvas, dataset, and antialiasing when comparing runs. For measurements on upstream data, see the [triangle mesh and isosurface comparisons](../benchmarks/results/my_mpl_style/README.md).
+The construction benchmark measures the time spent inside each plotting call. Inputs are prepared once and the benchmark reuses the axes. Setup, drawing, and file export occur outside the timing interval. The script reports runtime versions and raw samples as JSON. For rendering and rotation timings against Matplotlib's built-in projection, see the [mplot3d comparison](../benchmarks/results/my_mpl_style/README.md).
 
-Version 0.6.0 builds regular-grid connectivity directly in VTK-owned memory. Fixed-size polygons also use VTK's implicit cell offsets on VTK 9.6 and later. The table shows medians of 41 geometry builds per version on Windows 11 with Python 3.13.5, NumPy 2.3.0, and VTK 9.6.1. The measurements cover geometry construction before rendering.
+### Plot construction compared with 0.6.1
 
-| Geometry | 0.5.10 | 0.6.0 | Polygon cell storage |
-| --- | ---: | ---: | ---: |
-| 512 × 512 surface | 6.75 ms | 5.47 ms | 5,102 → 4,082 KiB |
-| 1,024 × 1,024 surface | 44.85 ms | 38.04 ms | 20,442 → 16,354 KiB |
-| Cheese mesh, 307,708 triangles | 5.49 ms | 4.50 ms | 4,808 → 3,607 KiB |
+Median milliseconds over 75 measured calls per method and version, after warm-up. Both versions ran on Windows 11 with Python 3.13.5, NumPy 2.3.0, Matplotlib 3.11.0, and VTK 9.6.1.
+
+| Method | Input | 0.6.1 (ms) | Current (ms) | Speedup |
+| --- | --- | ---: | ---: | ---: |
+| `plot_surface` | 600 × 600 vertices, mapped color and Gouraud lighting | 45.80 | 35.16 | 1.30× |
+| `plot_trisurf` | Cheese, 307,708 triangles with explicit indices | 5.56 | 4.94 | 1.13× |
+| `plot_isosurface` | 128³ scalar volume and a second field for color | 32.47 | 26.52 | 1.22× |
+| `plot` | One line with 250,000 finite points | 4.79 | 2.34 | 2.04× |
+| `scatter` | 250,000 finite points with uniform size and color | 8.54 | 2.28 | 3.74× |

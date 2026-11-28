@@ -8,7 +8,7 @@ Both renderers receive the complete meshes and the same orthographic view. The `
 
 ![Cheese and peanut meshes. Upper row mplot3d, lower row vtk3d with 2× supersampling](trisurf_comparison.png)
 
-[Documentation](../../../docs/api.md#plot_trisurf) · [Source code](../../my_mpl_style.py#L105)
+[Documentation](../../../docs/api.md#plot_trisurf) · [Source code](../../my_mpl_style.py)
 
 ### Rendering time
 
@@ -39,7 +39,7 @@ The paired meshes have identical triangle counts and axis-aligned bounds in this
 
 ![Three zero isosurfaces. Upper row mplot3d with face shading, lower row vtk3d with interpolated lighting](isosurface_comparison.png)
 
-[Documentation](../../../docs/function_reference.md#plot_isosurface) · [Source code](../../my_mpl_style.py#L128)
+[Documentation](../../../docs/api.md#plot_isosurface) · [Source code](../../my_mpl_style.py)
 
 ## Benchmark setup
 

@@ -9,10 +9,7 @@ from textwrap import indent
 import matplotlib
 matplotlib.use("Agg")
 
-import mpl3d_vtk
-from mpl3d_vtk.charts import _StreamingLine
-from mpl3d_vtk.planes import _ImageGraphic
-from mpl3d_vtk.spatial import VolumeGraphic
+import mpl_depth_style
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,21 +18,15 @@ SOURCES = ROOT / "examples/reference"
 RANDOM_SOURCE = ROOT / "examples/random_field_isosurface.py"
 RANDOM_IMAGE = f"gallery/{RANDOM_SOURCE.stem}.png"
 DATA_DIR = ROOT / "data"
-PAGES = ("api.md", "function_reference.md", "scene.md")
-MESH_EXAMPLES = ("plot_trisurf", "plot_mesh")
+PAGES = ("api.md", "scene.md")
 CODE_BLOCK = re.compile(r"^\x60\x60\x60python\n(.*?)^\x60\x60\x60$", re.MULTILINE | re.DOTALL)
 FIGURE = re.compile(
     rf'<img src="(gallery/reference/[^"]+\.png|{re.escape(RANDOM_IMAGE)})" width="\d+" alt="([^"]+)">'
 )
 HEADINGS = re.compile(r"^##(#?) (.+)\n", re.MULTILINE)
 SOURCE_LINK = re.compile(r"\n\n\[Source code\]\(\.\./examples/[^)\n]+\)\.")
-NATIVE_METHODS = {
-    mpl3d_vtk.VtkAxes: {
-        "autoscale", "autoscale_view", "get_box_aspect", "get_proj",
-        "get_xlim", "get_xlim3d", "get_ylim", "get_ylim3d", "get_zlim", "get_zlim3d",
-    },
-    VolumeGraphic: {"set_array"},
-}
+PLOTTING_METHODS = {"plot_surface", "plot_trisurf", "plot_isosurface", "plot", "scatter"}
+STYLE_HELPERS = {"plot_rc", "ax3D_setting"}
 STYLE = {
     "figure.figsize": (4.25, 3.15),
     "figure.constrained_layout.use": True,
@@ -100,23 +91,14 @@ def read_reference():
 
 
 def check_api_coverage(examples):
-    # Extraction shares the random field in plot_isosurface. Its API example returns a mesh.
-    titles = {example.title for example in examples} | {"extract_isosurface"}
-    missing = set(mpl3d_vtk.__all__) - titles
-    classes = (mpl3d_vtk.VtkAxes, mpl3d_vtk.Graphic, VolumeGraphic, _ImageGraphic, _StreamingLine)
-    for cls in classes:
-        owner = cls.__name__.lstrip("_")
-        for name, value in vars(cls).items():
-            if (name.startswith("_") or name in NATIVE_METHODS.get(cls, ())
-                    or not (callable(value) or isinstance(value, property))):
-                continue
-            qualified = f"{owner}.{name}"
-            use_owner = name in ("set", "draw", "remove") or cls in (VolumeGraphic, _ImageGraphic)
-            label = qualified if use_owner else name
-            if label not in titles:
-                missing.add(label)
-    if missing:
-        raise ValueError("Missing illustrated API entries: " + ", ".join(sorted(missing)))
+    expected = {name for name in PLOTTING_METHODS if callable(getattr(mpl_depth_style.VtkAxes, name, None))}
+    expected.update(name for name in STYLE_HELPERS if callable(getattr(mpl_depth_style, name, None)))
+    titles = {example.title for example in examples}
+    if expected != titles or len(examples) != len(titles):
+        raise ValueError(
+            f"Gallery entries must match the documented API. "
+            f"Missing: {sorted(expected - titles)}. Unexpected: {sorted(titles - expected)}."
+        )
 
 
 def build_source(example, setup):
@@ -129,9 +111,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mpl3d_vtk'''
-    if "vtkplot." in example.code:
-        header += "\n\nvtkplot = mpl3d_vtk"
+import mpl_depth_style'''
     style_lines = [f"    {key!r}: {value!r}," for key, value in STYLE.items()]
     style = "\n".join(["STYLE = {", *style_lines, "}"])
 
@@ -139,18 +119,18 @@ import mpl3d_vtk'''
     draw_args = "data_dir" if dataset else ""
     data_arg = ", data_dir" if dataset else ""
     body = setup + "\n\n" + example.code
-    if ".ax_setting(" not in example.code:
+    if ".ax3D_setting(" not in example.code:
         body += """
 
 for panel in fig.axes:
-    if isinstance(panel, mpl3d_vtk.VtkAxes):
-        mpl3d_vtk.ax_setting(panel)"""
+    if isinstance(panel, mpl_depth_style.VtkAxes):
+        mpl_depth_style.ax3D_setting(panel)"""
     draw = f"def draw({draw_args}):\n{indent(body, '    ')}\n    return fig"
 
     style_call = ""
     layout_call = ""
-    if example.name not in ("ax_setting", "plot_rc"):
-        style_call = '\n        mpl3d_vtk.plot_rc(save_bbox="standard")'
+    if example.name not in ("ax3D_setting", "plot_rc"):
+        style_call = '\n        mpl_depth_style.plot_rc(save_bbox="standard")'
         layout_call = "\n            fig.get_layout_engine().set(rect=(.06, .10, .88, .87))"
     save = f'''def save(output{data_arg}):
     with plt.rc_context(STYLE):{style_call}
@@ -162,7 +142,7 @@ for panel in fig.axes:
             for number in plt.get_fignums():
                 fig = plt.figure(number)
                 for ax in fig.axes:
-                    if isinstance(ax, mpl3d_vtk.VtkAxes):
+                    if isinstance(ax, mpl_depth_style.VtkAxes):
                         ax.remove()
                 plt.close(fig)'''
 
@@ -182,57 +162,32 @@ for panel in fig.axes:
 
 
 def write_gallery(examples):
-    def figure_links(reference, source):
-        return f"[Documentation]({reference}) · [Source code]({source})"
-
     by_name = {example.name: example for example in examples}
-    random = by_name[RANDOM_SOURCE.stem]
-    random_reference = f"{random.page}#{slug(random.title)}"
-    groups = {"Isosurfaces and triangle meshes": [by_name[name] for name in MESH_EXAMPLES]}
+    groups = {}
     for example in examples:
-        if example.name not in MESH_EXAMPLES and example is not random:
-            groups.setdefault(example.group, []).append(example)
+        groups.setdefault(example.group, []).append(example)
 
     page = [
         "# Gallery", "",
-        "Each figure links to its documentation and has a runnable Python script.",
+        "Click a figure to open its API documentation. Each figure has its own runnable Python script.",
         "",
-        "- **Plot data** · [Isosurfaces and triangle meshes](#isosurfaces-and-triangle-meshes) · [Surfaces](#surfaces-and-contours) · [Charts](#lines-points-and-charts) · [Scalar fields](#meshes-and-scalar-fields) · [Vector fields](#vector-fields-and-streamlines) · [Spatial geometry](#point-clouds-and-other-geometry) · [Matplotlib aliases](#matplotlib-aliases)",
-        "- **Manage the scene** · [Axes](#axes-controls) · [Streaming lines and lights](#streaming-lines-and-lights) · [Matplotlib controls](#matplotlib-controls) · [Renderer integration](#renderer-integration)",
-        "- **Work with a handle** · [Inspect geometry and data](#graphic-handles) · [Update data and colors](#update-data-and-colors) · [Style and visibility](#style-and-visibility) · [Specialized handles](#specialized-handles)",
+        "[Run the examples and regenerate the figures](examples.md)",
     ]
     for topic, entries in groups.items():
-        featured = topic == "Isosurfaces and triangle meshes"
-        columns = 2 if featured else 3
-        page.extend(["", f"## {topic}", ""])
-        if featured:
-            page.extend([
-                "The triangle mesh figures use the original cheese and peanut datasets.",
-                "[Example datasets](../data/README.md) · [Compare with mplot3d](../benchmarks/results/my_mpl_style/README.md)", "",
-            ])
-        page.extend(["|" + " |" * columns, "|" + " :---: |" * columns])
+        columns = 3 if topic == "Plotting methods" else 2
+        page.extend(["", f"## {topic}", "", "|" + " |" * columns, "|" + " :---: |" * columns])
         for offset in range(0, len(entries), columns):
             cells = []
-            for entry in entries[offset:offset+columns]:
+            for entry in entries[offset:offset + columns]:
                 href = f"{entry.page}#{slug(entry.title)}"
                 alt = f"{entry.title}. {entry.alt}".replace("|", r"\|")
-                cells.append(f"[![{alt}]({entry.image})]({href})<br>{figure_links(href, entry.source_href)}")
+                cells.append(
+                    f"[![{alt}]({entry.image})]({href})<br>"
+                    f"[Documentation]({href}) · [Source code]({entry.source_href})"
+                )
             cells.extend([""] * (columns - len(cells)))
             page.append("| " + " | ".join(cells) + " |")
-        if featured:
-            page.extend([
-                "", "### Random isosurface", "",
-                "The zero level of a 20 × 20 × 20 field of uniform random samples in [−1, 1], with seed 42.",
-                "",
-                f"[![{random.title}. {random.alt}]({random.image})]({random_reference})",
-                "",
-                figure_links(random_reference, random.source_href),
-            ])
-    page.extend([
-        "", "## More examples", "",
-        "- [Three intersecting planes](examples.md#three-intersecting-planes)",
-        "- [Run the examples or regenerate these figures](examples.md#regenerate-the-reference-figures)",
-    ])
+
     (DOCS / "plot_catalog.md").write_text("\n".join(page) + "\n", encoding="utf-8")
 
     def add_link(match):

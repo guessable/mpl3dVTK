@@ -16,7 +16,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mpl3d_vtk  # Registers the vtk3d projection.
+import mpl_depth_style  # Registers the vtk3d projection.
 
 
 def u(x, y, z):
@@ -25,7 +25,7 @@ def u(x, y, z):
 
 @plt.rc_context()
 def main(output=None):
-    mpl3d_vtk.plot_rc(save_bbox="standard")
+    mpl_depth_style.plot_rc(save_bbox="standard")
     coords = np.linspace(-1, 1, 100)
     a, b = np.meshgrid(coords, coords)
     zero = np.zeros_like(a)
@@ -41,7 +41,7 @@ def main(output=None):
         surface = ax.plot_surface(*plane, values=field, vmin=vmin, vmax=vmax)
     fig.colorbar(surface, ax=ax, label="$u$", shrink=.72, pad=.05)
     limits = (-1, 1)
-    mpl3d_vtk.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
+    mpl_depth_style.ax3D_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
     ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
     ax.set_title("plot_surface", fontfamily="monospace")
 

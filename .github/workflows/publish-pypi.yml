@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-24.04
     environment:
       name: pypi
-      url: https://pypi.org/project/mpl3d-vtk/
+      url: https://pypi.org/project/mpl-depth-style/
     permissions:
       id-token: write
     steps:

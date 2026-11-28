@@ -3,7 +3,7 @@ requires = ["setuptools>=80"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mpl3d-vtk"
+name = "mpl-depth-style"
 version = "0.6.1"
 description = "Scientific 3D plotting with VTK and native Matplotlib axes"
 readme = "README.md"
@@ -14,9 +14,9 @@ dependencies = ["numpy>=1.25", "matplotlib>=3.11,<3.12", "vtk>=9.4,<10", "my-mpl
 test = ["pytest>=8"]
 
 [project.urls]
-Repository = "https://github.com/guessable/mpl3dVTK"
-Documentation = "https://github.com/guessable/mpl3dVTK/blob/main/docs/plot_catalog.md"
-Issues = "https://github.com/guessable/mpl3dVTK/issues"
+Repository = "https://github.com/guessable/mpl-depth-style"
+Documentation = "https://github.com/guessable/mpl-depth-style/blob/main/docs/plot_catalog.md"
+Issues = "https://github.com/guessable/mpl-depth-style/issues"
 
 [tool.setuptools]
-packages = ["mpl3d_vtk"]
+packages = ["mpl_depth_style"]

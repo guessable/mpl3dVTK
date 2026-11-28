@@ -1,23 +1,25 @@
 # Plotting API
 
-Choose a method by the data you want to draw.
+Import `mpl_depth_style` to register the `vtk3d` Matplotlib projection. The plotted objects share a VTK depth buffer.
 
-| Task | Methods |
+| Data | Method |
 | --- | --- |
-| Surfaces and contours | [`plot_surface`](#plot_surface), [`plot_wireframe`](#plot_wireframe), [`plot_trisurf`](#plot_trisurf), [`contour`](#contour) |
-| Lines, points, and charts | [`plot`](#plot), [`scatter`](#scatter), [`quiver`](#quiver), [`bar3d`](#bar3d), [`stem`](#stem) |
-| Matplotlib aliases | [`plot3D`](#plot3d), [`scatter3D`](#scatter3d), [`quiver3D`](#quiver3d), [`contour3D`](#contour3d) |
+| Structured coordinate grids | [`plot_surface`](#plot_surface) |
+| Triangles and vertex coordinates | [`plot_trisurf`](#plot_trisurf) |
+| Sampled 3D scalar fields | [`plot_isosurface`](#plot_isosurface) |
+| Connected samples | [`plot`](#plot) |
+| Individual samples | [`scatter`](#scatter) |
 
-For volume and vector fields, use the [VTK reference](function_reference.md). For styling, cameras, and updates to existing plots, use [Scene and handles](scene.md).
+For styling and updates to existing plots, see [Styles and plot handles](scene.md).
 
 ## Run the examples
 
-The examples below share this setup. Start each example with a fresh copy of it. The gallery scripts use `plot_rc()` before creating figures and `ax_setting()` to style their 3D axes. [Gallery](plot_catalog.md) · [Plot styles](scene.md#plot_rc)
+The plot examples use the following setup. Start each example in a fresh figure. The gallery scripts use `plot_rc()` before creating figures and `ax3D_setting()` to style their 3D axes. [Gallery](plot_catalog.md) · [Plot styles](scene.md#plot_rc)
 
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
-import mpl3d_vtk
+import mpl_depth_style
 
 fig, ax = plt.subplots(subplot_kw={"projection": "vtk3d"})
 t = np.linspace(-2, 2, 61)
@@ -27,95 +29,7 @@ z = np.exp(x * np.sin(y))
 
 For the triangle mesh example, use `from pathlib import Path` and set `data_dir = Path("data")` from the repository root. The [example datasets](../data/README.md) are in that directory.
 
-## Common style options
-
-The defaults below apply to a directly constructed [`Graphic`](scene.md#graphic). Individual plotting methods describe their overrides and any additional keywords.
-
-- **`color`** (Matplotlib color or `None`, default `None`)
-
-  Uniform object color. Many plotting methods choose the next axes-cycle color when neither a fixed color nor scalar colors are supplied.
-
-- **`facecolor`** (Matplotlib color, `"none"`, or `None`, default `None`)
-
-  Fixed face fill that overrides `color` and mapped values. `"none"` draws a wireframe.
-
-- **`edgecolor`** (Matplotlib color, `"none"`, or `None`, default `"none"`)
-
-  Polygon boundary color. `"none"` or `None` hides the lines.
-
-- **`linewidth`** (float, default `1`)
-
-  Nominal width of lines and polygon edges in output pixels.
-
-- **`linestyle`** (str, default `"-"`)
-
-  One of `"-"`, `"--"`, `":"`, `"-."`, or `"none"`. VTK line stipple support depends on the renderer.
-
-- **`alpha`** (float or `None`, default `None`)
-
-  Uniform opacity in `[0, 1]`. `None` uses full actor opacity.
-
-- **`vertex_alpha`** (scalar, `array_like`, or `None`, default `None`)
-
-  Local opacity in `[0, 1]`, broadcast to one value per vertex or face according to `association`. When supplied, it replaces the alpha channel of the mapped or direct color data.
-
-- **`edge_alpha`** (float or `None`, default `None`)
-
-  Opacity of polygon edges in `[0, 1]`. `None` uses the VTK default.
-
-- **`point_size`** (float, default `5`)
-
-  Nominal size in pixels for primitive VTK points. Marker methods such as `scatter` derive point or glyph sizes from `s`.
-
-- **`wireframe`** (bool, default `False`)
-
-  Draw polygons as wireframe edges.
-
-- **`lighting`** (bool or str, default `False`)
-
-  `True` selects Phong lighting. Use `False` or choose `"flat"`, `"gouraud"`, or `"phong"`. Some plotting methods set a different default.
-
-- **`ambient`** (float, default `0.22`)
-
-  Ambient contribution to the lit material, from 0 to 1.
-
-- **`diffuse`** (float, default `0.78`)
-
-  Diffuse contribution to the lit material, from 0 to 1.
-
-- **`specular`** (float, default `0.12`)
-
-  Specular strength for the lit material, from 0 to 1.
-
-- **`specular_power`** (float, default `18`)
-
-  VTK highlight exponent. Larger values narrow the highlight.
-
-- **`cmap`** (colormap, str, RGB(A) table, or `None`, default `None`)
-
-  Scalar-to-color map. `None` uses the Matplotlib default if scalar mapping is active.
-
-- **`norm`** (Matplotlib normalization, scale name, or `None`, default `None`)
-
-  Converts data scalars to colormap positions. `None` uses linear normalization.
-
-- **`vmin`** (float or `None`, default `None`)
-
-  Lower scalar color limit. `None` leaves the bound to the normalization or the data.
-
-- **`vmax`** (float or `None`, default `None`)
-
-  Upper scalar color limit. `None` leaves the bound to the normalization or the data.
-
-- **`label`** (str or `None`, default `None`)
-
-  Matplotlib label for legends. An underscore prefix hides an entry from automatic legend selection.
-
-- **`visible`** (bool, default `True`)
-
-  Whether the VTK object is drawn.
-
-## Surfaces and contours
+## Plotting methods
 
 ### `plot_surface`
 
@@ -200,70 +114,6 @@ surface.set_heights(z + .2)
 
 [Source code](../examples/reference/plot_surface.py).
 
-### `plot_wireframe`
-
-```text
-ax.plot_wireframe(x, y, z, *, rcount=None, ccount=None, rstride=None, cstride=None, **style)
-```
-
-Draw the lines of a regular height grid. The combined grid must have at least two rows and columns.
-
-**Parameters**
-
-- **`x`** (`array_like`)
-
-  X vector of length `nx` or broadcastable X grid, as in [`plot_surface`](#plot_surface).
-
-- **`y`** (`array_like`)
-
-  Y vector of length `ny` or broadcastable Y grid, as in [`plot_surface`](#plot_surface).
-
-- **`z`** (2D array)
-
-  Vertex heights of the grid.
-
-- **`rcount`** (int or `None`, default `None`)
-
-  Maximum rows retained, at least 2. Leave `rstride` unset.
-
-- **`ccount`** (int or `None`, default `None`)
-
-  Maximum columns retained, at least 2. Leave `cstride` unset.
-
-- **`rstride`** (int or `None`, default `None`)
-
-  Positive row step. Leave `rcount` unset.
-
-- **`cstride`** (int or `None`, default `None`)
-
-  Positive column step. Leave `ccount` unset.
-
-- __`**style`__ (keyword arguments)
-
-  See [common style options](#common-style-options). `color` sets a uniform line color. `cmap` maps the grid heights to color. Sampling retains the boundary for counts and strides.
-
-**Returns**
-
-- **`wireframe`** ([`Graphic`](scene.md#graphic))
-
-  The grid lines. Use `set_heights()` to update the sampled grid.
-
-**Raises**
-
-- **`ValueError`**
-
-  If the grid is invalid or both a count and a stride are supplied for the same direction.
-
-**Examples**
-
-```python
-wireframe = ax.plot_wireframe(x, y, z, rstride=4, cstride=4, color="0.25", linewidth=1)
-```
-
-<img src="gallery/reference/plot_wireframe.png" width="460" alt="A sampled line mesh over the exponential height field">
-
-[Source code](../examples/reference/plot_wireframe.py).
-
 ### `plot_trisurf`
 
 ```text
@@ -297,7 +147,7 @@ Draw a triangular surface. Pass explicit connectivity for a known mesh or let Ma
 
 - **`association`** (str, default `"point"`)
 
-  `"point"` interpolates vertex colors. `"cell"` gives each retained triangle one color, in unmasked face order. See [mesh color interpolation](function_reference.md#mesh-color-interpolation).
+  `"point"` interpolates vertex colors. `"cell"` gives each retained triangle one color, in unmasked face order.
 
 - **`shade`** (bool or `None`, default `None`)
 
@@ -321,11 +171,11 @@ Draw a triangular surface. Pass explicit connectivity for a known mesh or let Ma
 
 - **`ValueError`**
 
-  If the height array does not have one entry per vertex or the color array does not match its association.
+  If vertex coordinates or triangle indices are invalid, or the color array does not match its association.
 
 **Notes**
 
-Use [`plot_mesh`](function_reference.md#plot_mesh) when your mesh already supplies XYZ vertices and face indices. See [mesh color interpolation](function_reference.md#mesh-color-interpolation) for the effect of each color association.
+Supply explicit indices for meshes that overlap when projected onto XY, such as closed surfaces. Automatic Delaunay triangulation uses XY only. Choose point colors for a continuous gradient or cell colors for flat, per-triangle color.
 
 **Examples**
 
@@ -342,7 +192,7 @@ surface = ax.plot_trisurf(x, y, z, triangles=faces, values=u[faces].mean(axis=1)
                           shade=False)
 ax.set_title(f"cheese · {len(faces):,} triangles")
 ax.set(xlabel="x", ylabel="y", zlabel="z")
-mpl3d_vtk.ax_setting(ax)
+mpl_depth_style.ax3D_setting(ax)
 fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$")
 ```
 
@@ -350,64 +200,71 @@ fig.colorbar(surface, ax=ax, shrink=.7, pad=.06, label=r"$u=x\sin z+y\sin(x^2)$"
 
 [Source code](../examples/reference/plot_trisurf.py).
 
-### `contour`
+### `plot_isosurface`
 
 ```text
-ax.contour(x, y, z, *, levels=10, offset=None, **style)
+ax.plot_isosurface(values, *, level=None, coordinates=None,
+                   color_values=None, share_vertices=True, **style)
 ```
 
-Draw level curves on a height grid. The input shapes follow [`plot_surface`](#plot_surface).
+Extract and draw an isosurface. The example draws the zero level of a seeded random field.
 
 **Parameters**
 
-- **`x`** (`array_like`)
+- **`values`** (3D array)
 
-  X vector of length `nx` or broadcastable X grid.
+  Sampled field with shape `(ny, nx, nz)` and at least two samples per axis.
 
-- **`y`** (`array_like`)
+- **`level`** (float or `None`, default `None`)
 
-  Y vector of length `ny` or broadcastable Y grid.
+  Target scalar level. The default is the midpoint of the NaN-ignoring range in `values`.
 
-- **`z`** (2D array)
+- **`coordinates`** (three arrays or `None`, default `None`)
 
-  Vertex heights used as the scalar field to contour.
+  Coordinate vectors `(x, y, z)` of lengths `(nx, ny, nz)` or three full grids matching `values`. Use `np.meshgrid(x, y, z, indexing="xy")` to construct full grids from vectors. When omitted, each axis uses zero-based indices.
 
-- **`levels`** (int or `array_like`, default `10`)
+- **`color_values`** (3D array or `None`, default `None`)
 
-  Positive number of evenly spaced interior levels or an explicit sequence of scalar heights.
+  Second field with the same shape as `values`. Its samples are interpolated onto the isosurface vertices. With no color field, use `color` for a uniform fill.
 
-- **`offset`** (float or `None`, default `None`)
+- **`share_vertices`** (bool, default `True`)
 
-  Z coordinate of the plane onto which to project the curves. By default each curve keeps its contour height.
+  Keep shared vertices. `False` gives each triangle independent points.
 
 - __`**style`__ (keyword arguments)
 
-  See [common style options](#common-style-options). Use `color` for uniform lines or `cmap` for contour values.
+  See [common style options](#common-style-options). Lighting defaults to `"gouraud"`. `alpha` controls surface opacity.
 
 **Returns**
 
-- **`lines`** ([`Graphic`](scene.md#graphic))
+- **`surface`** ([`Graphic`](scene.md#graphic))
 
-  The contour geometry. `lines.contour_levels` stores the unique requested levels.
+  The extracted triangle geometry and any interpolated color data.
 
 **Raises**
 
 - **`ValueError`**
 
-  If the height grid is invalid or an integer level count is below one.
+  If grid dimensions or coordinates are incompatible or `color_values` has a different shape from `values`.
+
+**Notes**
+
+Uniform ascending coordinate vectors use VTK Flying Edges. Nonuniform vectors and curvilinear grids use VTK's general contour filter. When using a colorbar for a second field, pass the returned handle to `fig.colorbar()`.
 
 **Examples**
 
 ```python
-surface = ax.plot_surface(t, t, z, cmap="viridis", alpha=.65)
-lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
+coords = np.linspace(-1, 1, 20)
+values = np.random.default_rng(42).uniform(-1, 1, size=(20,) * 3)
+ax.plot_isosurface(values, coordinates=(coords,) * 3, level=0, facecolor="#18b83e")
+limits = (-1, 1)
+ticks = np.linspace(*limits, 5)
+mpl_depth_style.ax3D_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
 ```
 
-<img src="gallery/reference/contour.png" width="460" alt="A transparent surface with three contour levels projected below it">
+<img src="gallery/random_field_isosurface.png" width="650" alt="Green zero isosurface of a seeded random field">
 
-[Source code](../examples/reference/contour.py).
-
-## Lines, points, and charts
+[Source code](../examples/random_field_isosurface.py).
 
 ### `plot`
 
@@ -415,7 +272,7 @@ lines = ax.contour(t, t, z, levels=[1, 2, 4], offset=0, color="0.2")
 ax.plot(x, y, z=0, *, zdir="z", color=None, linestyle="-", marker=None, markersize=6, **style)
 ```
 
-Draw one or more polylines and optional markers. Compatible coordinate arrays broadcast together. A 2D input supports multiple series.
+Draw one or more polylines and optional markers. Compatible coordinate arrays broadcast together. A 2D input supports multiple series. Masked or nonfinite coordinates split the line.
 
 **Parameters**
 
@@ -433,7 +290,7 @@ Draw one or more polylines and optional markers. Compatible coordinate arrays br
 
 - **`zdir`** (str, default `"z"`)
 
-  Axis receiving the third input. `"x"` maps `(x, y, z)` to `(z, x, y)`, `"y"` to `(y, z, x)`, and `"z"` leaves the order unchanged.
+  Axis receiving the third input. `"x"` maps `(x, y, z)` to `(z, x, y)`, `"y"` to `(x, z, y)`, and `"z"` leaves the order unchanged.
 
 - **`color`** (Matplotlib color or `None`, default `None`)
 
@@ -545,306 +402,90 @@ fig.colorbar(points, ax=ax)
 
 [Source code](../examples/reference/scatter.py).
 
-### `quiver`
+## Common style options
 
-```text
-ax.quiver(x, y, z, u, v, w, *, length=1., normalize=False,
-          arrow_length_ratio=.2, show_heads=True, **style)
-```
+The defaults below apply to a directly constructed [`Graphic`](scene.md#graphic). Individual plotting methods describe their overrides and any additional keywords.
 
-Draw VTK arrows. Positions and vector components broadcast to a common shape. Nonfinite positions and vectors are skipped.
+- **`color`** (Matplotlib color or `None`, default `None`)
 
-**Parameters**
+  Uniform object color. Many plotting methods choose the next axes-cycle color when neither a fixed color nor scalar colors are supplied.
 
-- **`x`** (scalar or `array_like`)
+- **`facecolor`** (Matplotlib color, `"none"`, or `None`, default `None`)
 
-  X coordinates of arrow tails.
+  Fixed face fill that overrides `color` and mapped values. `"none"` draws a wireframe.
 
-- **`y`** (scalar or `array_like`)
+- **`edgecolor`** (Matplotlib color, `"none"`, or `None`, default `"none"`)
 
-  Y coordinates of arrow tails.
+  Polygon boundary color. `"none"` or `None` hides the lines.
 
-- **`z`** (scalar or `array_like`)
+- **`linewidth`** (float, default `1`)
 
-  Z coordinates of arrow tails.
+  Nominal width of lines and polygon edges in output pixels.
 
-- **`u`** (scalar or `array_like`)
+- **`linestyle`** (str, default `"-"`)
 
-  X components of the vectors.
+  One of `"-"`, `"--"`, `":"`, `"-."`, or `"none"`. VTK line stipple support depends on the renderer.
 
-- **`v`** (scalar or `array_like`)
+- **`alpha`** (float or `None`, default `None`)
 
-  Y components of the vectors.
+  Uniform opacity in `[0, 1]`. `None` uses full actor opacity.
 
-- **`w`** (scalar or `array_like`)
+- **`vertex_alpha`** (scalar, `array_like`, or `None`, default `None`)
 
-  Z components of the vectors.
+  Local opacity in `[0, 1]`, broadcast to one value per vertex or face according to `association`. When supplied, it replaces the alpha channel of the mapped or direct color data.
 
-- **`length`** (float, default `1.0`)
+- **`edge_alpha`** (float or `None`, default `None`)
 
-  Finite, nonnegative multiplier applied to the vector lengths.
+  Opacity of polygon edges in `[0, 1]`. `None` uses the VTK default.
 
-- **`normalize`** (bool, default `False`)
+- **`point_size`** (float, default `5`)
 
-  Scale every nonzero vector to unit length before applying `length`.
+  Nominal size in pixels for primitive VTK points. Marker methods such as `scatter` derive point or glyph sizes from `s`.
 
-- **`arrow_length_ratio`** (float, default `0.2`)
+- **`wireframe`** (bool, default `False`)
 
-  Tip length as a fraction of the arrow length, in `[0, 1]`.
+  Draw polygons as wireframe edges.
 
-- **`show_heads`** (bool, default `True`)
+- **`lighting`** (bool or str, default `False`)
 
-  Draw arrowheads. Use `False` for shafts alone.
+  `True` selects Phong lighting. Use `False` or choose `"flat"`, `"gouraud"`, or `"phong"`. Some plotting methods set a different default.
 
-- __`**style`__ (keyword arguments)
+- **`ambient`** (float, default `0.22`)
 
-  See [common style options](#common-style-options). Use `cmap` to map the scaled vector magnitudes or `color` for a uniform color.
+  Ambient contribution to the lit material, from 0 to 1.
 
-**Returns**
+- **`diffuse`** (float, default `0.78`)
 
-- **`arrows`** ([`Graphic`](scene.md#graphic))
+  Diffuse contribution to the lit material, from 0 to 1.
 
-  One glyph artist for all arrows.
+- **`specular`** (float, default `0.12`)
 
-**Raises**
+  Specular strength for the lit material, from 0 to 1.
 
-- **`ValueError`**
+- **`specular_power`** (float, default `18`)
 
-  If `length` is negative or nonfinite, or `arrow_length_ratio` is outside `[0, 1]`.
+  VTK highlight exponent. Larger values narrow the highlight.
 
-**Examples**
+- **`cmap`** (colormap, str, RGB(A) table, or `None`, default `None`)
 
-```python
-a, b = np.meshgrid(np.linspace(-1, 1, 5), np.linspace(-1, 1, 5))
-arrows = ax.quiver(a, b, 0, -b, a, .35, length=.32, color="tab:orange")
-mpl3d_vtk.ax_setting(ax, zlim=(-.2, .65), box_aspect=(1, 1, .55))
-```
+  Scalar-to-color map. `None` uses the Matplotlib default if scalar mapping is active.
 
-<img src="gallery/reference/quiver.png" width="460" alt="An array of arrows showing the directions of a swirling vector field">
+- **`norm`** (Matplotlib normalization, scale name, or `None`, default `None`)
 
-[Source code](../examples/reference/quiver.py).
+  Converts data scalars to colormap positions. `None` uses linear normalization.
 
-### `bar3d`
+- **`vmin`** (float or `None`, default `None`)
 
-```text
-ax.bar3d(x, y, z, dx, dy, dz, *, shade=True, **style)
-```
+  Lower scalar color limit. `None` leaves the bound to the normalization or the data.
 
-Draw cuboid bars. All six geometry inputs broadcast together. Entries with nonfinite geometry are skipped.
+- **`vmax`** (float or `None`, default `None`)
 
-**Parameters**
+  Upper scalar color limit. `None` leaves the bound to the normalization or the data.
 
-- **`x`** (scalar or `array_like`)
+- **`label`** (str or `None`, default `None`)
 
-  X coordinate of the bar's base corner.
+  Matplotlib label for legends. An underscore prefix hides an entry from automatic legend selection.
 
-- **`y`** (scalar or `array_like`)
+- **`visible`** (bool, default `True`)
 
-  Y coordinate of the bar's base corner.
-
-- **`z`** (scalar or `array_like`)
-
-  Z coordinate of the base.
-
-- **`dx`** (scalar or `array_like`)
-
-  Width along X, in data units.
-
-- **`dy`** (scalar or `array_like`)
-
-  Depth along Y, in data units.
-
-- **`dz`** (scalar or `array_like`)
-
-  Height offset along Z. The top is `z + dz`.
-
-- **`shade`** (bool, default `True`)
-
-  Enable lighting. An explicit `lighting` style takes precedence.
-
-- __`**style`__ (keyword arguments)
-
-  See [common style options](#common-style-options). Bar faces carry the top Z value as a scalar, and edges default to black.
-
-**Returns**
-
-- **`bars`** ([`Graphic`](scene.md#graphic))
-
-  The polygon geometry for the bars.
-
-**Examples**
-
-```python
-bars = ax.bar3d([0, 1, 2], [0, .5, 1], 0, .65, .65, [2, 5, 3], cmap="plasma")
-mpl3d_vtk.ax_setting(ax, box_aspect=(2.6, 1.65, 3))
-```
-
-<img src="gallery/reference/bar3d.png" width="460" alt="Three cuboid bars colored according to their heights">
-
-[Source code](../examples/reference/bar3d.py).
-
-### `stem`
-
-```text
-ax.stem(x, y, z, *, bottom=0, marker="o", markersize=6, **style)
-```
-
-Draw vertical stems from a shared baseline to sample positions.
-
-**Parameters**
-
-- **`x`** (scalar or `array_like`)
-
-  X positions of the samples.
-
-- **`y`** (scalar or `array_like`)
-
-  Y positions of the samples.
-
-- **`z`** (scalar or `array_like`)
-
-  Z positions of the tips. The position arrays broadcast together.
-
-- **`bottom`** (float, default `0`)
-
-  Z coordinate of the baseline.
-
-- **`marker`** (str or `None`, default `"o"`)
-
-  Tip marker, with the same marker names as [`scatter`](#scatter). Use `None` to omit markers.
-
-- **`markersize`** (float, default `6`)
-
-  Nominal marker diameter. The marker area is its square.
-
-- __`**style`__ (keyword arguments)
-
-  See [common style options](#common-style-options). `color` sets the stems and the default tip color.
-
-**Returns**
-
-- **`stems`** ([`Graphic`](scene.md#graphic))
-
-  The only return value when markers are disabled.
-
-- **`stems`, `markers`** (tuple of [`Graphic`](scene.md#graphic))
-
-  The stems and separate tip markers when markers are enabled.
-
-**Examples**
-
-```python
-stems, markers = ax.stem(t[::8], np.sin(t[::8]), np.cos(t[::8]),
-                        bottom=-1, color="tab:green")
-```
-
-<img src="gallery/reference/stem.png" width="460" alt="Markers at the ends of vertical lines from a common baseline">
-
-[Source code](../examples/reference/stem.py).
-
-## Matplotlib aliases
-
-### `plot3D`
-
-```text
-ax.plot3D(x, y, z=0, *, zdir="z", color=None, linestyle="-", marker=None, markersize=6, **style)
-```
-
-Alias for [`plot`](#plot).
-
-**See also**
-
-[`plot`](#plot) describes every parameter and the return value.
-
-**Examples**
-
-```python
-theta = np.linspace(0, 3*np.pi, 120)
-ax.plot3D(np.cos(theta), np.sin(theta), theta/np.pi, color="tab:purple", linewidth=2)
-```
-
-<img src="gallery/reference/plot3d.png" width="460" alt="A helix drawn with the plot3D alias">
-
-[Source code](../examples/reference/plot3d.py).
-
-### `scatter3D`
-
-```text
-ax.scatter3D(x, y, z=0, *, s=20, c=None, zdir="z", marker="o", filled=True, **style)
-```
-
-Alias for [`scatter`](#scatter).
-
-**See also**
-
-[`scatter`](#scatter) describes every parameter and the return value.
-
-**Examples**
-
-```python
-points = np.random.default_rng(6).normal(size=(90, 3))
-ax.scatter3D(*points.T, s=24, c=points[:, 2], cmap="plasma")
-```
-
-<img src="gallery/reference/scatter3d.png" width="460" alt="A sampled three-dimensional point cloud drawn with scatter3D">
-
-[Source code](../examples/reference/scatter3d.py).
-
-### `quiver3D`
-
-```text
-ax.quiver3D(x, y, z, u, v, w, *, length=1., normalize=False,
-          arrow_length_ratio=.2, show_heads=True, **style)
-```
-
-Alias for [`quiver`](#quiver).
-
-**See also**
-
-[`quiver`](#quiver) describes every parameter and the return value.
-
-**Examples**
-
-```python
-a, b = np.meshgrid(np.linspace(-1, 1, 4), np.linspace(-1, 1, 4))
-ax.quiver3D(a, b, 0, -b, a, .35, length=.42, color="tab:green")
-ax.set(zlim=(-.2, .5))
-```
-
-<img src="gallery/reference/quiver3d.png" width="460" alt="Arrows on a plane drawn with quiver3D">
-
-[Source code](../examples/reference/quiver3d.py).
-
-### `contour3D`
-
-```text
-ax.contour3D(x, y, z, *, levels=10, offset=None, **style)
-```
-
-Alias for [`contour`](#contour).
-
-**See also**
-
-[`contour`](#contour) describes every parameter and the return value.
-
-**Examples**
-
-```python
-ax.contour3D(x, y, z, levels=[.5, 1, 2, 4], cmap="viridis", linewidth=2)
-```
-
-<img src="gallery/reference/contour3d.png" width="460" alt="Four levels of a height field drawn with contour3D">
-
-[Source code](../examples/reference/contour3d.py).
-
-## VtkAxes
-
-Create a [`VtkAxes`](scene.md#vtkaxes) and look up its scene controls.
-
-## Axes controls
-
-See [Axes controls](scene.md#axes-controls) for projection settings, antialiasing, and export to an RGBA array.
-
-## Graphic
-
-See [Graphic handles](scene.md#graphic) for geometry properties and updates to existing plots.
+  Whether the VTK object is drawn.

@@ -16,12 +16,12 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-import mpl3d_vtk  # Registers the vtk3d projection.
+import mpl_depth_style  # Registers the vtk3d projection.
 
 
 @plt.rc_context()
 def main(output=None):
-    mpl3d_vtk.plot_rc(save_bbox="standard")
+    mpl_depth_style.plot_rc(save_bbox="standard")
     n = 20
     coords = np.linspace(-1, 1, n)
     values = np.random.default_rng(42).uniform(-1, 1, size=(n,) * 3)
@@ -31,7 +31,7 @@ def main(output=None):
                            subplot_kw={"projection": "vtk3d"})
     ax.plot_isosurface(values, coordinates=(coords,) * 3, level=0, facecolor="#18b83e")
     limits = (-1, 1)
-    mpl3d_vtk.ax_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
+    mpl_depth_style.ax3D_setting(ax, limits, limits, limits, xticks=ticks, yticks=ticks, zticks=ticks)
     ax.set(xlabel="$x$", ylabel="$y$", zlabel="$z$")
     ax.set_title("plot_isosurface", fontfamily="monospace")
 
